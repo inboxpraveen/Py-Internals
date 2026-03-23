@@ -1,7 +1,7 @@
 <div align="center">
 
-<img src="https://img.shields.io/badge/Python-3.8%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.8+"/>
-<img src="https://img.shields.io/badge/License-PJ_Community-1A6B5C?style=for-the-badge" alt="PI Community License"/>
+<img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.10+"/>
+<img src="https://img.shields.io/badge/Licnse-PI_Community-1A6B5C?style=for-the-badge" alt="PI Community License"/>
 <img src="https://img.shields.io/badge/Deployed_on-GitHub_Pages-222222?style=for-the-badge&logo=github" alt="GitHub Pages"/>
 <img src="https://img.shields.io/badge/No_build_tools-Pure_HTML%2FCSS%2FJS-B85C1A?style=for-the-badge" alt="No build tools"/>
 

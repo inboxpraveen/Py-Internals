@@ -24,6 +24,7 @@
       font-family: var(--font-mono);
       font-size: 13.5px;
       line-height: 1.7;
+      color: #CDD6F4; /* ensure plain identifiers are readable on dark bg */
     }
 
     .mem-panel-body {
@@ -31,6 +32,19 @@
       overflow: auto;
       flex: 1;
       font-size: var(--fs-xs);
+    }
+
+    /* ── Explanation strip: more breathing room ───────────── */
+    .explanation-strip {
+      padding: var(--sp-7) var(--sp-12);
+      min-height: 150px;
+      border-bottom: 2px solid var(--clr-border);
+      margin: var(--sp-5) 0;
+    }
+
+    /* Wider gap under the step-track dots */
+    .step-track {
+      padding: var(--sp-3) var(--sp-5) var(--sp-4);
     }
 
     .explanation-text {
@@ -44,6 +58,96 @@
     @keyframes explanationChange {
       from { opacity: 0; transform: translateY(4px); }
       to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── How-to guide strip ───────────────────────────────── */
+    .demo-guide {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--sp-4);
+      padding: var(--sp-3) var(--sp-5);
+      background: var(--clr-surface);
+      border-bottom: 1px solid var(--clr-border);
+      flex-wrap: wrap;
+    }
+
+    .demo-guide__step {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      font-size: var(--fs-xs);
+      color: var(--clr-text-3);
+    }
+
+    .demo-guide__badge {
+      width: 18px;
+      height: 18px;
+      background: var(--clr-accent-lt);
+      border: 1px solid rgba(26,107,92,0.25);
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--clr-accent);
+      flex-shrink: 0;
+    }
+
+    .demo-guide__arrow {
+      color: var(--clr-border);
+      font-size: var(--fs-sm);
+    }
+
+    /* ── Demo selector with category groups ───────────────── */
+    .demo-selector {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      flex-wrap: wrap;
+      padding: var(--sp-4) var(--sp-5);
+      background: var(--clr-surface);
+      border-bottom: 1px solid var(--clr-border);
+      margin-bottom: 0;
+    }
+
+    .demo-group {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+    }
+
+    .demo-group__label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .demo-group__label--immutable {
+      background: var(--clr-surface-2);
+      color: var(--clr-text-3);
+      border: 1px solid var(--clr-border);
+    }
+
+    .demo-group__label--mutable {
+      background: var(--clr-accent-lt);
+      color: var(--clr-accent);
+      border: 1px solid rgba(26,107,92,0.2);
+    }
+
+    .demo-group-divider {
+      width: 1px;
+      height: 22px;
+      background: var(--clr-border);
+      margin: 0 var(--sp-1);
+      flex-shrink: 0;
     }
 
     /* ── Type explorer grid ───────────────────────────────── */
@@ -288,6 +392,13 @@
         </svg>
         Rebinding
       </a>
+      <a href="#demo-mutability" class="sidebar__item" onclick="scrollTo('#demo-mutability')">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="2" y="5" width="14" height="9" rx="2"/>
+          <path d="M6 5V4a3 3 0 016 0v1"/>
+        </svg>
+        Mutability
+      </a>
       <a href="#refcount" class="sidebar__item" onclick="scrollTo('#refcount')">
         <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="9" cy="9" r="5"/><path d="M9 6v3l2 2"/>
@@ -355,17 +466,70 @@
     <!-- ── Progress bar ────────────────────────────────────── -->
     <div class="progress-bar"><div class="progress-bar__fill" id="readProgress" style="width:0%"></div></div>
 
+    <!-- ── Learning path strip ─────────────────────────────── -->
+    <div style="background:var(--clr-surface);border-bottom:1px solid var(--clr-border);padding:var(--sp-5) var(--sp-12);display:flex;align-items:flex-start;gap:var(--sp-8);flex-wrap:wrap;">
+      <div style="flex:1;min-width:200px">
+        <div style="font-size:var(--fs-xs);font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--clr-text-3);margin-bottom:var(--sp-2)">What you'll understand</div>
+        <div style="display:flex;flex-wrap:wrap;gap:var(--sp-2)">
+          <span class="type-chip type-chip--int" style="font-family:var(--font-body);text-transform:none">Names vs objects</span>
+          <span class="type-chip type-chip--str" style="font-family:var(--font-body);text-transform:none">id() &amp; identity</span>
+          <span class="type-chip type-chip--list" style="font-family:var(--font-body);text-transform:none">Mutation</span>
+          <span class="type-chip type-chip--bool" style="font-family:var(--font-body);text-transform:none">Rebinding</span>
+          <span class="type-chip type-chip--none" style="font-family:var(--font-body);text-transform:none">Reference counting</span>
+          <span class="type-chip type-chip--dict" style="font-family:var(--font-body);text-transform:none">Aliasing</span>
+        </div>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div style="font-size:var(--fs-xs);font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--clr-text-3);margin-bottom:var(--sp-2)">Session flow</div>
+        <ol style="margin:0;padding-left:1.2em;font-size:var(--fs-xs);color:var(--clr-text-3);line-height:1.9">
+          <li>Step through each interactive demo below</li>
+          <li>Read the explanation strip under the stage</li>
+          <li>Scroll down for the full written narrative</li>
+        </ol>
+      </div>
+    </div>
+
     <!-- ╔══════════════════════════════════════════════════════╗
          ║  DEMO 1: Basic Variable Assignment                   ║
          ╚══════════════════════════════════════════════════════╝ -->
     <div id="demo-basic">
 
-      <!-- Demo selector tabs -->
+      <!-- How-to guide strip -->
+      <div class="demo-guide">
+        <div class="demo-guide__step">
+          <span class="demo-guide__badge">1</span>
+          Pick a demo below
+        </div>
+        <span class="demo-guide__arrow">›</span>
+        <div class="demo-guide__step">
+          <span class="demo-guide__badge">2</span>
+          Press <strong style="color:var(--clr-text-2);margin:0 3px">▶ Play</strong> or tap <strong style="color:var(--clr-text-2);margin:0 3px">Next →</strong> to step through
+        </div>
+        <span class="demo-guide__arrow">›</span>
+        <div class="demo-guide__step">
+          <span class="demo-guide__badge">3</span>
+          Watch the <strong style="color:var(--clr-text-2);margin:0 3px">Memory panel</strong> update in real time
+        </div>
+        <span class="demo-guide__arrow">›</span>
+        <div class="demo-guide__step">
+          <span class="demo-guide__badge">4</span>
+          Read the explanation below, then scroll down for concepts
+        </div>
+      </div>
+
+      <!-- Demo selector tabs (grouped by mutability) -->
       <div class="demo-selector">
-        <button class="demo-pill active" data-demo="basic"     onclick="switchDemo('basic')">1 · Assigning a variable</button>
-        <button class="demo-pill"        data-demo="rebind"    onclick="switchDemo('rebind')">2 · Rebinding</button>
-        <button class="demo-pill"        data-demo="aliasing"  onclick="switchDemo('aliasing')">3 · Aliasing</button>
-        <button class="demo-pill"        data-demo="mutation"  onclick="switchDemo('mutation')">4 · Mutation vs Rebinding</button>
+        <div class="demo-group">
+          <span class="demo-group__label demo-group__label--immutable">Immutable</span>
+          <button class="demo-pill active" data-demo="basic"  onclick="switchDemo('basic')">1 · Assigning a variable</button>
+          <button class="demo-pill"        data-demo="rebind" onclick="switchDemo('rebind')">2 · Rebinding</button>
+        </div>
+        <div class="demo-group-divider"></div>
+        <div class="demo-group">
+          <span class="demo-group__label demo-group__label--mutable">Mutable</span>
+          <button class="demo-pill" data-demo="aliasing" onclick="switchDemo('aliasing')">3 · Aliasing</button>
+          <button class="demo-pill" data-demo="mutation" onclick="switchDemo('mutation')">4 · Mutation vs Rebinding</button>
+        </div>
       </div>
 
       <!-- Stage: Code + Memory -->
@@ -445,14 +609,37 @@
       <div class="explanation-strip">
         <div class="explanation-strip__step-num" id="stepNum">1</div>
         <div class="explanation-strip__content">
-          <h3 id="stepTitle" class="explanation-text">—</h3>
-          <p  id="stepDesc"  class="explanation-text">Press ▶ to start, or click Next to step through.</p>
+          <h3 id="stepTitle" class="explanation-text">Initial state — empty namespace</h3>
+          <p  id="stepDesc"  class="explanation-text">
+            Before any code runs, the global namespace is empty — no names, no objects.
+            Press <strong>▶ Play</strong> to autoplay, or use <strong>Next →</strong> to step through manually.
+            Watch the <strong>Memory panel</strong> on the right as objects appear on the heap.
+          </p>
         </div>
       </div>
     </div>
 
     <!-- ── Narrative: Concepts ──────────────────────────────── -->
-    <article class="narrative">
+    <article class="narrative" id="narrative">
+
+      <!-- Mutable vs Immutable Quick Reference -->
+      <div id="demo-mutability" class="animate-fade-up">
+        <div class="callout callout--insight">
+          <div class="callout__icon">🔑</div>
+          <div>
+            <div class="callout__title">The most important thing to understand first</div>
+            <div class="callout__body">
+              Python objects come in two flavours: <strong>immutable</strong> (cannot be changed after creation)
+              and <strong>mutable</strong> (can be changed in-place).
+              Demos <strong>1 &amp; 2</strong> above demonstrate immutable types (int, str, float) —
+              every "change" is actually a <em>rebinding</em> to a new object.
+              Demos <strong>3 &amp; 4</strong> demonstrate mutable types (list) —
+              where you can change the object's contents without creating a new one.
+              This distinction is the root cause of most Python surprises.
+            </div>
+          </div>
+        </div>
+      </div>
 
       <h2>What is a variable in Python?</h2>
 

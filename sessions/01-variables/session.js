@@ -734,22 +734,28 @@ function initStage() {
     updateBar();
   }
 
-  /* Sidebar active-section highlighting on scroll */
-  const sections = document.querySelectorAll('[id]');
-  const sideLinks = document.querySelectorAll('.sidebar__item[href^="#"]');
+  /* Sidebar active-section: scroll-position based (reliable ordering) */
+  const sidebarAnchors = [...document.querySelectorAll('.sidebar__item[href^="#"]')]
+    .map(link => ({ link, el: document.getElementById(link.getAttribute('href').slice(1)) }))
+    .filter(item => item.el);
 
-  if (sideLinks.length && sections.length) {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          sideLinks.forEach(l => l.classList.remove('active'));
-          const active = document.querySelector(`.sidebar__item[href="#${entry.target.id}"]`);
-          if (active) active.classList.add('active');
-        }
-      });
-    }, { rootMargin: '-30% 0px -60% 0px' });
+  function updateSidebarActive() {
+    /* The active item is the last anchor whose section top is above the
+       current scroll position (offset by the sticky topbar height + a buffer). */
+    const scrollY  = window.scrollY + 110;
+    let   current  = sidebarAnchors[0];
 
-    sections.forEach(s => observer.observe(s));
+    for (const item of sidebarAnchors) {
+      if (item.el.offsetTop <= scrollY) current = item;
+    }
+
+    sidebarAnchors.forEach(item => item.link.classList.remove('active'));
+    if (current) current.link.classList.add('active');
+  }
+
+  if (sidebarAnchors.length) {
+    window.addEventListener('scroll', PJ.Core.debounce(updateSidebarActive, 40), { passive: true });
+    updateSidebarActive(); /* set correct item on page load */
   }
 }
 

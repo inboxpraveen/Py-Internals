@@ -245,6 +245,7 @@
 
 .stage__code-panel {
   background: #1C2333;
+  color: #CDD6F4;          /* default token colour — unstyled identifiers stay readable */
   display: flex;
   flex-direction: column;
   border-right: 1px solid rgba(255,255,255,0.07);
