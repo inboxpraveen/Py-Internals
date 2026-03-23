@@ -1,7 +1,7 @@
 <div align="center">
 
 <img src="https://img.shields.io/badge/Python-3.8%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.8+"/>
-<img src="https://img.shields.io/badge/License-PJ_Community-1A6B5C?style=for-the-badge" alt="PJ Community License"/>
+<img src="https://img.shields.io/badge/License-PJ_Community-1A6B5C?style=for-the-badge" alt="PI Community License"/>
 <img src="https://img.shields.io/badge/Deployed_on-GitHub_Pages-222222?style=for-the-badge&logo=github" alt="GitHub Pages"/>
 <img src="https://img.shields.io/badge/No_build_tools-Pure_HTML%2FCSS%2FJS-B85C1A?style=for-the-badge" alt="No build tools"/>
 
@@ -18,7 +18,7 @@
 
 <br />
 
-<img width="860" alt="Py Internals — memory visualization of variable rebinding" src="https://via.placeholder.com/860x480/FAFAF7/1A6B5C?text=Screenshot+Coming+Soon" />
+<img width="860" alt="Py Internals — memory visualization of variable rebinding" src="./assets//images/Py-Internals.png" />
 
 </div>
 
@@ -69,20 +69,6 @@ Py Internals closes that gap, visually, for free.
 | 06 | Iterators & Generators | 📋 Planned | `__iter__`, `__next__`, `yield`, lazy evaluation |
 | 07 | Decorators | 📋 Planned | First-class functions, wrapper pattern, `functools` |
 | 08 | The GIL & Concurrency | 📋 Planned | GIL, threads vs processes, `asyncio` |
-
----
-
-## Session 01 — Variables & Mutability
-
-The first session covers **four interactive demos**:
-
-1. **Basic Assignment** — `x = 42` creates an int object on the heap and binds the name `x` to it. You'll see `id()`, `type()`, and refcount in action.
-
-2. **Rebinding** — `x = 42 → x = 100 → x = "hello"` — each rebinding creates a new object. Watch the old ones wait for their refcount to hit zero, then get garbage collected.
-
-3. **Aliasing** — `a = [1,2,3]; b = a` — two names, one object. Mutating through `b` changes what `a` sees. This is the most common Python surprise, made obvious.
-
-4. **Mutation vs Rebinding** — why `s += "!"` on a string creates a new object while `lst.append(4)` modifies the existing one. Mutability, finally demystified.
 
 ---
 
@@ -139,19 +125,6 @@ npx serve .
 Then open [http://localhost:8000](http://localhost:8000).
 
 > **Why a server?** The JS modules use `fetch()` to load session data, which requires a server context. Opening `index.html` directly as a `file://` URL won't work.
-
----
-
-## Deploying to GitHub Pages
-
-1. Push this repo to GitHub
-2. Go to **Settings → Pages**
-3. Set source to **Deploy from a branch**, branch: `main`, folder: `/ (root)`
-4. Click Save — your course will be live at `https://inboxpraveen.github.io/Py-Internals`
-
-That's it. No CI, no build step, no config file.
-
-Optionally, add a custom domain under **Settings → Pages → Custom domain**.
 
 ---
 
