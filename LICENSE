@@ -1,0 +1,147 @@
+PY INTERNALS COMMUNITY LICENSE
+Version 1.0, 2024
+
+Copyright (c) 2024 [Your Name / Handle]
+Project: Py Internals — https://github.com/inboxpraveen/Py-Internals
+
+═══════════════════════════════════════════════════════════════════════════════
+PREAMBLE
+═══════════════════════════════════════════════════════════════════════════════
+
+This license governs the use, reproduction, distribution, and modification of
+the Py Internals educational materials, including but not limited to:
+
+  • All HTML, CSS, and JavaScript source code
+  • Interactive visualizations and animation systems
+  • Written explanations, session narratives, and educational text
+  • Memory model diagrams and visual design patterns
+  • The component library and design system
+
+The goal of this license is to keep this project freely accessible to learners
+everywhere, encourage contributions and derivatives that benefit the community,
+and ensure the original author receives credit for their work.
+
+═══════════════════════════════════════════════════════════════════════════════
+PERMISSIONS — You are FREE to:
+═══════════════════════════════════════════════════════════════════════════════
+
+1. USE
+   Use this project and its contents for personal learning, teaching, or
+   educational purposes — including in classrooms, workshops, bootcamps,
+   and online courses — without charge or restriction.
+
+2. SHARE
+   Copy and redistribute the material in any medium or format, including
+   hosting your own version of the course on GitHub Pages, Netlify, Vercel,
+   or any other static hosting provider.
+
+3. ADAPT
+   Remix, transform, and build upon the material. Translate sessions to
+   other languages. Create derivative works. Extend the component library.
+   Build new sessions using the provided patterns and common components.
+
+4. EMBED VISUALS
+   Embed individual visualizations or interactive components in blog posts,
+   articles, YouTube videos, tutorials, or other educational materials.
+
+═══════════════════════════════════════════════════════════════════════════════
+CONDITIONS — Under the following terms:
+═══════════════════════════════════════════════════════════════════════════════
+
+A. ATTRIBUTION (Required in all cases)
+
+   You MUST give appropriate credit to the original project. This means:
+
+   a) Including the following attribution in any work that uses, embeds,
+      or is derived from Py Internals materials:
+
+        "Based on / Adapted from Py Internals by [Your Name]
+         https://github.com/inboxpraveen/Py-Internals
+         Licensed under the PI Community License"
+
+   b) The attribution must be:
+      - Visible to end users (not hidden in comments or build artifacts)
+      - Reasonably prominent (e.g., in a footer, credits page, or About section)
+      - Linked to the original project URL where technically feasible
+
+   c) If you have modified the materials, you must indicate that changes
+      were made and must not imply that the original author endorses your
+      modified version.
+
+B. SHARE-ALIKE (For derivatives)
+
+   If you remix, transform, or build upon the material to create a derivative
+   educational course or component library, you must distribute your
+   contributions under the same license (PI Community License v1.0 or later)
+   or a compatible open license.
+
+   This ensures the educational commons remains open for everyone.
+
+C. NON-COMMERCIAL (For commercial use, see below)
+
+   The materials may NOT be used for direct commercial gain without explicit
+   written permission. Specifically prohibited without permission:
+
+   - Selling the course content (paid courses where this is the primary content)
+   - Paywalling access to the materials
+   - Bundling into commercial educational platforms for profit
+   - Using the visual components in commercial software products
+
+D. INTEGRITY OF MATERIALS
+
+   You may not present the materials in a way that:
+   - Misleads learners about the accuracy of the content
+   - Removes or obscures safety warnings or important technical caveats
+   - Attributes errors or fabricated claims to the original project
+
+═══════════════════════════════════════════════════════════════════════════════
+COMMERCIAL USE
+═══════════════════════════════════════════════════════════════════════════════
+
+For commercial use beyond what is permitted above, please contact the author
+to discuss a separate commercial license. Teaching institutions, coding
+bootcamps, and individual educators may often use the materials freely —
+contact the author to confirm your use case.
+
+Contact: [your email or GitHub profile URL]
+
+═══════════════════════════════════════════════════════════════════════════════
+CONTRIBUTIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+By submitting a pull request, issue, or any contribution to this project,
+you agree to license your contribution under the same PI Community License.
+You also confirm that you have the right to grant this license (i.e., the
+work is your original creation or you have appropriate rights to it).
+
+═══════════════════════════════════════════════════════════════════════════════
+DISCLAIMER
+═══════════════════════════════════════════════════════════════════════════════
+
+THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE
+USE OF THE MATERIALS.
+
+Educational content reflects the author's understanding at time of writing.
+Python's behavior may vary between implementations (CPython, PyPy, etc.) and
+versions. Always verify with official Python documentation.
+
+═══════════════════════════════════════════════════════════════════════════════
+EXAMPLE ATTRIBUTION
+═══════════════════════════════════════════════════════════════════════════════
+
+Minimal attribution (for embeds / short references):
+
+  "Memory visualization from Py Internals (github.com/inboxpraveen/Py-Internals)"
+
+Full attribution (for derivative works):
+
+  "This course is based on Py Internals by [Your Name], an open-source
+  interactive Python course. Original project: https://github.com/inboxpraveen/Py-Internals
+  Licensed under the PI Community License v1.0."
+
+═══════════════════════════════════════════════════════════════════════════════
+
+END OF LICENSE

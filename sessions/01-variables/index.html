@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Session 01: Variables & Mutability — Py Internals</title>
+  <meta name="description" content="Understand what Python variables really are, how memory works, and why some objects are mutable while others aren't." />
+
+  <link rel="stylesheet" href="../../assets/css/base.css" />
+  <link rel="stylesheet" href="../../assets/css/layout.css" />
+  <link rel="stylesheet" href="../../assets/css/components.css" />
+  <link rel="stylesheet" href="../../assets/css/memory-viz.css" />
+  <link rel="stylesheet" href="../../assets/css/animations.css" />
+
+  <style>
+    /* ── Stage specific tweaks ────────────────────────────── */
+    .code-panel-body {
+      padding: var(--sp-4);
+      overflow: auto;
+      flex: 1;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.7;
+    }
+
+    .mem-panel-body {
+      padding: var(--sp-4);
+      overflow: auto;
+      flex: 1;
+      font-size: var(--fs-xs);
+    }
+
+    .explanation-text {
+      transition: opacity 0.25s var(--ease-out), transform 0.25s var(--ease-out);
+    }
+
+    .explanation-text--animate {
+      animation: explanationChange 0.3s var(--ease-out) both;
+    }
+
+    @keyframes explanationChange {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Type explorer grid ───────────────────────────────── */
+    .type-explorer {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: var(--sp-4);
+      margin: var(--sp-6) 0;
+    }
+
+    .type-card {
+      background: var(--clr-surface);
+      border: 1.5px solid var(--clr-border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      transition: all var(--dur-base) var(--ease-out);
+    }
+
+    .type-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .type-card__header {
+      padding: var(--sp-3) var(--sp-4);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--clr-border);
+    }
+
+    .type-card__body {
+      padding: var(--sp-4);
+    }
+
+    .type-card__example {
+      font-family: var(--font-mono);
+      font-size: var(--fs-sm);
+      color: var(--clr-text);
+      margin-bottom: var(--sp-2);
+    }
+
+    .type-card__note {
+      font-size: var(--fs-xs);
+      color: var(--clr-text-3);
+      line-height: var(--lh-snug);
+    }
+
+    .type-card__mutability {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 2px 7px;
+      border-radius: var(--radius-full);
+    }
+
+    .type-card.mutable-card   { border-left: 3px solid var(--clr-accent); }
+    .type-card.immutable-card { border-left: 3px solid var(--clr-text-3); }
+
+    .mutability-immutable { background: var(--clr-surface-2); color: var(--clr-text-3); }
+    .mutability-mutable   { background: var(--clr-accent-lt); color: var(--clr-accent); }
+
+    /* ── Demo selector ────────────────────────────────────── */
+    .demo-selector {
+      display: flex;
+      gap: var(--sp-2);
+      flex-wrap: wrap;
+      margin-bottom: var(--sp-4);
+      padding: var(--sp-4) var(--sp-5);
+      background: var(--clr-surface);
+      border-bottom: 1px solid var(--clr-border);
+    }
+
+    .demo-pill {
+      padding: var(--sp-1) var(--sp-4);
+      border-radius: var(--radius-full);
+      font-size: var(--fs-xs);
+      font-weight: 600;
+      background: var(--clr-surface-2);
+      border: 1.5px solid var(--clr-border);
+      color: var(--clr-text-2);
+      cursor: pointer;
+      transition: all var(--dur-fast) var(--ease-out);
+    }
+
+    .demo-pill:hover { border-color: var(--clr-text-3); color: var(--clr-text); }
+
+    .demo-pill.active {
+      background: var(--clr-accent);
+      border-color: var(--clr-accent);
+      color: white;
+    }
+
+    /* ── Insight banner ───────────────────────────────────── */
+    .insight-banner {
+      background: linear-gradient(135deg, #F5F3FF, #EEF2FF);
+      border: 1px solid #C7D2FE;
+      border-radius: var(--radius-lg);
+      padding: var(--sp-5) var(--sp-6);
+      display: flex;
+      gap: var(--sp-4);
+      align-items: flex-start;
+    }
+
+    .insight-banner__icon { font-size: 24px; flex-shrink: 0; }
+
+    .insight-banner h4 {
+      font-family: var(--font-display);
+      font-size: var(--fs-md);
+      margin-bottom: var(--sp-2);
+      color: #3730A3;
+    }
+
+    .insight-banner p {
+      font-size: var(--fs-sm);
+      color: #4338CA;
+      line-height: var(--lh-loose);
+      margin: 0;
+    }
+
+    /* ── Comparison table ─────────────────────────────────── */
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--fs-sm);
+      margin: var(--sp-5) 0;
+    }
+
+    .comparison-table th {
+      text-align: left;
+      padding: var(--sp-3) var(--sp-4);
+      background: var(--clr-surface-2);
+      font-weight: 600;
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--clr-text-3);
+      border-bottom: 2px solid var(--clr-border);
+    }
+
+    .comparison-table td {
+      padding: var(--sp-3) var(--sp-4);
+      border-bottom: 1px solid var(--clr-border);
+      vertical-align: middle;
+      color: var(--clr-text-2);
+    }
+
+    .comparison-table tr:last-child td { border-bottom: none; }
+    .comparison-table tr:hover td { background: var(--clr-surface-2); }
+
+    /* ── Key idea pill ────────────────────────────────────── */
+    .key-idea {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--sp-3);
+      padding: var(--sp-4) var(--sp-5);
+      background: var(--clr-accent-lt);
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(26,107,92,0.15);
+      margin: var(--sp-5) 0;
+    }
+
+    .key-idea__icon {
+      width: 24px;
+      height: 24px;
+      border-radius: var(--radius-full);
+      background: var(--clr-accent);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .key-idea p {
+      font-size: var(--fs-sm);
+      color: var(--clr-accent);
+      font-weight: 500;
+      margin: 0;
+      line-height: var(--lh-snug);
+    }
+
+    /* Responsive stage */
+    @media (max-width: 860px) {
+      .stage { grid-template-columns: 1fr; }
+      .stage__code-panel { min-height: 320px; }
+      .stage__memory-panel { min-height: 320px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Top Bar ─────────────────────────────────────────────── -->
+<header class="topbar">
+  <div class="topbar__logo">
+    <button class="menu-toggle" aria-label="Toggle menu" onclick="PJ.Core.toggleSidebar()">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <a href="../../index.html" style="display:flex;align-items:center;gap:10px;text-decoration:none">
+      <div class="topbar__logo-mark">Py</div>
+      <span class="topbar__brand">Py<span>Internals</span></span>
+    </a>
+  </div>
+  <div class="topbar__actions">
+    <span style="font-size:var(--fs-xs);color:var(--clr-text-3);font-weight:500">Session 01 of 05</span>
+    <a href="#" class="btn btn--secondary btn--sm" id="nextSessionBtn" style="display:none">
+      Next Session →
+    </a>
+  </div>
+</header>
+
+<!-- ── Sidebar overlay (mobile) ──────────────────────────── -->
+<div class="sidebar-overlay" onclick="PJ.Core.closeSidebar()"></div>
+
+<!-- ── App Shell ──────────────────────────────────────────── -->
+<div class="app-shell" style="grid-template-rows:unset">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar__section">
+      <div class="sidebar__label">Session 01</div>
+      <a href="#intro"        class="sidebar__item active" onclick="scrollTo('#intro')">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="9" cy="9" r="7"/><path d="M9 6v4l2 2"/>
+        </svg>
+        Introduction
+      </a>
+      <a href="#demo-basic"   class="sidebar__item" onclick="scrollTo('#demo-basic')">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M2 9h14M9 2v14"/>
+        </svg>
+        Variable Assignment
+      </a>
+      <a href="#demo-rebind" class="sidebar__item" onclick="scrollTo('#demo-rebind')">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M4 9l3 3 7-7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Rebinding
+      </a>
+      <a href="#refcount" class="sidebar__item" onclick="scrollTo('#refcount')">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="9" cy="9" r="5"/><path d="M9 6v3l2 2"/>
+        </svg>
+        Ref Counting
+      </a>
+      <a href="#types" class="sidebar__item" onclick="scrollTo('#types')">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 5h12M3 9h8M3 13h5"/>
+        </svg>
+        All Types
+      </a>
+    </div>
+    <div class="sidebar__section">
+      <div class="sidebar__label">Course</div>
+      <a href="../../index.html" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 9L9 3l6 6M5 7v8h8V7"/>
+        </svg>
+        All Sessions
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main-content">
+
+    <!-- ── Session Hero ────────────────────────────────────── -->
+    <div class="session-hero" id="intro">
+      <div class="session-hero__breadcrumb">
+        <a href="../../index.html">Home</a>
+        <span>›</span>
+        Session 01
+      </div>
+      <div class="session-hero__eyebrow">Foundations · Session 01</div>
+      <h1 class="session-hero__title">Variables &amp; Mutability</h1>
+      <p class="session-hero__subtitle">
+        What really happens when you write <code>x = 42</code>?
+        Why can you change a list but not a string?
+        We'll trace every step — through Python's memory, through references, through time.
+      </p>
+      <div class="session-meta">
+        <div class="session-meta__item">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="7" cy="7" r="5.5"/><path d="M7 4v3l2 2"/>
+          </svg>
+          ~25 minutes
+        </div>
+        <div class="session-meta__item">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M2 7l3 3 7-7"/>
+          </svg>
+          4 interactive demos
+        </div>
+        <div class="session-meta__item">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="1" y="1" width="12" height="12" rx="2"/>
+            <path d="M4 4h6M4 7h4M4 10h3"/>
+          </svg>
+          Beginner friendly
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Progress bar ────────────────────────────────────── -->
+    <div class="progress-bar"><div class="progress-bar__fill" id="readProgress" style="width:0%"></div></div>
+
+    <!-- ╔══════════════════════════════════════════════════════╗
+         ║  DEMO 1: Basic Variable Assignment                   ║
+         ╚══════════════════════════════════════════════════════╝ -->
+    <div id="demo-basic">
+
+      <!-- Demo selector tabs -->
+      <div class="demo-selector">
+        <button class="demo-pill active" data-demo="basic"     onclick="switchDemo('basic')">1 · Assigning a variable</button>
+        <button class="demo-pill"        data-demo="rebind"    onclick="switchDemo('rebind')">2 · Rebinding</button>
+        <button class="demo-pill"        data-demo="aliasing"  onclick="switchDemo('aliasing')">3 · Aliasing</button>
+        <button class="demo-pill"        data-demo="mutation"  onclick="switchDemo('mutation')">4 · Mutation vs Rebinding</button>
+      </div>
+
+      <!-- Stage: Code + Memory -->
+      <div class="stage" id="stage">
+
+        <!-- Code panel -->
+        <div class="stage__code-panel">
+          <div class="panel-header panel-header--dark">
+            <span>python</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+            </div>
+          </div>
+          <div class="code-panel-body" id="codePanel"></div>
+
+          <!-- Step track -->
+          <div class="step-track" data-role="step-track" id="stepTrack"></div>
+
+          <!-- Playback controls -->
+          <div class="playback-controls" id="controls">
+            <div class="playback-controls__left">
+              <button class="step-btn" data-action="prev" title="Previous step" disabled>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                  <path d="M8 2L4 6l4 4"/>
+                </svg>
+              </button>
+              <button class="play-btn" data-action="play" title="Play / Pause">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                  <path d="M3 2.5l8 4.5-8 4.5z"/>
+                </svg>
+              </button>
+              <button class="step-btn" data-action="next" title="Next step">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                  <path d="M4 2l4 4-4 4"/>
+                </svg>
+              </button>
+              <button class="btn btn--ghost btn--sm" data-action="reset" title="Reset">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M10 6A4 4 0 112 6" stroke-linecap="round"/>
+                  <path d="M2 3v3h3" fill="currentColor" stroke="none"/>
+                </svg>
+              </button>
+            </div>
+            <div class="playback-controls__right">
+              <div class="speed-control">
+                Speed:
+                <select class="speed-select" data-action="speed">
+                  <option value="1400">0.5×</option>
+                  <option value="800" selected>1×</option>
+                  <option value="500">1.5×</option>
+                  <option value="300">2×</option>
+                </select>
+              </div>
+              <span class="step-counter" data-role="step-counter">1 / 1</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Memory panel -->
+        <div class="stage__memory-panel">
+          <div class="panel-header">
+            <span style="color:var(--clr-text-3)">Memory</span>
+            <div style="display:flex;align-items:center;gap:6px;font-size:var(--fs-xs);color:var(--clr-text-3)">
+              <span style="display:inline-block;width:8px;height:8px;background:var(--clr-mem-stack);border-radius:2px;opacity:.6"></span>
+              namespace
+              <span style="display:inline-block;width:8px;height:8px;background:var(--clr-mem-heap);border-radius:2px;opacity:.6;margin-left:4px"></span>
+              heap
+            </div>
+          </div>
+          <div class="mem-panel-body" id="memPanel"></div>
+        </div>
+      </div>
+
+      <!-- Explanation strip -->
+      <div class="explanation-strip">
+        <div class="explanation-strip__step-num" id="stepNum">1</div>
+        <div class="explanation-strip__content">
+          <h3 id="stepTitle" class="explanation-text">—</h3>
+          <p  id="stepDesc"  class="explanation-text">Press ▶ to start, or click Next to step through.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Narrative: Concepts ──────────────────────────────── -->
+    <article class="narrative">
+
+      <h2>What is a variable in Python?</h2>
+
+      <p>
+        In many languages, a variable is a <strong>named box in memory</strong>.
+        You declare <code>int x = 5</code> and a piece of RAM labeled "x" holds the number 5.
+        Change <code>x</code>, and the bytes inside that box change.
+      </p>
+
+      <p>
+        Python is different. <strong>Python variables are names — labels that point to objects.</strong>
+        When you write <code>x = 42</code>, Python:
+      </p>
+
+      <ol style="list-style:decimal;padding-left:1.5em;color:var(--clr-text-2);font-size:var(--fs-md);line-height:var(--lh-loose);margin-bottom:var(--sp-5)">
+        <li>Creates an integer object <code>42</code> somewhere in memory (the heap)</li>
+        <li>Binds the name <code>x</code> in the current namespace to that object</li>
+      </ol>
+
+      <p>
+        The variable <code>x</code> doesn't "contain" 42.
+        It <strong>references</strong> the object that contains 42.
+        This distinction matters more than you'd think.
+      </p>
+
+      <div class="insight-banner">
+        <div class="insight-banner__icon">💡</div>
+        <div>
+          <h4>Python's model: names and objects</h4>
+          <p>
+            In Python, <strong>everything is an object</strong>. Numbers, strings, functions, classes — all objects.
+            Variables are just names bound to objects.
+            Assignment (<code>=</code>) always binds a name to an object; it never copies the object itself.
+          </p>
+        </div>
+      </div>
+
+      <h2>What is <code>id()</code>?</h2>
+
+      <p>
+        Every object in Python has a unique identity: its memory address (or a proxy for it).
+        The built-in function <code>id(x)</code> returns this address as an integer.
+        Two variables with the <strong>same <code>id()</code> point to the exact same object</strong> —
+        no copy was made.
+      </p>
+
+      <div class="code-block">
+        <div class="code-block__header">
+          <div class="code-block__dots">
+            <div class="code-block__dot"></div>
+            <div class="code-block__dot"></div>
+            <div class="code-block__dot"></div>
+          </div>
+          <span class="code-block__lang">python</span>
+        </div>
+        <div class="code-block__body">
+<span class="tok-var">x</span> <span class="tok-op">=</span> <span class="tok-num">42</span>
+<span class="tok-var">y</span> <span class="tok-op">=</span> <span class="tok-var">x</span>
+
+<span class="tok-fn">print</span>(<span class="tok-fn">id</span>(<span class="tok-var">x</span>) <span class="tok-op">==</span> <span class="tok-fn">id</span>(<span class="tok-var">y</span>))  <span class="tok-cmt"># True — same object!</span>
+<span class="tok-fn">print</span>(<span class="tok-var">x</span> <span class="tok-kw">is</span> <span class="tok-var">y</span>)                 <span class="tok-cmt"># True — 'is' checks identity</span>
+        </div>
+      </div>
+
+      <div class="callout callout--info">
+        <div class="callout__icon">🔎</div>
+        <div>
+          <div class="callout__title"><code>is</code> vs <code>==</code></div>
+          <div class="callout__body">
+            <code>==</code> checks <strong>value equality</strong> — do the objects look the same?<br>
+            <code>is</code> checks <strong>identity</strong> — are they literally the same object in memory?<br>
+            Use <code>is None</code>, <code>is True</code>, <code>is False</code> for singletons.
+            For everything else, prefer <code>==</code>.
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Reference Counting ──────────────────────────────── -->
+      <div id="refcount">
+        <div class="section-divider"><div class="section-divider__label">Reference Counting</div></div>
+        <h2>How Python tracks when to free memory</h2>
+
+        <p>
+          Every heap object carries a hidden counter: its <strong>reference count</strong>.
+          It records how many names (or containers) currently point to the object.
+          CPython adjusts this counter automatically as variables are bound and unbound.
+        </p>
+
+        <div class="key-idea">
+          <div class="key-idea__icon">↑</div>
+          <p>
+            Refcount <strong>increases</strong> when a new name is bound to the object
+            (<code>x = obj</code>, <code>b = a</code>, or passing it as a function argument).
+          </p>
+        </div>
+
+        <div class="key-idea">
+          <div class="key-idea__icon">↓</div>
+          <p>
+            Refcount <strong>decreases</strong> when a name is rebound (<code>x = other</code>),
+            deleted (<code>del x</code>), or goes out of scope (function returns).
+          </p>
+        </div>
+
+        <div class="key-idea">
+          <div class="key-idea__icon">✕</div>
+          <p>
+            When refcount reaches <strong>0</strong>, CPython immediately frees the object's memory.
+            No waiting, no delay — garbage collected on the spot.
+          </p>
+        </div>
+
+        <div class="code-block">
+          <div class="code-block__header">
+            <div class="code-block__dots">
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+            </div>
+            <span class="code-block__lang">python</span>
+          </div>
+          <div class="code-block__body">
+<span class="tok-kw">import</span> <span class="tok-var">sys</span>
+
+<span class="tok-var">x</span> <span class="tok-op">=</span> [<span class="tok-num">1</span>, <span class="tok-num">2</span>, <span class="tok-num">3</span>]
+<span class="tok-fn">print</span>(<span class="tok-var">sys</span>.<span class="tok-fn">getrefcount</span>(<span class="tok-var">x</span>))   <span class="tok-cmt"># 2 (x + getrefcount's argument)</span>
+
+<span class="tok-var">y</span> <span class="tok-op">=</span> <span class="tok-var">x</span>                           <span class="tok-cmt"># y also points to the list</span>
+<span class="tok-fn">print</span>(<span class="tok-var">sys</span>.<span class="tok-fn">getrefcount</span>(<span class="tok-var">x</span>))   <span class="tok-cmt"># 3</span>
+
+<span class="tok-kw">del</span> <span class="tok-var">y</span>                           <span class="tok-cmt"># y removed; refcount drops</span>
+<span class="tok-fn">print</span>(<span class="tok-var">sys</span>.<span class="tok-fn">getrefcount</span>(<span class="tok-var">x</span>))   <span class="tok-cmt"># 2 again</span>
+          </div>
+        </div>
+
+        <div class="callout callout--warn">
+          <div class="callout__icon">⚠️</div>
+          <div>
+            <div class="callout__title">Reference cycles</div>
+            <div class="callout__body">
+              If two objects reference each other (e.g., a list containing itself), their refcounts
+              never reach 0 even when nothing else points to them.
+              CPython has a <strong>cyclic garbage collector</strong> that handles these cases,
+              but it runs periodically — not immediately. This is why CPython doesn't <em>only</em>
+              use reference counting.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Mutation vs Rebinding ───────────────────────────── -->
+      <div id="demo-rebind">
+        <div class="section-divider"><div class="section-divider__label">Mutation vs Rebinding</div></div>
+        <h2>The most important distinction in Python</h2>
+
+        <p>
+          Understanding the difference between <strong>mutation</strong> and <strong>rebinding</strong>
+          is the single most useful mental model for reasoning about Python code.
+        </p>
+
+        <div class="insight-banner">
+          <div class="insight-banner__icon">⚡</div>
+          <div>
+            <h4>The two-sentence summary</h4>
+            <p>
+              <strong>Rebinding</strong> (<code>x = new_value</code>) makes the name point to a different object.
+              The old object is unaffected — it just loses one reference.<br>
+              <strong>Mutation</strong> (<code>x.append()</code>, <code>x[0] = ...</code>) changes the contents
+              of the <em>existing</em> object. All names referencing it see the change.
+            </p>
+          </div>
+        </div>
+
+        <div class="code-block">
+          <div class="code-block__header">
+            <div class="code-block__dots">
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+            </div>
+            <span class="code-block__lang">python</span>
+          </div>
+          <div class="code-block__body">
+<span class="tok-cmt"># ── REBINDING (immutable types) ─────────────────────────────</span>
+<span class="tok-var">s</span> <span class="tok-op">=</span> <span class="tok-str">"hello"</span>
+<span class="tok-var">t</span> <span class="tok-op">=</span> <span class="tok-var">s</span>            <span class="tok-cmt"># both point to the same "hello" object</span>
+<span class="tok-var">s</span> <span class="tok-op">=</span> <span class="tok-str">"world"</span>     <span class="tok-cmt"># s rebound to a NEW object; t still "hello"</span>
+<span class="tok-fn">print</span>(<span class="tok-var">t</span>)           <span class="tok-cmt"># hello — unaffected</span>
+
+<span class="tok-cmt"># ── MUTATION (mutable types) ─────────────────────────────────</span>
+<span class="tok-var">a</span> <span class="tok-op">=</span> [<span class="tok-num">1</span>, <span class="tok-num">2</span>, <span class="tok-num">3</span>]
+<span class="tok-var">b</span> <span class="tok-op">=</span> <span class="tok-var">a</span>            <span class="tok-cmt"># both point to the same list</span>
+<span class="tok-var">a</span>.<span class="tok-fn">append</span>(<span class="tok-num">4</span>)     <span class="tok-cmt"># mutates the shared object</span>
+<span class="tok-fn">print</span>(<span class="tok-var">b</span>)           <span class="tok-cmt"># [1, 2, 3, 4] — b sees the change!</span>
+          </div>
+        </div>
+
+        <p>
+          Immutable types (<code>int</code>, <code>str</code>, <code>float</code>, <code>tuple</code>) can
+          <em>only</em> be rebounded — you can never change the object itself.
+          Mutable types (<code>list</code>, <code>dict</code>, <code>set</code>) can be both mutated
+          and rebound.
+        </p>
+
+        <div style="overflow-x:auto">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Operation</th>
+                <th>Example</th>
+                <th>Creates new object?</th>
+                <th>id() changes?</th>
+                <th>Other aliases see change?</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Rebind</strong></td>
+                <td><code>x = 99</code></td>
+                <td>✅ Yes</td>
+                <td>✅ Yes</td>
+                <td>❌ No</td>
+              </tr>
+              <tr>
+                <td><strong>Augmented rebind</strong></td>
+                <td><code>x += 1</code> (int)</td>
+                <td>✅ Yes</td>
+                <td>✅ Yes</td>
+                <td>❌ No</td>
+              </tr>
+              <tr>
+                <td><strong>Mutate (append)</strong></td>
+                <td><code>lst.append(x)</code></td>
+                <td>❌ No</td>
+                <td>❌ No</td>
+                <td>✅ Yes</td>
+              </tr>
+              <tr>
+                <td><strong>Mutate (index)</strong></td>
+                <td><code>lst[0] = x</code></td>
+                <td>❌ No</td>
+                <td>❌ No</td>
+                <td>✅ Yes</td>
+              </tr>
+              <tr>
+                <td><strong>Augmented rebind</strong></td>
+                <td><code>lst += [x]</code> (list)</td>
+                <td>❌ No*</td>
+                <td>❌ No*</td>
+                <td>✅ Yes*</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size:var(--fs-xs);color:var(--clr-text-3);margin-top:calc(var(--sp-2)*-1)">
+          * For lists, <code>+=</code> calls <code>__iadd__</code> which mutates in-place (unlike with immutable types).
+        </p>
+      </div>
+
+      <!-- ── Types Reference Section ───────────────────────── -->
+      <div id="types">
+        <div class="section-divider"><div class="section-divider__label">Python's Built-in Types</div></div>
+        <h2>All the Variable Types</h2>
+
+        <p>Python has many built-in types. The most important thing to know about each is:
+           <strong>is it mutable or immutable?</strong></p>
+
+        <div class="type-explorer">
+
+          <!-- int -->
+          <div class="type-card immutable-card">
+            <div class="type-card__header">
+              <span class="type-chip type-chip--int">int</span>
+              <span class="type-card__mutability mutability-immutable">immutable</span>
+            </div>
+            <div class="type-card__body">
+              <div class="type-card__example">x = 42<br>x = -7<br>x = 0</div>
+              <div class="type-card__note">Whole numbers, any size. Immutable: <code>x += 1</code> creates a new int object, doesn't change the old one.</div>
+            </div>
+          </div>
+
+          <!-- float -->
+          <div class="type-card immutable-card">
+            <div class="type-card__header">
+              <span class="type-chip type-chip--float">float</span>
+              <span class="type-card__mutability mutability-immutable">immutable</span>
+            </div>
+            <div class="type-card__body">
+              <div class="type-card__example">x = 3.14<br>x = 2.0<br>x = -0.5</div>
+              <div class="type-card__note">Decimal numbers (64-bit IEEE 754). Immutable. Watch out for floating point precision.</div>
+            </div>
+          </div>
+
+          <!-- str -->
+          <div class="type-card immutable-card">
+            <div class="type-card__header">
+              <span class="type-chip type-chip--str">str</span>
+              <span class="type-card__mutability mutability-immutable">immutable</span>
+            </div>
+            <div class="type-card__body">
+              <div class="type-card__example">s = "hello"<br>s = 'world'<br>s = """multi<br>line"""</div>
+              <div class="type-card__note">Sequences of Unicode characters. Cannot be changed after creation — <code>s[0] = 'H'</code> raises a TypeError.</div>
+            </div>
+          </div>
+
+          <!-- bool -->
+          <div class="type-card immutable-card">
+            <div class="type-card__header">
+              <span class="type-chip type-chip--bool">bool</span>
+              <span class="type-card__mutability mutability-immutable">immutable</span>
+            </div>
+            <div class="type-card__body">
+              <div class="type-card__example">done = True<br>active = False</div>
+              <div class="type-card__note">A subclass of <code>int</code>! True == 1, False == 0. Immutable singleton objects.</div>
+            </div>
+          </div>
+
+          <!-- None -->
+          <div class="type-card immutable-card">
+            <div class="type-card__header">
+              <span class="type-chip type-chip--none">NoneType</span>
+              <span class="type-card__mutability mutability-immutable">immutable</span>
+            </div>
+            <div class="type-card__body">
+              <div class="type-card__example">result = None</div>
+              <div class="type-card__note">The absence of a value. A singleton — there is exactly <strong>one</strong> None object in the entire Python process.</div>
+            </div>
+          </div>
+
+          <!-- tuple -->
+          <div class="type-card immutable-card">
+            <div class="type-card__header">
+              <span class="type-chip type-chip--tuple">tuple</span>
+              <span class="type-card__mutability mutability-immutable">immutable</span>
+            </div>
+            <div class="type-card__body">
+              <div class="type-card__example">t = (1, 2, 3)<br>t = ("a", True)</div>
+              <div class="type-card__note">Ordered, fixed-length sequence. You can't add/remove/change elements after creation. Great for function return values.</div>
+            </div>
+          </div>
+
+          <!-- list -->
+          <div class="type-card mutable-card">
+            <div class="type-card__header">
+              <span class="type-chip type-chip--list">list</span>
+              <span class="type-card__mutability mutability-mutable">mutable</span>
+            </div>
+            <div class="type-card__body">
+              <div class="type-card__example">nums = [1, 2, 3]<br>nums.append(4)<br>nums[0] = 99</div>
+              <div class="type-card__note">Ordered, changeable sequence. You can add, remove, and update items in place. The object's identity stays the same.</div>
+            </div>
+          </div>
+
+          <!-- dict -->
+          <div class="type-card mutable-card">
+            <div class="type-card__header">
+              <span class="type-chip type-chip--dict">dict</span>
+              <span class="type-card__mutability mutability-mutable">mutable</span>
+            </div>
+            <div class="type-card__body">
+              <div class="type-card__example">d = {"a": 1}<br>d["b"] = 2<br>del d["a"]</div>
+              <div class="type-card__note">Key-value store. Mutable and ordered (Python 3.7+). Keys must be immutable (hashable).</div>
+            </div>
+          </div>
+
+          <!-- set -->
+          <div class="type-card mutable-card">
+            <div class="type-card__header">
+              <span class="type-chip type-chip--set">set</span>
+              <span class="type-card__mutability mutability-mutable">mutable</span>
+            </div>
+            <div class="type-card__body">
+              <div class="type-card__example">s = {1, 2, 3}<br>s.add(4)<br>s.discard(1)</div>
+              <div class="type-card__note">Unordered collection of unique items. Mutable — you can add/remove. But elements must be immutable (hashable).</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Summary table -->
+        <h3>Quick Reference: Mutability at a glance</h3>
+        <div style="overflow-x:auto">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Literal</th>
+                <th>Mutable?</th>
+                <th>Why it matters</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="type-chip type-chip--int">int</span></td>
+                <td><code>42</code></td>
+                <td>❌ No</td>
+                <td><code>x += 1</code> rebinds <code>x</code> to a new object</td>
+              </tr>
+              <tr>
+                <td><span class="type-chip type-chip--float">float</span></td>
+                <td><code>3.14</code></td>
+                <td>❌ No</td>
+                <td>Any arithmetic produces a new float</td>
+              </tr>
+              <tr>
+                <td><span class="type-chip type-chip--str">str</span></td>
+                <td><code>"hello"</code></td>
+                <td>❌ No</td>
+                <td>String methods return new strings; you can't change characters in-place</td>
+              </tr>
+              <tr>
+                <td><span class="type-chip type-chip--bool">bool</span></td>
+                <td><code>True</code></td>
+                <td>❌ No</td>
+                <td>Only two boolean objects exist; they're singletons</td>
+              </tr>
+              <tr>
+                <td><span class="type-chip type-chip--none">NoneType</span></td>
+                <td><code>None</code></td>
+                <td>❌ No</td>
+                <td>One None object exists; always use <code>is None</code> to check</td>
+              </tr>
+              <tr>
+                <td><span class="type-chip type-chip--tuple">tuple</span></td>
+                <td><code>(1, 2)</code></td>
+                <td>❌ No</td>
+                <td>Can't add/remove/change; safe to use as dict keys</td>
+              </tr>
+              <tr>
+                <td><span class="type-chip type-chip--list">list</span></td>
+                <td><code>[1, 2]</code></td>
+                <td>✅ Yes</td>
+                <td>Functions can modify the list you passed — be careful with aliases!</td>
+              </tr>
+              <tr>
+                <td><span class="type-chip type-chip--dict">dict</span></td>
+                <td><code>{"k": v}</code></td>
+                <td>✅ Yes</td>
+                <td>Passed by reference; mutations inside functions persist</td>
+              </tr>
+              <tr>
+                <td><span class="type-chip type-chip--set">set</span></td>
+                <td><code>{1, 2}</code></td>
+                <td>✅ Yes</td>
+                <td>Can grow/shrink; elements must be immutable/hashable</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Why mutability matters callout -->
+        <div class="callout callout--warn">
+          <div class="callout__icon">⚠️</div>
+          <div>
+            <div class="callout__title">The aliasing trap</div>
+            <div class="callout__body">
+              <code>a = [1, 2, 3]</code> then <code>b = a</code> does NOT copy the list.
+              Both <code>a</code> and <code>b</code> point to the same list object.
+              Doing <code>b.append(4)</code> will also affect <code>a</code>!
+              Use <code>b = a.copy()</code> or <code>b = list(a)</code> to get an independent copy.
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout--info">
+          <div class="callout__icon">🔍</div>
+          <div>
+            <div class="callout__title">Integer interning</div>
+            <div class="callout__body">
+              CPython (the standard Python) pre-creates integer objects for small values
+              (typically -5 to 256). So <code>id(5) == id(5)</code> is always True,
+              and two variables both set to 5 will share the exact same object.
+              For large integers, each assignment creates a new object.
+              This is an optimization detail, not a language guarantee.
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout--success">
+          <div class="callout__icon">✅</div>
+          <div>
+            <div class="callout__title">The golden rule</div>
+            <div class="callout__body">
+              <strong>Immutable objects</strong> are safe to share — no one can change them through another reference.
+              <strong>Mutable objects</strong> need careful handling when passed around — anyone with a reference can change the object.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </article>
+
+    <!-- ── Session Footer ──────────────────────────────────── -->
+    <div class="session-footer">
+      <a href="../../index.html" class="btn btn--secondary">
+        ← Back to Course
+      </a>
+      <div style="text-align:center;font-size:var(--fs-xs);color:var(--clr-text-3)">
+        Session 01 of 05
+      </div>
+      <a href="../02-functions/" class="btn btn--primary" style="opacity:.5;pointer-events:none">
+        Session 02: Functions →
+      </a>
+    </div>
+
+  </main>
+</div>
+
+<!-- ── Scripts ─────────────────────────────────────────────── -->
+<script src="../../assets/js/core.js"></script>
+<script src="../../assets/js/syntax.js"></script>
+<script src="../../assets/js/memory-viz.js"></script>
+<script src="../../assets/js/animator.js"></script>
+<script src="session.js"></script>
+
+</body>
+</html>

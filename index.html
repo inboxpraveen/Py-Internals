@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Py Internals — Learn Python from the Inside Out</title>
+  <meta name="description" content="An open-source, interactive Python course. Understand variables, memory, types and more through beautiful visualizations." />
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="assets/css/base.css" />
+  <link rel="stylesheet" href="assets/css/layout.css" />
+  <link rel="stylesheet" href="assets/css/components.css" />
+  <link rel="stylesheet" href="assets/css/memory-viz.css" />
+  <link rel="stylesheet" href="assets/css/animations.css" />
+
+  <style>
+    /* ── Homepage-specific styles ── */
+    .home-hero {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: var(--sp-20) var(--sp-8) var(--sp-16);
+      text-align: center;
+    }
+
+    .home-hero__eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-2);
+      font-size: var(--fs-xs);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--clr-accent);
+      background: var(--clr-accent-lt);
+      padding: var(--sp-1) var(--sp-4);
+      border-radius: var(--radius-full);
+      margin-bottom: var(--sp-6);
+      border: 1px solid rgba(26,107,92,0.2);
+    }
+
+    .home-hero__title {
+      font-size: clamp(2.5rem, 5vw, 3.5rem);
+      font-weight: 700;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      margin-bottom: var(--sp-5);
+    }
+
+    .home-hero__title em {
+      font-style: italic;
+      color: var(--clr-accent);
+    }
+
+    .home-hero__lead {
+      font-size: var(--fs-lg);
+      color: var(--clr-text-2);
+      line-height: var(--lh-loose);
+      max-width: 580px;
+      margin: 0 auto var(--sp-8);
+    }
+
+    .home-hero__cta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--sp-3);
+      flex-wrap: wrap;
+    }
+
+    .feature-strip {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--sp-8);
+      padding: var(--sp-6) var(--sp-8);
+      border-top: 1px solid var(--clr-border);
+      border-bottom: 1px solid var(--clr-border);
+      background: var(--clr-surface);
+      flex-wrap: wrap;
+    }
+
+    .feature-strip__item {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      font-size: var(--fs-sm);
+      color: var(--clr-text-2);
+    }
+
+    .feature-strip__icon {
+      color: var(--clr-accent);
+      font-size: var(--fs-md);
+    }
+
+    .sessions-grid {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: var(--sp-12) var(--sp-8);
+    }
+
+    .sessions-grid__title {
+      font-size: var(--fs-2xl);
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      margin-bottom: var(--sp-2);
+    }
+
+    .sessions-grid__subtitle {
+      color: var(--clr-text-2);
+      font-size: var(--fs-md);
+      margin-bottom: var(--sp-8);
+    }
+
+    .session-card {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--sp-5);
+      padding: var(--sp-6);
+      background: var(--clr-surface);
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius-xl);
+      margin-bottom: var(--sp-4);
+      transition: all var(--dur-base) var(--ease-out);
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .session-card:hover {
+      border-color: var(--clr-accent);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .session-card.locked {
+      opacity: 0.55;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .session-card__num {
+      flex-shrink: 0;
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-lg);
+      background: var(--clr-accent-lt);
+      border: 1px solid rgba(26,107,92,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: var(--fs-md);
+      font-weight: 700;
+      color: var(--clr-accent);
+    }
+
+    .session-card.locked .session-card__num {
+      background: var(--clr-surface-2);
+      border-color: var(--clr-border);
+      color: var(--clr-text-3);
+    }
+
+    .session-card__body { flex: 1; }
+
+    .session-card__title {
+      font-family: var(--font-display);
+      font-size: var(--fs-lg);
+      font-weight: 600;
+      margin-bottom: var(--sp-1);
+    }
+
+    .session-card__desc {
+      font-size: var(--fs-sm);
+      color: var(--clr-text-2);
+      line-height: var(--lh-snug);
+    }
+
+    .session-card__tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sp-2);
+      margin-top: var(--sp-3);
+    }
+
+    .session-card__tag {
+      font-size: 11px;
+      font-weight: 500;
+      background: var(--clr-surface-2);
+      color: var(--clr-text-3);
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--clr-border);
+    }
+
+    .session-card__arrow {
+      flex-shrink: 0;
+      color: var(--clr-text-3);
+      margin-top: 4px;
+      transition: all var(--dur-fast) var(--ease-out);
+    }
+    .session-card:hover .session-card__arrow {
+      color: var(--clr-accent);
+      transform: translateX(3px);
+    }
+
+    .coming-soon-badge {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      background: var(--clr-surface-2);
+      color: var(--clr-text-3);
+      border: 1px solid var(--clr-border);
+      padding: 2px 7px;
+      border-radius: var(--radius-full);
+    }
+
+    .philosophy-section {
+      background: var(--clr-surface);
+      border-top: 1px solid var(--clr-border);
+      border-bottom: 1px solid var(--clr-border);
+      padding: var(--sp-12) var(--sp-8);
+    }
+
+    .philosophy-inner {
+      max-width: 820px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--sp-12);
+    }
+
+    .philosophy-inner h2 {
+      grid-column: 1 / -1;
+      font-size: var(--fs-2xl);
+      letter-spacing: -0.3px;
+    }
+
+    .philosophy-point { }
+
+    .philosophy-point__num {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xl);
+      font-weight: 700;
+      color: var(--clr-accent);
+      opacity: 0.4;
+      margin-bottom: var(--sp-2);
+    }
+
+    .philosophy-point__title {
+      font-family: var(--font-display);
+      font-size: var(--fs-md);
+      font-weight: 600;
+      margin-bottom: var(--sp-2);
+    }
+
+    .philosophy-point__text {
+      font-size: var(--fs-sm);
+      color: var(--clr-text-2);
+      line-height: var(--lh-loose);
+    }
+
+    .footer {
+      text-align: center;
+      padding: var(--sp-8);
+      font-size: var(--fs-sm);
+      color: var(--clr-text-3);
+      border-top: 1px solid var(--clr-border);
+    }
+
+    .footer a { color: var(--clr-accent); }
+
+    @media (max-width: 640px) {
+      .home-hero { padding: var(--sp-12) var(--sp-5) var(--sp-10); }
+      .sessions-grid { padding: var(--sp-8) var(--sp-5); }
+      .philosophy-inner { grid-template-columns: 1fr; gap: var(--sp-8); }
+      .philosophy-inner h2 { grid-column: 1; }
+      .feature-strip { gap: var(--sp-5); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Top Bar ─────────────────────────────────────────────── -->
+<header class="topbar">
+  <div class="topbar__logo">
+    <div class="topbar__logo-mark">Py</div>
+    <span class="topbar__brand">Py<span>Internals</span></span>
+  </div>
+  <div class="topbar__actions">
+    <a href="https://github.com/inboxpraveen/Py-Internals"
+       target="_blank"
+       class="btn btn--secondary btn--sm"
+       style="display:inline-flex;align-items:center;gap:6px;">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+      </svg>
+      GitHub
+    </a>
+  </div>
+</header>
+
+<!-- ── Main ────────────────────────────────────────────────── -->
+<main>
+
+  <!-- Hero -->
+  <section class="home-hero">
+    <div class="home-hero__eyebrow animate-fade-up">
+      Open Source · Free Forever · Interactive
+    </div>
+    <h1 class="home-hero__title animate-fade-up delay-1">
+      Learn Python the way<br>it <em>actually</em> works
+    </h1>
+    <p class="home-hero__lead animate-fade-up delay-2">
+      Not just syntax — <strong>memory, reasoning, and mental models.</strong>
+      Every concept visualized. Every question answered.
+      Python from first principles.
+    </p>
+    <div class="home-hero__cta animate-fade-up delay-3">
+      <a href="sessions/01-variables/index.html" class="btn btn--primary btn--lg">
+        Start Learning
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M6.5 3L11.5 8L6.5 13" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+      <a href="#sessions" class="btn btn--secondary btn--lg">View All Sessions</a>
+    </div>
+  </section>
+
+  <!-- Feature strip -->
+  <div class="feature-strip">
+    <div class="feature-strip__item">
+      <span class="feature-strip__icon">🧠</span>
+      Memory model visualized
+    </div>
+    <div class="feature-strip__item">
+      <span class="feature-strip__icon">▶</span>
+      Step-by-step animation
+    </div>
+    <div class="feature-strip__item">
+      <span class="feature-strip__icon">📱</span>
+      Works on any device
+    </div>
+    <div class="feature-strip__item">
+      <span class="feature-strip__icon">⚡</span>
+      No install needed
+    </div>
+    <div class="feature-strip__item">
+      <span class="feature-strip__icon">🔓</span>
+      Open source
+    </div>
+  </div>
+
+  <!-- Sessions -->
+  <section class="sessions-grid" id="sessions">
+    <h2 class="sessions-grid__title">Course Sessions</h2>
+    <p class="sessions-grid__subtitle">Each session builds on the last. Animations, quizzes, memory diagrams — all included.</p>
+
+    <!-- Session 01 -->
+    <a href="sessions/01-variables/" class="session-card animate-fade-up">
+      <div class="session-card__num">01</div>
+      <div class="session-card__body">
+        <div class="session-card__title">Variables & Mutability</div>
+        <div class="session-card__desc">
+          What is a variable really? What happens in memory when you write <code>x = 5</code>?
+          Why can you change a list but not a string? Understand Python's object model from the ground up.
+        </div>
+        <div class="session-card__tags">
+          <span class="session-card__tag">int</span>
+          <span class="session-card__tag">str</span>
+          <span class="session-card__tag">list</span>
+          <span class="session-card__tag">id()</span>
+          <span class="session-card__tag">memory model</span>
+          <span class="session-card__tag">reference counting</span>
+        </div>
+      </div>
+      <svg class="session-card__arrow" width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M7 10h6M10 7l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+
+    <!-- Future sessions -->
+    <div class="session-card locked">
+      <div class="session-card__num">02</div>
+      <div class="session-card__body">
+        <div class="session-card__title" style="display:flex;align-items:center;gap:8px;">
+          Functions & the Call Stack <span class="coming-soon-badge">soon</span>
+        </div>
+        <div class="session-card__desc">How functions create frames, pass arguments, and return values. Stack diagrams animated.</div>
+        <div class="session-card__tags">
+          <span class="session-card__tag">def</span>
+          <span class="session-card__tag">call stack</span>
+          <span class="session-card__tag">scope</span>
+          <span class="session-card__tag">LEGB</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="session-card locked">
+      <div class="session-card__num">03</div>
+      <div class="session-card__body">
+        <div class="session-card__title" style="display:flex;align-items:center;gap:8px;">
+          Lists, Dicts & References <span class="coming-soon-badge">soon</span>
+        </div>
+        <div class="session-card__desc">Shallow vs deep. Aliasing. Why modifying a list inside a function changes it outside. Visualized.</div>
+        <div class="session-card__tags">
+          <span class="session-card__tag">list</span>
+          <span class="session-card__tag">dict</span>
+          <span class="session-card__tag">shallow copy</span>
+          <span class="session-card__tag">aliasing</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="session-card locked">
+      <div class="session-card__num">04</div>
+      <div class="session-card__body">
+        <div class="session-card__title" style="display:flex;align-items:center;gap:8px;">
+          Classes & Objects <span class="coming-soon-badge">soon</span>
+        </div>
+        <div class="session-card__desc">What is <code>self</code>? How does Python find attributes? The MRO, <code>__init__</code>, and instance vs class vars.</div>
+        <div class="session-card__tags">
+          <span class="session-card__tag">class</span>
+          <span class="session-card__tag">self</span>
+          <span class="session-card__tag">__init__</span>
+          <span class="session-card__tag">MRO</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="session-card locked">
+      <div class="session-card__num">05</div>
+      <div class="session-card__body">
+        <div class="session-card__title" style="display:flex;align-items:center;gap:8px;">
+          Iterators & Generators <span class="coming-soon-badge">soon</span>
+        </div>
+        <div class="session-card__desc">How <code>for</code> loops really work. The iterator protocol. Lazy evaluation and yield.</div>
+        <div class="session-card__tags">
+          <span class="session-card__tag">iterator</span>
+          <span class="session-card__tag">generator</span>
+          <span class="session-card__tag">yield</span>
+          <span class="session-card__tag">lazy evaluation</span>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Philosophy -->
+  <section class="philosophy-section">
+    <div class="philosophy-inner">
+      <h2>Why another Python course?</h2>
+
+      <div class="philosophy-point animate-fade-up delay-1">
+        <div class="philosophy-point__num">01</div>
+        <div class="philosophy-point__title">Most courses teach syntax. This one teaches <em>understanding</em>.</div>
+        <div class="philosophy-point__text">
+          You can memorize <code>list.append()</code> in five minutes.
+          But do you know <em>why</em> lists are mutable and strings aren't?
+          What actually happens in RAM when you write <code>x = x + 1</code>?
+          That's what we care about.
+        </div>
+      </div>
+
+      <div class="philosophy-point animate-fade-up delay-2">
+        <div class="philosophy-point__num">02</div>
+        <div class="philosophy-point__title">Animations over slides.</div>
+        <div class="philosophy-point__text">
+          Every concept is animated. You watch the variable bind to an object.
+          You see the reference count tick up. You watch the garbage collector sweep.
+          You can pause, rewind, and go at your own speed.
+        </div>
+      </div>
+
+      <div class="philosophy-point animate-fade-up delay-3">
+        <div class="philosophy-point__num">03</div>
+        <div class="philosophy-point__title">Open source. Always free. No account needed.</div>
+        <div class="philosophy-point__text">
+          Hosted on GitHub Pages. Fork it, extend it, translate it.
+          The license lets you use the visuals and content freely
+          — just give credit.
+        </div>
+      </div>
+
+      <div class="philosophy-point animate-fade-up delay-4">
+        <div class="philosophy-point__num">04</div>
+        <div class="philosophy-point__title">Mobile-first, no install.</div>
+        <div class="philosophy-point__text">
+          Pure HTML, CSS, and JavaScript. No build tools, no Node, no backend.
+          Works offline after first load. Open on your phone on the bus.
+          Close. Come back. It remembers where you were.
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  Py Internals — Open Source Interactive Python Course<br>
+  Created with care. Licensed under
+  <a href="LICENSE">PI Community License</a>.
+  <a href="https://github.com/inboxpraveen/Py-Internals" target="_blank">Contribute on GitHub</a>.
+</footer>
+
+<script src="assets/js/core.js"></script>
+</body>
+</html>

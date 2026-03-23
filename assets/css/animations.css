@@ -1,0 +1,174 @@
+/* ============================================================
+   PY INTERNALS — ANIMATIONS CSS
+   Keyframes, transitions, entrance/exit utilities
+   ============================================================ */
+
+/* ── Page / Section Entrances ─────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Utility Classes ──────────────────────────────────────── */
+.animate-fade-up {
+  animation: fadeInUp var(--dur-anim) var(--ease-out) both;
+}
+
+.animate-fade-in {
+  animation: fadeIn var(--dur-slow) var(--ease-out) both;
+}
+
+.animate-scale-in {
+  animation: scaleIn var(--dur-slow) var(--ease-spring) both;
+}
+
+/* Stagger delays */
+.delay-1 { animation-delay: 80ms; }
+.delay-2 { animation-delay: 160ms; }
+.delay-3 { animation-delay: 240ms; }
+.delay-4 { animation-delay: 320ms; }
+.delay-5 { animation-delay: 400ms; }
+
+/* ── Continuous / Looping ─────────────────────────────────── */
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.5; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes bounce {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position: 200% 0; }
+}
+
+.animate-pulse   { animation: pulse 2s ease-in-out infinite; }
+.animate-spin    { animation: spin 1s linear infinite; }
+.animate-bounce  { animation: bounce 1s ease-in-out infinite; }
+
+/* ── Skeleton / Loading ───────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--clr-surface-2) 25%,
+    var(--clr-border)    50%,
+    var(--clr-surface-2) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Explanation Panel Transition ─────────────────────────── */
+.explanation-enter {
+  animation: fadeInUp 0.35s var(--ease-out) both;
+}
+
+.explanation-exit {
+  animation: fadeIn 0.2s var(--ease-in) reverse both;
+}
+
+/* ── Code Line Highlight Pulse ────────────────────────────── */
+@keyframes linePulse {
+  0%   { background: rgba(26,107,92,0.35); }
+  100% { background: rgba(26,107,92,0.15); }
+}
+
+.code-line.highlighting {
+  animation: linePulse 0.4s var(--ease-out) forwards;
+}
+
+/* ── Reference Arrow Draw ─────────────────────────────────── */
+@keyframes arrowDraw {
+  from { stroke-dashoffset: 100; opacity: 0; }
+  to   { stroke-dashoffset: 0;   opacity: 1; }
+}
+
+.arrow-draw {
+  stroke-dasharray: 100;
+  animation: arrowDraw 0.5s var(--ease-out) forwards;
+}
+
+/* ── Memory Object Appear ─────────────────────────────────── */
+@keyframes memObjIn {
+  0%   { opacity: 0; transform: scale(0.88) translateY(8px); }
+  60%  { transform: scale(1.02) translateY(-1px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes memObjOut {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.88); max-height: 0; margin: 0; padding: 0; }
+}
+
+.mem-appear { animation: memObjIn 0.45s var(--ease-spring) forwards; }
+.mem-disappear { animation: memObjOut 0.3s var(--ease-in) forwards; }
+
+/* ── Notification / Toast ─────────────────────────────────── */
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.toast {
+  animation: toastIn 0.3s var(--ease-spring) forwards;
+}
+
+/* ── Number Counting ──────────────────────────────────────── */
+@keyframes countUp {
+  from { transform: translateY(6px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+.count-change {
+  animation: countUp 0.25s var(--ease-out);
+}
+
+/* ── Focus ring ───────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--clr-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Reduced Motion ───────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

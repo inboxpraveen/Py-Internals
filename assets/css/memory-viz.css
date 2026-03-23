@@ -1,0 +1,371 @@
+/* ============================================================
+   PY INTERNALS — MEMORY VISUALIZER CSS
+   Stack frame, heap objects, reference arrows, animations
+   ============================================================ */
+
+/* ── Memory Layout ────────────────────────────────────────── */
+.mem-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 360px;
+  overflow: hidden;
+  font-family: var(--font-mono);
+}
+
+/* ── Sections ─────────────────────────────────────────────── */
+.mem-section-label {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--clr-text-3);
+  margin-bottom: var(--sp-3);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.mem-section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--clr-border);
+}
+
+/* ── Stack Frame ──────────────────────────────────────────── */
+.mem-stack {
+  margin-bottom: var(--sp-4);
+}
+
+.mem-frame {
+  background: var(--clr-surface);
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: var(--sp-2);
+}
+
+.mem-frame__header {
+  background: var(--clr-surface-2);
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--clr-text-2);
+  border-bottom: 1px solid var(--clr-border);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.mem-frame__scope-badge {
+  font-size: 10px;
+  background: #EBF4FC;
+  color: var(--clr-type-int);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* ── Variable Row ─────────────────────────────────────────── */
+.mem-var {
+  display: flex;
+  align-items: center;
+  padding: var(--sp-2) var(--sp-3);
+  gap: var(--sp-3);
+  border-bottom: 1px solid var(--clr-border);
+  transition: background var(--dur-fast) var(--ease-out);
+  position: relative;
+}
+
+.mem-var:last-child { border-bottom: none; }
+
+.mem-var.highlight {
+  background: var(--clr-accent-lt);
+  animation: varFlash 0.5s ease-out;
+}
+
+.mem-var.new-var {
+  animation: varSlideIn 0.4s var(--ease-spring) forwards;
+}
+
+.mem-var.deleted {
+  animation: varFadeOut 0.4s var(--ease-in) forwards;
+}
+
+.mem-var.rebound {
+  animation: varRebind 0.5s var(--ease-out) forwards;
+}
+
+@keyframes varFlash {
+  0%   { background: rgba(26,107,92,0.25); }
+  100% { background: var(--clr-accent-lt); }
+}
+
+@keyframes varSlideIn {
+  0%   { opacity: 0; transform: translateX(-8px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes varFadeOut {
+  0%   { opacity: 1; max-height: 48px; }
+  100% { opacity: 0; max-height: 0; padding: 0; }
+}
+
+@keyframes varRebind {
+  0%   { background: transparent; }
+  40%  { background: rgba(184,92,26,0.15); }
+  100% { background: transparent; }
+}
+
+.mem-var__name {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--clr-mem-stack);
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.mem-var__arrow {
+  color: var(--clr-text-3);
+  font-size: var(--fs-xs);
+  flex-shrink: 0;
+}
+
+.mem-var__ref {
+  font-size: var(--fs-xs);
+  color: var(--clr-mem-ref);
+  font-weight: 600;
+  padding: 2px 6px;
+  background: rgba(184,92,26,0.08);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(184,92,26,0.2);
+  cursor: pointer;
+  transition: all var(--dur-fast);
+}
+.mem-var__ref:hover { background: rgba(184,92,26,0.15); }
+
+.mem-var__inline-val {
+  font-size: var(--fs-sm);
+  color: var(--clr-text);
+  flex: 1;
+}
+
+/* ── Heap ─────────────────────────────────────────────────── */
+.mem-heap {
+  margin-top: var(--sp-2);
+}
+
+/* ── Heap Object ──────────────────────────────────────────── */
+.mem-obj {
+  background: var(--clr-surface);
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--sp-3);
+  overflow: hidden;
+  transition: all var(--dur-base) var(--ease-out);
+  position: relative;
+}
+
+.mem-obj.new-obj {
+  animation: objAppear 0.5s var(--ease-spring) forwards;
+}
+
+.mem-obj.gc-pending {
+  border-color: #F0C5C5;
+  background: #FFF0F0;
+  animation: gcPulse 1s ease-in-out infinite;
+}
+
+.mem-obj.mutated {
+  animation: objMutate 0.5s var(--ease-out);
+}
+
+@keyframes objAppear {
+  0%   { opacity: 0; transform: scale(0.92) translateY(6px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes gcPulse {
+  0%,100% { border-color: #F0C5C5; }
+  50%     { border-color: #E06060; }
+}
+
+@keyframes objMutate {
+  0%   { box-shadow: none; }
+  40%  { box-shadow: 0 0 0 3px rgba(26,107,92,0.3); }
+  100% { box-shadow: none; }
+}
+
+.mem-obj__header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--clr-surface-2);
+  border-bottom: 1px solid var(--clr-border);
+}
+
+.mem-obj__id {
+  font-size: 10px;
+  color: var(--clr-text-3);
+  font-weight: 600;
+  margin-left: auto;
+}
+
+.mem-obj__refcount {
+  font-size: 10px;
+  background: var(--clr-surface-2);
+  border: 1px solid var(--clr-border);
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+  color: var(--clr-text-3);
+}
+
+.mem-obj__refcount.decreasing {
+  color: #8A1A1A;
+  background: #FCE8E8;
+  border-color: #F0C5C5;
+}
+
+.mem-obj__value {
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--clr-text);
+}
+
+/* Mutable indicator */
+.mem-obj.mutable {
+  border-left: 3px solid var(--clr-accent);
+}
+
+.mem-obj.immutable {
+  border-left: 3px solid var(--clr-text-3);
+}
+
+.mutability-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mutability-badge--mutable {
+  background: var(--clr-accent-lt);
+  color: var(--clr-accent);
+}
+
+.mutability-badge--immutable {
+  background: var(--clr-surface-2);
+  color: var(--clr-text-3);
+  border: 1px solid var(--clr-border);
+}
+
+/* ── SVG Reference Arrows ─────────────────────────────────── */
+.mem-arrows-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.arrow-ref {
+  stroke: var(--clr-mem-ref);
+  stroke-width: 1.5;
+  fill: none;
+  marker-end: url(#arrowhead);
+  stroke-dasharray: 5;
+  animation: dashAnimate 20s linear infinite;
+}
+
+.arrow-ref.solid {
+  stroke-dasharray: none;
+  animation: none;
+}
+
+@keyframes dashAnimate {
+  to { stroke-dashoffset: -100; }
+}
+
+/* ── Two-panel memory layout ──────────────────────────────── */
+.mem-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+  align-items: start;
+}
+
+@media (max-width: 480px) {
+  .mem-two-col { grid-template-columns: 1fr; }
+}
+
+/* ── Interned Object Badge ────────────────────────────────── */
+.interned-badge {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: #FFF0E6;
+  color: var(--clr-accent-2);
+  padding: 2px 5px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #F5D5B8;
+}
+
+/* ── Identity Indicator ───────────────────────────────────── */
+.id-match-highlight {
+  animation: idMatch 1s ease-out 2;
+}
+@keyframes idMatch {
+  0%,100% { box-shadow: none; }
+  50%     { box-shadow: 0 0 0 3px var(--clr-accent); }
+}
+
+/* ── Object collections (list/tuple/set display) ──────────── */
+.mem-obj__items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.mem-obj__item-cell {
+  background: var(--clr-surface-2);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.mem-obj__item-cell .item-index {
+  color: var(--clr-text-3);
+  font-size: 9px;
+}
+
+/* ── Dict display ─────────────────────────────────────────── */
+.mem-obj__dict-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-3);
+  border-bottom: 1px solid var(--clr-border);
+  font-size: var(--fs-xs);
+}
+
+.mem-obj__dict-row:last-child { border-bottom: none; }
+
+.dict-key   { color: var(--clr-type-str); font-weight: 600; }
+.dict-colon { color: var(--clr-text-3); }
+.dict-val   { color: var(--clr-type-int); }
