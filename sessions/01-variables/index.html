@@ -60,20 +60,129 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
+    /* ── Learning overview ────────────────────────────────── */
+    .learning-overview {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+      gap: var(--sp-5);
+      padding: var(--sp-6) var(--sp-12);
+      background: var(--clr-surface);
+      border-bottom: 1px solid var(--clr-border);
+    }
+
+    .learning-card {
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius-xl);
+      padding: var(--sp-5);
+      background: linear-gradient(180deg, var(--clr-surface), var(--clr-bg));
+    }
+
+    .learning-card__label,
+    .stage-intro__label {
+      font-size: var(--fs-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--clr-text-3);
+      margin-bottom: var(--sp-3);
+    }
+
+    .learning-card__title {
+      font-family: var(--font-display);
+      font-size: var(--fs-xl);
+      line-height: var(--lh-tight);
+      margin-bottom: var(--sp-3);
+    }
+
+    .learning-card__body {
+      color: var(--clr-text-2);
+      font-size: var(--fs-sm);
+      line-height: var(--lh-loose);
+      margin-bottom: var(--sp-4);
+    }
+
+    .learning-outcomes {
+      display: grid;
+      gap: var(--sp-3);
+    }
+
+    .learning-outcome {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: var(--sp-3);
+      align-items: start;
+      color: var(--clr-text-2);
+      font-size: var(--fs-sm);
+      line-height: var(--lh-snug);
+    }
+
+    .learning-outcome__num {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-full);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--clr-accent-lt);
+      color: var(--clr-accent);
+      border: 1px solid rgba(26,107,92,0.18);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .concept-chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sp-2);
+    }
+
+    .stage-intro {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: var(--sp-5);
+      align-items: center;
+      padding: var(--sp-6) var(--sp-12);
+      background: var(--clr-bg);
+      border-bottom: 1px solid var(--clr-border);
+    }
+
+    .stage-intro h2 {
+      font-size: var(--fs-2xl);
+      margin-bottom: var(--sp-2);
+    }
+
+    .stage-intro p {
+      color: var(--clr-text-2);
+      line-height: var(--lh-loose);
+      max-width: 720px;
+    }
+
+    .stage-intro__hint {
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius-lg);
+      padding: var(--sp-4);
+      background: var(--clr-surface);
+      color: var(--clr-text-3);
+      font-size: var(--fs-xs);
+      line-height: var(--lh-loose);
+      max-width: 300px;
+    }
+
     /* ── How-to guide strip ───────────────────────────────── */
     .demo-guide {
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       gap: var(--sp-4);
-      padding: var(--sp-3) var(--sp-5);
+      padding: var(--sp-3) var(--sp-12);
       background: var(--clr-surface);
       border-bottom: 1px solid var(--clr-border);
       flex-wrap: wrap;
     }
 
     .demo-guide__step {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: var(--sp-2);
       font-size: var(--fs-xs);
@@ -107,7 +216,7 @@
       align-items: center;
       gap: var(--sp-2);
       flex-wrap: wrap;
-      padding: var(--sp-4) var(--sp-5);
+      padding: var(--sp-4) var(--sp-12);
       background: var(--clr-surface);
       border-bottom: 1px solid var(--clr-border);
       margin-bottom: 0;
@@ -214,16 +323,17 @@
     /* ── Demo selector ────────────────────────────────────── */
     .demo-selector {
       display: flex;
+      align-items: center;
       gap: var(--sp-2);
       flex-wrap: wrap;
-      margin-bottom: var(--sp-4);
-      padding: var(--sp-4) var(--sp-5);
+      margin-bottom: 0;
+      padding: var(--sp-4) var(--sp-12);
       background: var(--clr-surface);
       border-bottom: 1px solid var(--clr-border);
     }
 
     .demo-pill {
-      padding: var(--sp-1) var(--sp-4);
+      padding: var(--sp-2) var(--sp-4);
       border-radius: var(--radius-full);
       font-size: var(--fs-xs);
       font-weight: 600;
@@ -240,6 +350,39 @@
       background: var(--clr-accent);
       border-color: var(--clr-accent);
       color: white;
+    }
+
+    .narrative-lede {
+      font-size: var(--fs-lg);
+      line-height: var(--lh-loose);
+      color: var(--clr-text-2);
+      margin-bottom: var(--sp-8);
+    }
+
+    .mental-model {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--sp-4);
+      margin: var(--sp-6) 0 var(--sp-8);
+    }
+
+    .mental-model__card {
+      background: var(--clr-surface);
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius-xl);
+      padding: var(--sp-5);
+    }
+
+    .mental-model__card h3 {
+      margin: 0 0 var(--sp-2);
+      font-size: var(--fs-md);
+      color: var(--clr-text);
+    }
+
+    .mental-model__card p {
+      font-size: var(--fs-sm);
+      line-height: var(--lh-loose);
+      margin: 0;
     }
 
     /* ── Insight banner ───────────────────────────────────── */
@@ -267,6 +410,23 @@
       color: #4338CA;
       line-height: var(--lh-loose);
       margin: 0;
+    }
+
+    .narrative .callout__icon {
+      min-width: 40px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-full);
+      background: rgba(26,107,92,0.08);
+      color: var(--clr-accent);
+      border: 1px solid rgba(26,107,92,0.16);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-top: 1px;
     }
 
     /* ── Comparison table ─────────────────────────────────── */
@@ -333,11 +493,81 @@
       line-height: var(--lh-snug);
     }
 
+    .rule-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--sp-4);
+      margin: var(--sp-5) 0 var(--sp-6);
+    }
+
+    .rule-card {
+      background: var(--clr-surface);
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius-xl);
+      padding: var(--sp-5);
+      border-top: 3px solid var(--clr-accent);
+    }
+
+    .rule-card--rebind { border-top-color: var(--clr-text-3); }
+    .rule-card--mutate { border-top-color: var(--clr-accent); }
+
+    .rule-card__label {
+      font-size: var(--fs-xs);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--clr-text-3);
+      margin-bottom: var(--sp-2);
+    }
+
+    .rule-card p {
+      font-size: var(--fs-sm);
+      margin-bottom: var(--sp-3);
+    }
+
+    .rule-card code {
+      display: inline-block;
+      margin-top: var(--sp-1);
+    }
+
     /* Responsive stage */
+    @media (max-width: 980px) {
+      .learning-overview,
+      .stage-intro,
+      .mental-model,
+      .rule-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stage-intro__hint {
+        max-width: none;
+      }
+    }
+
     @media (max-width: 860px) {
       .stage { grid-template-columns: 1fr; }
       .stage__code-panel { min-height: 320px; }
       .stage__memory-panel { min-height: 320px; }
+    }
+
+    @media (max-width: 768px) {
+      .learning-overview,
+      .stage-intro,
+      .demo-guide,
+      .demo-selector {
+        padding-left: var(--sp-5);
+        padding-right: var(--sp-5);
+      }
+
+      .demo-group {
+        width: 100%;
+        flex-wrap: wrap;
+      }
+
+      .demo-group-divider,
+      .demo-guide__arrow {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -384,13 +614,7 @@
         <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M2 9h14M9 2v14"/>
         </svg>
-        Variable Assignment
-      </a>
-      <a href="#demo-rebind" class="sidebar__item" onclick="scrollTo('#demo-rebind')">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M4 9l3 3 7-7" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Rebinding
+        Interactive Lab
       </a>
       <a href="#demo-mutability" class="sidebar__item" onclick="scrollTo('#demo-mutability')">
         <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -404,6 +628,12 @@
           <circle cx="9" cy="9" r="5"/><path d="M9 6v3l2 2"/>
         </svg>
         Ref Counting
+      </a>
+      <a href="#demo-rebind" class="sidebar__item" onclick="scrollTo('#demo-rebind')">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M4 9l3 3 7-7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Rebinding
       </a>
       <a href="#types" class="sidebar__item" onclick="scrollTo('#types')">
         <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -466,54 +696,87 @@
     <!-- ── Progress bar ────────────────────────────────────── -->
     <div class="progress-bar"><div class="progress-bar__fill" id="readProgress" style="width:0%"></div></div>
 
-    <!-- ── Learning path strip ─────────────────────────────── -->
-    <div style="background:var(--clr-surface);border-bottom:1px solid var(--clr-border);padding:var(--sp-5) var(--sp-12);display:flex;align-items:flex-start;gap:var(--sp-8);flex-wrap:wrap;">
-      <div style="flex:1;min-width:200px">
-        <div style="font-size:var(--fs-xs);font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--clr-text-3);margin-bottom:var(--sp-2)">What you'll understand</div>
-        <div style="display:flex;flex-wrap:wrap;gap:var(--sp-2)">
+    <!-- ── Learning overview ───────────────────────────────── -->
+    <section class="learning-overview" aria-labelledby="learning-overview-title">
+      <div class="learning-card">
+        <div class="learning-card__label">Learning goal</div>
+        <h2 class="learning-card__title" id="learning-overview-title">
+          Build the mental model before memorizing rules.
+        </h2>
+        <p class="learning-card__body">
+          This session has one central idea: Python variables are names pointing at objects.
+          Once that is clear, identity, mutation, aliasing, and garbage collection all become
+          much easier to reason about.
+        </p>
+        <div class="concept-chip-row" aria-label="Concepts covered">
           <span class="type-chip type-chip--int" style="font-family:var(--font-body);text-transform:none">Names vs objects</span>
-          <span class="type-chip type-chip--str" style="font-family:var(--font-body);text-transform:none">id() &amp; identity</span>
-          <span class="type-chip type-chip--list" style="font-family:var(--font-body);text-transform:none">Mutation</span>
+          <span class="type-chip type-chip--str" style="font-family:var(--font-body);text-transform:none">Identity</span>
           <span class="type-chip type-chip--bool" style="font-family:var(--font-body);text-transform:none">Rebinding</span>
-          <span class="type-chip type-chip--none" style="font-family:var(--font-body);text-transform:none">Reference counting</span>
+          <span class="type-chip type-chip--list" style="font-family:var(--font-body);text-transform:none">Mutation</span>
           <span class="type-chip type-chip--dict" style="font-family:var(--font-body);text-transform:none">Aliasing</span>
+          <span class="type-chip type-chip--none" style="font-family:var(--font-body);text-transform:none">Refcount</span>
         </div>
       </div>
-      <div style="flex:1;min-width:200px">
-        <div style="font-size:var(--fs-xs);font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--clr-text-3);margin-bottom:var(--sp-2)">Session flow</div>
-        <ol style="margin:0;padding-left:1.2em;font-size:var(--fs-xs);color:var(--clr-text-3);line-height:1.9">
-          <li>Step through each interactive demo below</li>
-          <li>Read the explanation strip under the stage</li>
-          <li>Scroll down for the full written narrative</li>
-        </ol>
+
+      <div class="learning-card">
+        <div class="learning-card__label">Recommended path</div>
+        <div class="learning-outcomes">
+          <div class="learning-outcome">
+            <span class="learning-outcome__num">1</span>
+            <span><strong>Watch the stage.</strong> Step through each line and notice which object appears or changes.</span>
+          </div>
+          <div class="learning-outcome">
+            <span class="learning-outcome__num">2</span>
+            <span><strong>Name the operation.</strong> Ask: did Python rebind a name, mutate an object, or add another reference?</span>
+          </div>
+          <div class="learning-outcome">
+            <span class="learning-outcome__num">3</span>
+            <span><strong>Read the guide.</strong> Use the narrative below to connect the animation to everyday Python code.</span>
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
 
     <!-- ╔══════════════════════════════════════════════════════╗
          ║  DEMO 1: Basic Variable Assignment                   ║
          ╚══════════════════════════════════════════════════════╝ -->
     <div id="demo-basic">
 
+      <section class="stage-intro" aria-labelledby="stage-title">
+        <div>
+          <div class="stage-intro__label">Interactive lab</div>
+          <h2 id="stage-title">Follow one idea at a time</h2>
+          <p>
+            Choose a demo, then move line by line. The left panel shows the Python code.
+            The right panel shows the namespace and heap objects Python is managing behind the scenes.
+          </p>
+        </div>
+        <div class="stage-intro__hint">
+          Tip: if a concept feels unclear, pause on that step and compare the highlighted code line
+          with the memory object highlighted on the right.
+        </div>
+      </section>
+
       <!-- How-to guide strip -->
       <div class="demo-guide">
         <div class="demo-guide__step">
           <span class="demo-guide__badge">1</span>
-          Pick a demo below
+          Choose a demo
         </div>
         <span class="demo-guide__arrow">›</span>
         <div class="demo-guide__step">
           <span class="demo-guide__badge">2</span>
-          Press <strong style="color:var(--clr-text-2);margin:0 3px">▶ Play</strong> or tap <strong style="color:var(--clr-text-2);margin:0 3px">Next →</strong> to step through
+          Press <strong style="color:var(--clr-text-2);margin:0 3px">Play</strong> or <strong style="color:var(--clr-text-2);margin:0 3px">Next</strong>
         </div>
         <span class="demo-guide__arrow">›</span>
         <div class="demo-guide__step">
           <span class="demo-guide__badge">3</span>
-          Watch the <strong style="color:var(--clr-text-2);margin:0 3px">Memory panel</strong> update in real time
+          Watch memory update
         </div>
         <span class="demo-guide__arrow">›</span>
         <div class="demo-guide__step">
           <span class="demo-guide__badge">4</span>
-          Read the explanation below, then scroll down for concepts
+          Read the explanation below
         </div>
       </div>
 
@@ -612,7 +875,7 @@
           <h3 id="stepTitle" class="explanation-text">Initial state — empty namespace</h3>
           <p  id="stepDesc"  class="explanation-text">
             Before any code runs, the global namespace is empty — no names, no objects.
-            Press <strong>▶ Play</strong> to autoplay, or use <strong>Next →</strong> to step through manually.
+            Press <strong>Play</strong> to autoplay, or use <strong>Next</strong> to step through manually.
             Watch the <strong>Memory panel</strong> on the right as objects appear on the heap.
           </p>
         </div>
@@ -622,58 +885,54 @@
     <!-- ── Narrative: Concepts ──────────────────────────────── -->
     <article class="narrative" id="narrative">
 
-      <!-- Mutable vs Immutable Quick Reference -->
-      <div id="demo-mutability" class="animate-fade-up">
-        <div class="callout callout--insight">
-          <div class="callout__icon">🔑</div>
-          <div>
-            <div class="callout__title">The most important thing to understand first</div>
-            <div class="callout__body">
-              Python objects come in two flavours: <strong>immutable</strong> (cannot be changed after creation)
-              and <strong>mutable</strong> (can be changed in-place).
-              Demos <strong>1 &amp; 2</strong> above demonstrate immutable types (int, str, float) —
-              every "change" is actually a <em>rebinding</em> to a new object.
-              Demos <strong>3 &amp; 4</strong> demonstrate mutable types (list) —
-              where you can change the object's contents without creating a new one.
-              This distinction is the root cause of most Python surprises.
-            </div>
-          </div>
+      <h2>What is a variable in Python?</h2>
+
+      <p class="narrative-lede">
+        The easiest way to understand Python variables is to separate three things:
+        the <strong>name</strong> in a namespace, the <strong>object</strong> on the heap,
+        and the <strong>reference</strong> connecting them.
+      </p>
+
+      <div class="mental-model">
+        <div class="mental-model__card">
+          <h3>1. Name</h3>
+          <p>
+            A variable name such as <code>x</code> lives in a namespace. It is a label,
+            not a storage box.
+          </p>
+        </div>
+        <div class="mental-model__card">
+          <h3>2. Object</h3>
+          <p>
+            Values such as <code>42</code>, <code>"hello"</code>, and <code>[1, 2, 3]</code>
+            are objects stored on the heap.
+          </p>
+        </div>
+        <div class="mental-model__card">
+          <h3>3. Reference</h3>
+          <p>
+            Assignment connects the name to the object. More than one name can reference
+            the same object.
+          </p>
         </div>
       </div>
 
-      <h2>What is a variable in Python?</h2>
-
       <p>
-        In many languages, a variable is a <strong>named box in memory</strong>.
-        You declare <code>int x = 5</code> and a piece of RAM labeled "x" holds the number 5.
-        Change <code>x</code>, and the bytes inside that box change.
+        In many languages, a variable is often explained as a named box in memory.
+        Python's model is different. When you write <code>x = 42</code>, Python creates
+        or finds an integer object, then binds the name <code>x</code> to that object.
+        The name does not contain the number; it points at the object that represents it.
       </p>
 
-      <p>
-        Python is different. <strong>Python variables are names — labels that point to objects.</strong>
-        When you write <code>x = 42</code>, Python:
-      </p>
-
-      <ol style="list-style:decimal;padding-left:1.5em;color:var(--clr-text-2);font-size:var(--fs-md);line-height:var(--lh-loose);margin-bottom:var(--sp-5)">
-        <li>Creates an integer object <code>42</code> somewhere in memory (the heap)</li>
-        <li>Binds the name <code>x</code> in the current namespace to that object</li>
-      </ol>
-
-      <p>
-        The variable <code>x</code> doesn't "contain" 42.
-        It <strong>references</strong> the object that contains 42.
-        This distinction matters more than you'd think.
-      </p>
-
-      <div class="insight-banner">
-        <div class="insight-banner__icon">💡</div>
+      <div class="callout callout--info">
+        <div class="callout__icon">Model</div>
         <div>
-          <h4>Python's model: names and objects</h4>
-          <p>
+          <div class="callout__title">Assignment binds a name</div>
+          <div class="callout__body">
             In Python, <strong>everything is an object</strong>. Numbers, strings, functions, classes — all objects.
-            Variables are just names bound to objects.
-            Assignment (<code>=</code>) always binds a name to an object; it never copies the object itself.
-          </p>
+            Assignment with <code>=</code> binds a name to an object. It does not copy the object unless
+            you explicitly ask Python to make a copy.
+          </div>
         </div>
       </div>
 
@@ -705,7 +964,7 @@
       </div>
 
       <div class="callout callout--info">
-        <div class="callout__icon">🔎</div>
+        <div class="callout__icon">Tip</div>
         <div>
           <div class="callout__title"><code>is</code> vs <code>==</code></div>
           <div class="callout__body">
@@ -713,6 +972,48 @@
             <code>is</code> checks <strong>identity</strong> — are they literally the same object in memory?<br>
             Use <code>is None</code>, <code>is True</code>, <code>is False</code> for singletons.
             For everything else, prefer <code>==</code>.
+          </div>
+        </div>
+      </div>
+
+      <!-- Mutable vs Immutable Quick Reference -->
+      <div id="demo-mutability" class="animate-fade-up">
+        <div class="section-divider"><div class="section-divider__label">Mutable or Immutable</div></div>
+        <h2>Can the object itself change?</h2>
+
+        <p>
+          Once a name points to an object, the next question is whether that object can change in-place.
+          This is the difference between immutable and mutable types.
+        </p>
+
+        <div class="rule-grid">
+          <div class="rule-card rule-card--rebind">
+            <div class="rule-card__label">Immutable</div>
+            <p>
+              The object's value cannot change. A "change" creates or finds another object and rebinds
+              the name to it.
+            </p>
+            <code>int</code> <code>float</code> <code>str</code> <code>tuple</code>
+          </div>
+          <div class="rule-card rule-card--mutate">
+            <div class="rule-card__label">Mutable</div>
+            <p>
+              The object's contents can change while its identity stays the same. All aliases see the
+              updated contents.
+            </p>
+            <code>list</code> <code>dict</code> <code>set</code>
+          </div>
+        </div>
+
+        <div class="callout callout--insight">
+          <div class="callout__icon">Key</div>
+          <div>
+            <div class="callout__title">Most surprises come from sharing mutable objects</div>
+            <div class="callout__body">
+              <code>a = [1, 2, 3]</code> followed by <code>b = a</code> does not copy the list.
+              Both names point to one object. If <code>b.append(4)</code> runs, <code>a</code>
+              sees the new item too.
+            </div>
           </div>
         </div>
       </div>
@@ -776,7 +1077,7 @@
         </div>
 
         <div class="callout callout--warn">
-          <div class="callout__icon">⚠️</div>
+          <div class="callout__icon">Warn</div>
           <div>
             <div class="callout__title">Reference cycles</div>
             <div class="callout__body">
@@ -800,15 +1101,19 @@
           is the single most useful mental model for reasoning about Python code.
         </p>
 
-        <div class="insight-banner">
-          <div class="insight-banner__icon">⚡</div>
-          <div>
-            <h4>The two-sentence summary</h4>
+        <div class="rule-grid">
+          <div class="rule-card rule-card--rebind">
+            <div class="rule-card__label">Rebinding</div>
             <p>
-              <strong>Rebinding</strong> (<code>x = new_value</code>) makes the name point to a different object.
-              The old object is unaffected — it just loses one reference.<br>
-              <strong>Mutation</strong> (<code>x.append()</code>, <code>x[0] = ...</code>) changes the contents
-              of the <em>existing</em> object. All names referencing it see the change.
+              <code>x = new_value</code> makes the name point to a different object.
+              The old object is unchanged; it simply loses one reference.
+            </p>
+          </div>
+          <div class="rule-card rule-card--mutate">
+            <div class="rule-card__label">Mutation</div>
+            <p>
+              <code>x.append()</code> or <code>x[0] = ...</code> changes the existing object.
+              Every name pointing at that object observes the change.
             </p>
           </div>
         </div>
@@ -859,37 +1164,37 @@
               <tr>
                 <td><strong>Rebind</strong></td>
                 <td><code>x = 99</code></td>
-                <td>✅ Yes</td>
-                <td>✅ Yes</td>
-                <td>❌ No</td>
+                <td>Yes</td>
+                <td>Yes</td>
+                <td>No</td>
               </tr>
               <tr>
                 <td><strong>Augmented rebind</strong></td>
                 <td><code>x += 1</code> (int)</td>
-                <td>✅ Yes</td>
-                <td>✅ Yes</td>
-                <td>❌ No</td>
+                <td>Yes</td>
+                <td>Yes</td>
+                <td>No</td>
               </tr>
               <tr>
                 <td><strong>Mutate (append)</strong></td>
                 <td><code>lst.append(x)</code></td>
-                <td>❌ No</td>
-                <td>❌ No</td>
-                <td>✅ Yes</td>
+                <td>No</td>
+                <td>No</td>
+                <td>Yes</td>
               </tr>
               <tr>
                 <td><strong>Mutate (index)</strong></td>
                 <td><code>lst[0] = x</code></td>
-                <td>❌ No</td>
-                <td>❌ No</td>
-                <td>✅ Yes</td>
+                <td>No</td>
+                <td>No</td>
+                <td>Yes</td>
               </tr>
               <tr>
                 <td><strong>Augmented rebind</strong></td>
                 <td><code>lst += [x]</code> (list)</td>
-                <td>❌ No*</td>
-                <td>❌ No*</td>
-                <td>✅ Yes*</td>
+                <td>No*</td>
+                <td>No*</td>
+                <td>Yes*</td>
               </tr>
             </tbody>
           </table>
@@ -1035,55 +1340,55 @@
               <tr>
                 <td><span class="type-chip type-chip--int">int</span></td>
                 <td><code>42</code></td>
-                <td>❌ No</td>
+                <td>No</td>
                 <td><code>x += 1</code> rebinds <code>x</code> to a new object</td>
               </tr>
               <tr>
                 <td><span class="type-chip type-chip--float">float</span></td>
                 <td><code>3.14</code></td>
-                <td>❌ No</td>
+                <td>No</td>
                 <td>Any arithmetic produces a new float</td>
               </tr>
               <tr>
                 <td><span class="type-chip type-chip--str">str</span></td>
                 <td><code>"hello"</code></td>
-                <td>❌ No</td>
+                <td>No</td>
                 <td>String methods return new strings; you can't change characters in-place</td>
               </tr>
               <tr>
                 <td><span class="type-chip type-chip--bool">bool</span></td>
                 <td><code>True</code></td>
-                <td>❌ No</td>
+                <td>No</td>
                 <td>Only two boolean objects exist; they're singletons</td>
               </tr>
               <tr>
                 <td><span class="type-chip type-chip--none">NoneType</span></td>
                 <td><code>None</code></td>
-                <td>❌ No</td>
+                <td>No</td>
                 <td>One None object exists; always use <code>is None</code> to check</td>
               </tr>
               <tr>
                 <td><span class="type-chip type-chip--tuple">tuple</span></td>
                 <td><code>(1, 2)</code></td>
-                <td>❌ No</td>
+                <td>No</td>
                 <td>Can't add/remove/change; safe to use as dict keys</td>
               </tr>
               <tr>
                 <td><span class="type-chip type-chip--list">list</span></td>
                 <td><code>[1, 2]</code></td>
-                <td>✅ Yes</td>
+                <td>Yes</td>
                 <td>Functions can modify the list you passed — be careful with aliases!</td>
               </tr>
               <tr>
                 <td><span class="type-chip type-chip--dict">dict</span></td>
                 <td><code>{"k": v}</code></td>
-                <td>✅ Yes</td>
+                <td>Yes</td>
                 <td>Passed by reference; mutations inside functions persist</td>
               </tr>
               <tr>
                 <td><span class="type-chip type-chip--set">set</span></td>
                 <td><code>{1, 2}</code></td>
-                <td>✅ Yes</td>
+                <td>Yes</td>
                 <td>Can grow/shrink; elements must be immutable/hashable</td>
               </tr>
             </tbody>
@@ -1092,7 +1397,7 @@
 
         <!-- Why mutability matters callout -->
         <div class="callout callout--warn">
-          <div class="callout__icon">⚠️</div>
+          <div class="callout__icon">Warn</div>
           <div>
             <div class="callout__title">The aliasing trap</div>
             <div class="callout__body">
@@ -1105,7 +1410,7 @@
         </div>
 
         <div class="callout callout--info">
-          <div class="callout__icon">🔍</div>
+          <div class="callout__icon">Note</div>
           <div>
             <div class="callout__title">Integer interning</div>
             <div class="callout__body">
@@ -1119,7 +1424,7 @@
         </div>
 
         <div class="callout callout--success">
-          <div class="callout__icon">✅</div>
+          <div class="callout__icon">Rule</div>
           <div>
             <div class="callout__title">The golden rule</div>
             <div class="callout__body">
