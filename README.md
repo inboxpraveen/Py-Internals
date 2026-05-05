@@ -62,8 +62,8 @@ Py Internals closes that gap, visually, for free.
 
 | # | Session | Status | Concepts |
 |---|---------|--------|----------|
-| 01 | [Variables & Mutability](sessions/01-variables/) | ✅ Live | Names vs objects, rebinding, aliasing, mutation, GC |
-| 02 | [Functions & Scope](sessions/02-functions/) | ✅ Live | Call stack, frames, LEGB rule, argument binding, closures, `nonlocal` |
+| 01 | [Variables & Mutability](https://inboxpraveen.github.io/Py-Internals/sessions/01-variables/) | ✅ Live | Names vs objects, rebinding, aliasing, mutation, GC |
+| 02 | [Functions & Scope](https://inboxpraveen.github.io/Py-Internals/sessions/02-functions/) | ✅ Live | Call stack, frames, LEGB rule, argument binding, closures, `nonlocal` |
 | 03 | Lists & References | 📋 Planned | Shallow copy, deep copy, list internals |
 | 04 | Dictionaries | 📋 Planned | Hash tables, key lookup, collision |
 | 05 | Classes & Objects | 📋 Planned | `__init__`, `self`, method binding, `__dict__` |
@@ -128,6 +128,14 @@ npx serve .
 Then open [http://localhost:8000](http://localhost:8000).
 
 > **Why a server?** The JS modules use `fetch()` to load session data, which requires a server context. Opening `index.html` directly as a `file://` URL won't work.
+
+---
+
+## Application Screenshot
+
+<img src="./assets/images/Homepage.jpeg" alt="Homepage">
+
+<img src="./assets/images/Session-Example.jpeg" alt="Session 1 Example">
 
 ---
 
