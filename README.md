@@ -133,9 +133,9 @@ Then open [http://localhost:8000](http://localhost:8000).
 
 ## Application Screenshot
 
-<img src="./assets/images/Homepage.jpeg" alt="Homepage">
+<img src="./assets/images/Homepage.png" alt="Homepage">
 
-<img src="./assets/images/Session-Example.jpeg" alt="Session 1 Example">
+<img src="./assets/images/Session-Example.png" alt="Session 1 Example">
 
 ---
 
