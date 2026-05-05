@@ -46,6 +46,11 @@
   margin-bottom: var(--sp-2);
 }
 
+.mem-frame--active {
+  border-color: rgba(26,107,92,0.35);
+  box-shadow: 0 0 0 3px rgba(26,107,92,0.08);
+}
+
 .mem-frame__header {
   background: var(--clr-surface-2);
   padding: var(--sp-2) var(--sp-3);

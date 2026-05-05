@@ -66,8 +66,11 @@ PJ.MemoryViz = class {
     const wrap = document.createElement('div');
     wrap.className = 'mem-canvas';
 
-    // Stack section
-    if (snapshot.frame) {
+    // Stack section. Older sessions use `frame`; newer sessions can use
+    // `frames` to show an actual call stack with multiple active scopes.
+    if (snapshot.frames && snapshot.frames.length > 0) {
+      wrap.appendChild(this._renderFrames(snapshot.frames, snapshot.highlight || []));
+    } else if (snapshot.frame) {
       wrap.appendChild(this._renderFrame(snapshot.frame, snapshot.highlight || []));
     }
 
@@ -81,6 +84,33 @@ PJ.MemoryViz = class {
   }
 
   // ── Frame (namespace / stack) ─────────────────────────────
+  _renderFrames(frames, highlight) {
+    const section = document.createElement('div');
+    section.className = 'mem-stack';
+
+    const label = document.createElement('div');
+    label.className = 'mem-section-label';
+    label.innerHTML = `
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" style="color:var(--clr-mem-stack);opacity:.7">
+        <rect x="1" y="3" width="10" height="7" rx="1.5" opacity=".4"/>
+        <rect x="3" y="1" width="6" height="3" rx="1"/>
+      </svg>
+      Call Stack
+    `;
+    section.appendChild(label);
+
+    const displayFrames = [...frames].reverse();
+    displayFrames.forEach((frame, index) => {
+      const frameEl = this._renderFrameElement(frame, highlight);
+      if (index === 0 && frames.length > 1) {
+        frameEl.classList.add('mem-frame--active');
+      }
+      section.appendChild(frameEl);
+    });
+
+    return section;
+  }
+
   _renderFrame(frame, highlight) {
     const section = document.createElement('div');
     section.className = 'mem-stack';
@@ -96,6 +126,11 @@ PJ.MemoryViz = class {
     `;
     section.appendChild(label);
 
+    section.appendChild(this._renderFrameElement(frame, highlight));
+    return section;
+  }
+
+  _renderFrameElement(frame, highlight) {
     const frameEl = document.createElement('div');
     frameEl.className = 'mem-frame';
 
@@ -122,8 +157,7 @@ PJ.MemoryViz = class {
       });
     }
 
-    section.appendChild(frameEl);
-    return section;
+    return frameEl;
   }
 
   _renderVar(v, highlight) {

@@ -13,6 +13,7 @@
 
 [**View the Course →**](https://inboxpraveen.github.io/Py-Internals) &nbsp;·&nbsp;
 [**Session 01: Variables**](https://inboxpraveen.github.io/Py-Internals/sessions/01-variables/) &nbsp;·&nbsp;
+[**Session 02: Functions**](https://inboxpraveen.github.io/Py-Internals/sessions/02-functions/) &nbsp;·&nbsp;
 [**Report a Bug**](https://github.com/inboxpraveen/Py-Internals/issues) &nbsp;·&nbsp;
 [**Request a Topic**](https://github.com/inboxpraveen/Py-Internals/discussions)
 
@@ -62,7 +63,7 @@ Py Internals closes that gap, visually, for free.
 | # | Session | Status | Concepts |
 |---|---------|--------|----------|
 | 01 | [Variables & Mutability](sessions/01-variables/) | ✅ Live | Names vs objects, rebinding, aliasing, mutation, GC |
-| 02 | Functions & Scope | 🚧 Planned | Call stack, LEGB rule, closures, `nonlocal` |
+| 02 | [Functions & Scope](sessions/02-functions/) | ✅ Live | Call stack, frames, LEGB rule, argument binding, closures, `nonlocal` |
 | 03 | Lists & References | 📋 Planned | Shallow copy, deep copy, list internals |
 | 04 | Dictionaries | 📋 Planned | Hash tables, key lookup, collision |
 | 05 | Classes & Objects | 📋 Planned | `__init__`, `self`, method binding, `__dict__` |
@@ -99,7 +100,9 @@ Py-Internals/
     ├── 01-variables/
     │   ├── index.html           ← Session page (imports shared CSS/JS)
     │   └── session.js           ← Demo definitions and step data
-    └── 02-functions/            ← Next session (same pattern)
+    └── 02-functions/
+        ├── index.html           ← Function calls, scope, closures
+        └── session.js           ← Call-stack demo definitions
 ```
 
 ---

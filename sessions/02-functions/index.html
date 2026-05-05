@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Session 02: Functions & Scope - Py Internals</title>
+  <meta name="description" content="Understand Python functions, call frames, local scope, argument passing, returns, and closures through interactive memory diagrams." />
+
+  <link rel="icon" type="image/png" href="../../assets/images/Python-logo.png" />
+  <link rel="apple-touch-icon" href="../../assets/images/Python-logo.png" />
+
+  <link rel="stylesheet" href="../../assets/css/base.css" />
+  <link rel="stylesheet" href="../../assets/css/layout.css" />
+  <link rel="stylesheet" href="../../assets/css/components.css" />
+  <link rel="stylesheet" href="../../assets/css/memory-viz.css" />
+  <link rel="stylesheet" href="../../assets/css/animations.css" />
+
+  <style>
+    .code-panel-body {
+      padding: var(--sp-4);
+      overflow: auto;
+      flex: 1;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.7;
+      color: #CDD6F4;
+    }
+
+    .mem-panel-body {
+      padding: var(--sp-4);
+      overflow: auto;
+      flex: 1;
+      font-size: var(--fs-xs);
+    }
+
+    .type-chip--function {
+      background: #EEF2FF;
+      color: #4338CA;
+      border: 1px solid #C7D2FE;
+    }
+
+    .learning-overview {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+      gap: var(--sp-5);
+      padding: var(--sp-6) var(--sp-12);
+      background: var(--clr-surface);
+      border-bottom: 1px solid var(--clr-border);
+    }
+
+    .learning-card,
+    .flow-card,
+    .rule-card {
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius-xl);
+      background: var(--clr-surface);
+      padding: var(--sp-5);
+    }
+
+    .learning-card {
+      background: linear-gradient(180deg, var(--clr-surface), var(--clr-bg));
+    }
+
+    .section-label,
+    .learning-card__label,
+    .stage-intro__label,
+    .rule-card__label {
+      font-size: var(--fs-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--clr-text-3);
+      margin-bottom: var(--sp-3);
+    }
+
+    .learning-card__title {
+      font-family: var(--font-display);
+      font-size: var(--fs-xl);
+      line-height: var(--lh-tight);
+      margin-bottom: var(--sp-3);
+    }
+
+    .learning-card__body,
+    .flow-card p,
+    .rule-card p {
+      color: var(--clr-text-2);
+      font-size: var(--fs-sm);
+      line-height: var(--lh-loose);
+    }
+
+    .learning-path {
+      display: grid;
+      gap: var(--sp-3);
+    }
+
+    .learning-path__step {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: var(--sp-3);
+      align-items: start;
+      color: var(--clr-text-2);
+      font-size: var(--fs-sm);
+      line-height: var(--lh-snug);
+    }
+
+    .learning-path__num {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-full);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--clr-accent-lt);
+      color: var(--clr-accent);
+      border: 1px solid rgba(26,107,92,0.18);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .concept-chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sp-2);
+      margin-top: var(--sp-4);
+    }
+
+    .stage-intro {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: var(--sp-5);
+      align-items: center;
+      padding: var(--sp-6) var(--sp-12);
+      background: var(--clr-bg);
+      border-bottom: 1px solid var(--clr-border);
+    }
+
+    .stage-intro h2 {
+      font-size: var(--fs-2xl);
+      margin-bottom: var(--sp-2);
+    }
+
+    .stage-intro p {
+      color: var(--clr-text-2);
+      line-height: var(--lh-loose);
+      max-width: 720px;
+    }
+
+    .stage-intro__hint {
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius-lg);
+      padding: var(--sp-4);
+      background: var(--clr-surface);
+      color: var(--clr-text-3);
+      font-size: var(--fs-xs);
+      line-height: var(--lh-loose);
+      max-width: 310px;
+    }
+
+    .demo-guide,
+    .demo-selector {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--sp-3);
+      padding: var(--sp-4) var(--sp-12);
+      background: var(--clr-surface);
+      border-bottom: 1px solid var(--clr-border);
+    }
+
+    .demo-guide {
+      padding-top: var(--sp-3);
+      padding-bottom: var(--sp-3);
+    }
+
+    .demo-guide__step {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-2);
+      font-size: var(--fs-xs);
+      color: var(--clr-text-3);
+    }
+
+    .demo-guide__badge {
+      width: 18px;
+      height: 18px;
+      border-radius: var(--radius-full);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--clr-accent-lt);
+      color: var(--clr-accent);
+      border: 1px solid rgba(26,107,92,0.25);
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .demo-guide__arrow { color: var(--clr-border); }
+
+    .demo-pill {
+      padding: var(--sp-2) var(--sp-4);
+      border-radius: var(--radius-full);
+      font-size: var(--fs-xs);
+      font-weight: 600;
+      background: var(--clr-surface-2);
+      border: 1.5px solid var(--clr-border);
+      color: var(--clr-text-2);
+      cursor: pointer;
+      transition: all var(--dur-fast) var(--ease-out);
+    }
+
+    .demo-pill:hover { border-color: var(--clr-text-3); color: var(--clr-text); }
+    .demo-pill.active {
+      background: var(--clr-accent);
+      border-color: var(--clr-accent);
+      color: white;
+    }
+
+    .explanation-strip {
+      padding: var(--sp-7) var(--sp-12);
+      min-height: 150px;
+      border-bottom: 2px solid var(--clr-border);
+      margin: var(--sp-5) 0;
+    }
+
+    .step-track {
+      padding: var(--sp-3) var(--sp-5) var(--sp-4);
+    }
+
+    .explanation-text {
+      transition: opacity 0.25s var(--ease-out), transform 0.25s var(--ease-out);
+    }
+
+    .explanation-text--animate {
+      animation: explanationChange 0.3s var(--ease-out) both;
+    }
+
+    @keyframes explanationChange {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .narrative-lede {
+      font-size: var(--fs-lg);
+      line-height: var(--lh-loose);
+      color: var(--clr-text-2);
+      margin-bottom: var(--sp-8);
+    }
+
+    .flow-grid,
+    .rule-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--sp-4);
+      margin: var(--sp-6) 0 var(--sp-8);
+    }
+
+    .rule-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .flow-card h3,
+    .rule-card h3 {
+      margin: 0 0 var(--sp-2);
+      font-size: var(--fs-md);
+      color: var(--clr-text);
+    }
+
+    .narrative .callout__icon {
+      min-width: 40px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-full);
+      background: rgba(26,107,92,0.08);
+      color: var(--clr-accent);
+      border: 1px solid rgba(26,107,92,0.16);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-top: 1px;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--fs-sm);
+      margin: var(--sp-5) 0;
+    }
+
+    .comparison-table th {
+      text-align: left;
+      padding: var(--sp-3) var(--sp-4);
+      background: var(--clr-surface-2);
+      font-weight: 600;
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--clr-text-3);
+      border-bottom: 2px solid var(--clr-border);
+    }
+
+    .comparison-table td {
+      padding: var(--sp-3) var(--sp-4);
+      border-bottom: 1px solid var(--clr-border);
+      vertical-align: top;
+      color: var(--clr-text-2);
+    }
+
+    .comparison-table tr:last-child td { border-bottom: none; }
+    .comparison-table tr:hover td { background: var(--clr-surface-2); }
+
+    @media (max-width: 980px) {
+      .learning-overview,
+      .stage-intro,
+      .flow-grid,
+      .rule-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stage-intro__hint { max-width: none; }
+    }
+
+    @media (max-width: 860px) {
+      .stage { grid-template-columns: 1fr; }
+      .stage__code-panel { min-height: 360px; }
+      .stage__memory-panel { min-height: 420px; }
+    }
+
+    @media (max-width: 768px) {
+      .learning-overview,
+      .stage-intro,
+      .demo-guide,
+      .demo-selector {
+        padding-left: var(--sp-5);
+        padding-right: var(--sp-5);
+      }
+
+      .demo-guide__arrow { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar__logo">
+    <button class="menu-toggle" aria-label="Toggle menu" onclick="PJ.Core.toggleSidebar()">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <a href="../../index.html" style="display:flex;align-items:center;gap:10px;text-decoration:none">
+      <div class="topbar__logo-mark">Py</div>
+      <span class="topbar__brand">Py<span>Internals</span></span>
+    </a>
+  </div>
+  <div class="topbar__actions">
+    <span style="font-size:var(--fs-xs);color:var(--clr-text-3);font-weight:500">Session 02 of 05</span>
+  </div>
+</header>
+
+<div class="sidebar-overlay" onclick="PJ.Core.closeSidebar()"></div>
+
+<div class="app-shell" style="grid-template-rows:unset">
+  <aside class="sidebar">
+    <div class="sidebar__section">
+      <div class="sidebar__label">Session 02</div>
+      <a href="#intro" class="sidebar__item active" onclick="scrollTo('#intro')">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="9" cy="9" r="7"/><path d="M9 6v4l2 2"/>
+        </svg>
+        Introduction
+      </a>
+      <a href="#demo-basic" class="sidebar__item" onclick="scrollTo('#demo-basic')">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M2 9h14M9 2v14"/>
+        </svg>
+        Interactive Lab
+      </a>
+      <a href="#call-stack" class="sidebar__item" onclick="scrollTo('#call-stack')">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M4 4h10M4 9h10M4 14h10"/>
+        </svg>
+        Call Stack
+      </a>
+      <a href="#scope" class="sidebar__item" onclick="scrollTo('#scope')">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="3" width="12" height="12" rx="2"/><path d="M6 7h6M6 11h4"/>
+        </svg>
+        Scope
+      </a>
+      <a href="#arguments" class="sidebar__item" onclick="scrollTo('#arguments')">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 9h10M10 6l3 3-3 3"/><circle cx="4" cy="9" r="2"/>
+        </svg>
+        Arguments
+      </a>
+      <a href="#closures" class="sidebar__item" onclick="scrollTo('#closures')">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M6 8V6a3 3 0 016 0v2"/><rect x="4" y="8" width="10" height="7" rx="2"/>
+        </svg>
+        Closures
+      </a>
+    </div>
+    <div class="sidebar__section">
+      <div class="sidebar__label">Course</div>
+      <a href="../01-variables/" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M11 5l-4 4 4 4"/>
+        </svg>
+        Previous Session
+      </a>
+      <a href="../../index.html" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 9L9 3l6 6M5 7v8h8V7"/>
+        </svg>
+        All Sessions
+      </a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="session-hero" id="intro">
+      <div class="session-hero__breadcrumb">
+        <a href="../../index.html">Home</a>
+        <span>›</span>
+        Session 02
+      </div>
+      <div class="session-hero__eyebrow">Foundations · Session 02</div>
+      <h1 class="session-hero__title">Functions, Scope &amp; the Call Stack</h1>
+      <p class="session-hero__subtitle">
+        What happens when Python calls a function? We will trace function objects,
+        call frames, local names, argument references, return values, and closures step by step.
+      </p>
+      <div class="session-meta">
+        <div class="session-meta__item">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="7" cy="7" r="5.5"/><path d="M7 4v3l2 2"/>
+          </svg>
+          ~35 minutes
+        </div>
+        <div class="session-meta__item">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M2 7l3 3 7-7"/>
+          </svg>
+          4 interactive demos
+        </div>
+        <div class="session-meta__item">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="1" y="1" width="12" height="12" rx="2"/><path d="M4 4h6M4 7h4M4 10h3"/>
+          </svg>
+          Beginner friendly, deeper model
+        </div>
+      </div>
+    </div>
+
+    <div class="progress-bar"><div class="progress-bar__fill" id="readProgress" style="width:0%"></div></div>
+
+    <section class="learning-overview" aria-labelledby="learning-overview-title">
+      <div class="learning-card">
+        <div class="learning-card__label">Learning goal</div>
+        <h2 class="learning-card__title" id="learning-overview-title">
+          See a function call as frames, names, objects, and a return path.
+        </h2>
+        <p class="learning-card__body">
+          Functions feel like a single operation, but Python performs several clear steps:
+          create a function object, create a call frame, bind arguments to local names,
+          run the body, return an object, then remove the frame.
+        </p>
+        <div class="concept-chip-row">
+          <span class="type-chip type-chip--function">function object</span>
+          <span class="type-chip type-chip--dict">call frame</span>
+          <span class="type-chip type-chip--str">scope</span>
+          <span class="type-chip type-chip--list">arguments</span>
+          <span class="type-chip type-chip--int">return</span>
+          <span class="type-chip type-chip--bool">closure</span>
+        </div>
+      </div>
+
+      <div class="learning-card">
+        <div class="learning-card__label">Recommended path</div>
+        <div class="learning-path">
+          <div class="learning-path__step">
+            <span class="learning-path__num">1</span>
+            <span><strong>Watch stack frames.</strong> New function calls appear as frames above global scope.</span>
+          </div>
+          <div class="learning-path__step">
+            <span class="learning-path__num">2</span>
+            <span><strong>Track names separately.</strong> Global and local names may have the same spelling but live in different frames.</span>
+          </div>
+          <div class="learning-path__step">
+            <span class="learning-path__num">3</span>
+            <span><strong>Follow object identity.</strong> Arguments and returns pass references to objects, not boxes of copied values.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="demo-basic">
+      <section class="stage-intro" aria-labelledby="stage-title">
+        <div>
+          <div class="stage-intro__label">Interactive lab</div>
+          <h2 id="stage-title">Move through each function behavior</h2>
+          <p>
+            Pick a demo and step line by line. The memory panel shows the call stack first,
+            then heap objects. The top stack frame is the currently running function.
+          </p>
+        </div>
+        <div class="stage-intro__hint">
+          Tip: when a function is called, pause and ask which names are global, which names are local,
+          and which names point to the same object.
+        </div>
+      </section>
+
+      <div class="demo-guide">
+        <div class="demo-guide__step"><span class="demo-guide__badge">1</span> Choose a demo</div>
+        <span class="demo-guide__arrow">›</span>
+        <div class="demo-guide__step"><span class="demo-guide__badge">2</span> Step through the highlighted code</div>
+        <span class="demo-guide__arrow">›</span>
+        <div class="demo-guide__step"><span class="demo-guide__badge">3</span> Watch frames appear and disappear</div>
+        <span class="demo-guide__arrow">›</span>
+        <div class="demo-guide__step"><span class="demo-guide__badge">4</span> Read the explanation below</div>
+      </div>
+
+      <div class="demo-selector">
+        <button class="demo-pill active" data-demo="call" onclick="switchDemo('call')">1 · Call and return</button>
+        <button class="demo-pill" data-demo="scope" onclick="switchDemo('scope')">2 · Local scope</button>
+        <button class="demo-pill" data-demo="mutableArgs" onclick="switchDemo('mutableArgs')">3 · Mutable arguments</button>
+        <button class="demo-pill" data-demo="closure" onclick="switchDemo('closure')">4 · Closures</button>
+      </div>
+
+      <div class="stage" id="stage">
+        <div class="stage__code-panel">
+          <div class="panel-header panel-header--dark">
+            <span>python</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+            </div>
+          </div>
+          <div class="code-panel-body" id="codePanel"></div>
+          <div class="step-track" data-role="step-track" id="stepTrack"></div>
+          <div class="playback-controls" id="controls">
+            <div class="playback-controls__left">
+              <button class="step-btn" data-action="prev" title="Previous step" disabled>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M8 2L4 6l4 4"/></svg>
+              </button>
+              <button class="play-btn" data-action="play" title="Play / Pause">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M3 2.5l8 4.5-8 4.5z"/></svg>
+              </button>
+              <button class="step-btn" data-action="next" title="Next step">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M4 2l4 4-4 4"/></svg>
+              </button>
+              <button class="btn btn--ghost btn--sm" data-action="reset" title="Reset">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M10 6A4 4 0 112 6" stroke-linecap="round"/>
+                  <path d="M2 3v3h3" fill="currentColor" stroke="none"/>
+                </svg>
+              </button>
+            </div>
+            <div class="playback-controls__right">
+              <div class="speed-control">
+                Speed:
+                <select class="speed-select" data-action="speed">
+                  <option value="1600">0.5×</option>
+                  <option value="900" selected>1×</option>
+                  <option value="600">1.5×</option>
+                  <option value="350">2×</option>
+                </select>
+              </div>
+              <span class="step-counter" data-role="step-counter">1 / 1</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage__memory-panel">
+          <div class="panel-header">
+            <span style="color:var(--clr-text-3)">Memory</span>
+            <div style="display:flex;align-items:center;gap:6px;font-size:var(--fs-xs);color:var(--clr-text-3)">
+              <span style="display:inline-block;width:8px;height:8px;background:var(--clr-mem-stack);border-radius:2px;opacity:.6"></span>
+              call stack
+              <span style="display:inline-block;width:8px;height:8px;background:var(--clr-mem-heap);border-radius:2px;opacity:.6;margin-left:4px"></span>
+              heap
+            </div>
+          </div>
+          <div class="mem-panel-body" id="memPanel"></div>
+        </div>
+      </div>
+
+      <div class="explanation-strip">
+        <div class="explanation-strip__step-num" id="stepNum">1</div>
+        <div class="explanation-strip__content">
+          <h3 id="stepTitle" class="explanation-text">Initial state - only the global frame exists</h3>
+          <p id="stepDesc" class="explanation-text">
+            Before code runs, there is one namespace: global. Press Play or use Next to step through the call.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <article class="narrative" id="narrative">
+      <h2 id="call-stack">What happens when Python calls a function?</h2>
+      <p class="narrative-lede">
+        A function call is not magic. Python creates a temporary workspace called a
+        <strong>frame</strong>, runs the function body inside that frame, then removes the frame when
+        the call returns.
+      </p>
+
+      <div class="flow-grid">
+        <div class="flow-card">
+          <div class="section-label">Step 1</div>
+          <h3>Function object</h3>
+          <p>
+            Running <code>def</code> creates a function object and binds a name to it.
+            The body is stored for later; it does not execute at definition time.
+          </p>
+        </div>
+        <div class="flow-card">
+          <div class="section-label">Step 2</div>
+          <h3>Call frame</h3>
+          <p>
+            Calling the function creates a new frame. Parameters become local names in that frame,
+            each bound to the argument objects.
+          </p>
+        </div>
+        <div class="flow-card">
+          <div class="section-label">Step 3</div>
+          <h3>Return path</h3>
+          <p>
+            <code>return</code> hands an object back to the caller. The local frame is removed unless
+            something, such as a closure, must keep part of it alive.
+          </p>
+        </div>
+      </div>
+
+      <div class="callout callout--info">
+        <div class="callout__icon">Model</div>
+        <div>
+          <div class="callout__title">A frame is Python's runtime workspace for one call</div>
+          <div class="callout__body">
+            You can think of a frame as the place where Python tracks local names, the current line being
+            executed, and the path back to the caller. The exact low-level representation belongs to the
+            Python runtime, but the mental model is stable: each active function call has its own frame.
+          </div>
+        </div>
+      </div>
+
+      <div id="scope">
+        <div class="section-divider"><div class="section-divider__label">Scope</div></div>
+        <h2>Local names are separate from global names</h2>
+        <p>
+          A scope is a place where names are looked up. When code inside a function reads a name,
+          Python searches in a predictable order: local, enclosing function scopes, global, then built-ins.
+          This is commonly called <strong>LEGB</strong>.
+        </p>
+
+        <div class="rule-grid">
+          <div class="rule-card">
+            <div class="rule-card__label">Reading</div>
+            <h3>Name lookup searches outward</h3>
+            <p>
+              If a name is not found in the local frame, Python looks in enclosing scopes, then globals,
+              then built-ins. That is why a function can read a global constant.
+            </p>
+          </div>
+          <div class="rule-card">
+            <div class="rule-card__label">Assigning</div>
+            <h3>Assignment creates a local name by default</h3>
+            <p>
+              If you assign to <code>message</code> inside a function, Python treats it as local unless
+              you declare <code>global message</code> or <code>nonlocal message</code>.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout callout--warn">
+          <div class="callout__icon">Care</div>
+          <div>
+            <div class="callout__title">Same spelling does not mean same variable</div>
+            <div class="callout__body">
+              A global <code>message</code> and a local <code>message</code> can both exist at the same time.
+              They are different names in different frames. The animation above shows both names pointing
+              to different string objects.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="arguments">
+        <div class="section-divider"><div class="section-divider__label">Arguments</div></div>
+        <h2>Arguments bind parameter names to existing objects</h2>
+        <p>
+          When you call <code>add_item(bag)</code>, Python does not copy the list. It binds the local
+          parameter name <code>items</code> to the same list object that <code>bag</code> already references.
+          This is why mutations inside a function can affect the caller's object.
+        </p>
+
+        <div style="overflow-x:auto">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Operation inside function</th>
+                <th>What changes?</th>
+                <th>Caller sees it?</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>items.append("x")</code></td>
+                <td>The list object is mutated in-place.</td>
+                <td>Yes, because caller and parameter point to the same list.</td>
+              </tr>
+              <tr>
+                <td><code>items = ["x"]</code></td>
+                <td>The local name is rebound to a new list.</td>
+                <td>No, the caller's name still points to the original list.</td>
+              </tr>
+              <tr>
+                <td><code>return items</code></td>
+                <td>The referenced object is handed back to the caller.</td>
+                <td>Only if the caller stores or uses the returned object.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="closures">
+        <div class="section-divider"><div class="section-divider__label">Closures</div></div>
+        <h2>Closures let a function remember an outer name</h2>
+        <p>
+          Normally, a function's local frame disappears after return. A closure is the important exception:
+          when an inner function uses a name from an outer function, Python keeps that remembered name alive
+          so the inner function can use it later.
+        </p>
+
+        <div class="callout callout--insight">
+          <div class="callout__icon">Key</div>
+          <div>
+            <div class="callout__title"><code>nonlocal</code> means "use the remembered outer name"</div>
+            <div class="callout__body">
+              Without <code>nonlocal count</code>, assigning to <code>count</code> inside <code>inc()</code>
+              would create a local name in <code>inc</code>. With <code>nonlocal</code>, Python updates the
+              remembered <code>count</code> from the enclosing <code>make_counter</code> call.
+            </div>
+          </div>
+        </div>
+
+        <h3>What you should understand by the end</h3>
+        <div style="overflow-x:auto">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Concept</th>
+                <th>Plain-English meaning</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Function object</strong></td>
+                <td>The object created by <code>def</code>; a name can point to it like any other object.</td>
+              </tr>
+              <tr>
+                <td><strong>Frame</strong></td>
+                <td>A temporary namespace/workspace for one active function call.</td>
+              </tr>
+              <tr>
+                <td><strong>Local scope</strong></td>
+                <td>The names that belong to a particular call frame.</td>
+              </tr>
+              <tr>
+                <td><strong>Argument passing</strong></td>
+                <td>Parameter names are bound to the objects supplied by the caller.</td>
+              </tr>
+              <tr>
+                <td><strong>Closure</strong></td>
+                <td>An inner function plus remembered outer names it needs after the outer call returns.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </article>
+
+    <div class="session-footer">
+      <a href="../01-variables/" class="btn btn--secondary">
+        ← Session 01: Variables
+      </a>
+      <div style="text-align:center;font-size:var(--fs-xs);color:var(--clr-text-3)">
+        Session 02 of 05
+      </div>
+      <a href="#" class="btn btn--primary" style="opacity:.5;pointer-events:none">
+        Session 03: Lists & References →
+      </a>
+    </div>
+  </main>
+</div>
+
+<script src="../../assets/js/core.js"></script>
+<script src="../../assets/js/syntax.js"></script>
+<script src="../../assets/js/memory-viz.js"></script>
+<script src="../../assets/js/animator.js"></script>
+<script src="session.js"></script>
+
+</body>
+</html>
