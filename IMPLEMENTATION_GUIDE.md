@@ -48,7 +48,8 @@ Py-Internals/
     ├── 01-variables/
     │   ├── index.html          ← Session HTML (uses common CSS/JS)
     │   └── session.js          ← Demo definitions + step data
-    ├── 02-functions/           ← Future session (same pattern)
+    ├── 02-functions/           ← Functions, scope, call-stack frames
+    ├── 03-lists-dicts/         ← Containers, aliases, shallow copies
     └── ...
 ```
 
@@ -82,7 +83,7 @@ All values are CSS custom properties on `:root`. Use them everywhere — never h
 
 /* Python type colors */
 --clr-type-int, --clr-type-float, --clr-type-str
---clr-type-bool, --clr-type-none, --clr-type-list, etc.
+--clr-type-bool, --clr-type-none, --clr-type-list, --clr-type-function, etc.
 
 /* Memory viz colors */
 --clr-mem-stack, --clr-mem-heap, --clr-mem-ref, --clr-mem-new
@@ -104,6 +105,28 @@ All values are CSS custom properties on `:root`. Use them everywhere — never h
 
 Put it in a `<style>` block inside the session's `index.html`, after the link tags.
 Keep it minimal — prefer the existing utilities.
+
+### Shared additions from Session 02
+
+Session 02 added reusable support for function-focused sessions:
+
+- `components.css` now includes `.type-chip--function`, so any memory object or variable with `type: 'function'` renders with a consistent chip.
+- `memory-viz.css` includes `.mem-frame--active`, used to highlight the currently running call frame when multiple frames are shown.
+
+Use these shared styles before adding session-local equivalents. Only add session CSS for page-specific layout blocks such as learning cards, flow cards, or lab instructions.
+
+### Reusable patterns from Session 03
+
+Session 03 did **not** add new shared CSS or JS files. It intentionally reuses the existing `PJ.MemoryViz`, `PJ.Animator`, `PJ.Syntax`, type chips, callouts, tables, and stage shell.
+
+It did introduce a few session-local patterns that future container-heavy sessions can copy:
+
+- `.diagram-card` — a simple narrative card for before/after diagrams or conceptual comparisons.
+- `.diagram-grid` — a two-column responsive grid for paired explanations.
+- `.reference-map` and related elements — a static narrative diagram for showing names pointing to container objects and container slots pointing to values.
+- The convention of displaying nested container references as readable labels like `list -> 0x7f560010` inside list cells or dict values.
+
+Keep these styles session-local until at least one more session needs them unchanged. If future sessions reuse the same `reference-map` or `diagram-card` structure, move the CSS into `components.css` or a small shared narrative-diagram section.
 
 ---
 
@@ -137,6 +160,12 @@ const viz = new PJ.MemoryViz('container-id');
 viz.render(snapshot);   // snapshot format below
 viz.clear();
 ```
+
+`PJ.MemoryViz` supports two stack formats:
+- `frame` for a single namespace, used by simple sessions like variables.
+- `frames` for an actual call stack, used by function/scope sessions.
+
+When using `frames`, list frames in execution order from oldest to newest, for example global first and the active function call last. The visualizer displays the active frame at the top and gives it the `.mem-frame--active` style.
 
 ### `PJ.Animator`
 ```js
@@ -174,7 +203,7 @@ touch sessions/02-functions/session.js
 
 ### Step 2: Copy the HTML shell
 
-Use Session 01's `index.html` as your template. Replace:
+Use Session 01's `index.html` as your template for object/memory sessions, Session 02's `index.html` for sessions that need a call stack, multiple scopes, or function-style flow cards, or Session 03's `index.html` for container/reference topics such as lists, dictionaries, shallow copies, nested mutation, or aliasing. Replace:
 - `<title>` — update session name
 - `<meta name="description">` — describe the session
 - `.session-hero__eyebrow` — e.g., "Foundations · Session 02"
@@ -204,8 +233,9 @@ code blocks, and type cards. This is where the deeper explanation lives.
 
 ### Step 6: Add to `index.html` (homepage)
 
-Add a new `<div class="session-card">` entry in the sessions grid.
-Change from `locked` to an `<a>` link once the session is ready.
+Add a new session card in the homepage sessions grid.
+Use `<a href="sessions/NN-topic/" class="session-card ...">` once the session is ready.
+Leave future sessions as `<div class="session-card locked">`.
 
 ---
 
@@ -233,6 +263,8 @@ Each step is a plain JavaScript object:
 ---
 
 ## 6. Memory Snapshot Format
+
+Use `frame` when the demo only needs one namespace:
 
 ```js
 {
@@ -294,6 +326,151 @@ Each step is a plain JavaScript object:
 }
 ```
 
+Use `frames` when the demo needs a call stack. This is the recommended format for functions, recursion, generators, decorators, context managers, and exceptions.
+
+```js
+{
+  frames: [
+    {
+      name: 'global',
+      vars: [
+        { name: 'add', ref: 'addFn', pyId: ADDRS.addFn, type: 'function', state: 'normal' },
+      ],
+    },
+    {
+      name: 'add(a, b)',
+      vars: [
+        { name: 'a', ref: 'int2', pyId: ADDRS.int2, type: 'int', state: 'new' },
+        { name: 'b', ref: 'int3', pyId: ADDRS.int3, type: 'int', state: 'new' },
+      ],
+    },
+  ],
+  heap: [
+    { id: 'addFn', pyId: ADDRS.addFn, type: 'function', value: 'add(a, b)', refcount: 1, mutable: false },
+    { id: 'int2',  pyId: ADDRS.int2,  type: 'int',      value: 2,           refcount: 1, mutable: false },
+    { id: 'int3',  pyId: ADDRS.int3,  type: 'int',      value: 3,           refcount: 1, mutable: false },
+  ],
+  highlight: ['int2', 'int3'],
+}
+```
+
+Frame ordering rule: write frames from caller to callee (`global`, then the active function, then deeper calls). The visualizer reverses that order visually so the active frame appears at the top of the call stack.
+
+### Function objects
+
+Function definitions can be represented like normal heap objects:
+
+```js
+{
+  id: 'greetFn',
+  pyId: ADDRS.greetFn,
+  type: 'function',
+  value: 'greet(name)',
+  refcount: 1,
+  mutable: false,
+  state: 'new',
+}
+```
+
+This keeps the explanation Python-level: `def` creates a function object and binds a name to it. Avoid explaining low-level runtime implementation details unless they directly help the learner's mental model.
+
+### Closures and remembered state
+
+For closure demos, represent remembered outer names explicitly as Python-level state. A small `dict` object works well because the visualizer already supports key/value pairs:
+
+```js
+{
+  id: 'closureState',
+  pyId: ADDRS.closureState,
+  type: 'dict',
+  refcount: 1,
+  mutable: true,
+  state: 'normal',
+  pairs: [
+    { key: 'count', value: 1, type: 'int' },
+  ],
+}
+```
+
+This is a teaching diagram, not a claim that Python literally stores closures as dictionaries. Use copy such as "remembered outer state" or "closure cell" so learners understand the behavior without needing implementation internals.
+
+### Container references and nested objects
+
+For list and dict sessions, keep the model Python-level: containers are heap objects, and their slots/values point to other objects. Avoid claiming that the browser diagram is the literal CPython structure.
+
+The current visualizer displays collection items as values, not as clickable arrows. When teaching nested containers, use readable labels inside the parent container and render the nested objects separately on the heap:
+
+```js
+{
+  frames: [{ name: 'global', vars: [
+    { name: 'original', ref: 'outerList', pyId: ADDRS.outerList, type: 'list', state: 'new' },
+    { name: 'copy',     ref: 'copyList',  pyId: ADDRS.copyList,  type: 'list', state: 'new' },
+  ]}],
+  heap: [
+    {
+      id: 'innerList',
+      pyId: ADDRS.innerList,
+      type: 'list',
+      refcount: 2,
+      mutable: true,
+      state: 'mutated',
+      items: [
+        { value: 1, type: 'int' },
+        { value: 99, type: 'int' },
+      ],
+    },
+    {
+      id: 'outerList',
+      pyId: ADDRS.outerList,
+      type: 'list',
+      refcount: 1,
+      mutable: true,
+      state: 'normal',
+      items: [
+        { value: 'innerList -> 0x7f532010', type: 'str' },
+      ],
+    },
+    {
+      id: 'copyList',
+      pyId: ADDRS.copyList,
+      type: 'list',
+      refcount: 1,
+      mutable: true,
+      state: 'normal',
+      items: [
+        { value: 'innerList -> 0x7f532010', type: 'str' },
+      ],
+    },
+  ],
+  highlight: ['innerList', 'outerList', 'copyList'],
+}
+```
+
+Use this pattern when showing:
+
+- aliasing: two names point to the same container object;
+- shallow copy: two outer containers point to some of the same inner objects;
+- function side effects: a parameter name points to the caller's mutable object;
+- dict values: keys map to values, and those values can be mutable objects such as lists.
+
+For dicts, use `pairs` and the same label convention when a value points to a nested object:
+
+```js
+{
+  id: 'profileDict',
+  pyId: ADDRS.profileDict,
+  type: 'dict',
+  refcount: 1,
+  mutable: true,
+  pairs: [
+    { key: 'name', value: 'Ada', type: 'str' },
+    { key: 'skills', value: 'list -> 0x7f580010', type: 'str' },
+  ],
+}
+```
+
+When explaining this to learners, say "at the Python level, think of this slot/value as referring to another object." This gives the right mental model without introducing C structs or implementation-specific storage details.
+
 ### Memory address conventions
 
 Pre-generate a set of stable addresses for each session to keep the display consistent:
@@ -329,8 +506,11 @@ Use sequential `0x7fXXXX` format. Real CPython addresses look like this.
 <span class="type-chip type-chip--int">int</span>
 <span class="type-chip type-chip--str">str</span>
 <span class="type-chip type-chip--list">list</span>
-<!-- values: int, float, str, bool, none, list, dict, tuple, set -->
+<span class="type-chip type-chip--function">function</span>
+<!-- values: int, float, str, bool, none, list, dict, tuple, set, function -->
 ```
+
+Use `type: 'function'` in memory snapshots for objects created by `def`. The shared chip style is available in `components.css`.
 
 ### Callout Boxes
 
@@ -388,6 +568,56 @@ Use sequential `0x7fXXXX` format. Real CPython addresses look like this.
 </article>
 ```
 
+### Learning Overview / Lab Flow Pattern
+
+Session 02 introduced a reusable page structure for complex topics, and Session 03 reused it successfully for container/reference topics:
+
+```html
+<section class="learning-overview">...</section>
+<section class="stage-intro">...</section>
+<div class="demo-guide">...</div>
+<div class="demo-selector">...</div>
+<div class="stage" id="stage">...</div>
+<div class="explanation-strip">...</div>
+<article class="narrative">...</article>
+```
+
+These classes are still session-local today, but the pattern is recommended for future in-depth sessions:
+- `learning-overview` states the mental model and learning path before the animation.
+- `stage-intro` explains how to read the code panel and memory panel.
+- `demo-guide` gives short interaction instructions.
+- `demo-selector` switches between 3-5 focused demos.
+- `narrative` provides the deep explanation after learners have seen the animation.
+
+If two or more future sessions need the same layout classes unchanged, move them into shared CSS instead of copying them again.
+
+### Static Reference Map Pattern
+
+Session 03 uses a static `reference-map` in the narrative to reinforce the same idea shown in the animation:
+
+```html
+<div class="reference-map" aria-label="Reference diagram for a list alias">
+  <div class="reference-map__row">
+    <div class="reference-map__name">nums</div>
+    <div class="reference-map__arrow">-&gt;</div>
+    <div class="reference-map__object">
+      list @ 0x7f530010
+      <span class="reference-map__slot">[0] -&gt; 99</span>
+      <span class="reference-map__slot">[1] -&gt; 20</span>
+    </div>
+  </div>
+</div>
+```
+
+Use this for concepts where a static diagram helps learners pause after the animation:
+
+- name-to-object aliases;
+- nested list/dict references;
+- shallow copy before/after states;
+- function parameter references.
+
+These classes currently live in Session 03's local `<style>` block. Do not assume they are globally available until they are moved into shared CSS.
+
 ### Entrance Animations
 
 Add these classes to any element for entrance animations:
@@ -411,6 +641,10 @@ Delays: `delay-1` = 80ms, `delay-2` = 160ms, `delay-3` = 240ms, `delay-4` = 320m
 - ✅ Use `state: 'new'` on newly created heap objects (triggers the appear animation)
 - ✅ Use `state: 'gc'` on objects about to be garbage collected (triggers the red pulsing border)
 - ✅ Use `state: 'rebound'` on a var row when its reference has just changed
+- ✅ Use `frames` instead of `frame` when showing function calls, recursion, closures, or nested scopes
+- ✅ Represent function definitions with `type: 'function'` heap objects
+- ✅ Represent list and dict aliases by pointing multiple names at the same heap object ID
+- ✅ For nested containers, render the nested object separately and label parent slots/values with `name -> 0x7f...`
 - ✅ Put the most important insight in the second-to-last step, and confirm/summarize on the last
 - ✅ Use callouts generously — they break up text and highlight key insights
 - ✅ Make `highlight` arrays specific — highlight only the objects currently being discussed
@@ -421,6 +655,8 @@ Delays: `delay-1` = 80ms, `delay-2` = 160ms, `delay-3` = 240ms, `delay-4` = 320m
 - ❌ Add more than 10 steps to a demo — learners lose context
 - ❌ Skip the initial "empty state" step — learners need to see the baseline
 - ❌ Use `inline: true` on variables that point to heap objects — use `ref` instead
+- ❌ Explain Python behavior through C/Cython implementation details in learner-facing copy; keep the model Python-level unless low-level details are essential
+- ❌ Claim the visualizer's nested-reference labels are literal CPython storage; they are teaching labels for Python-level references
 - ❌ Name heap objects generically (e.g., `obj1`) — use meaningful names like `iCount` for an int named `count`
 - ❌ Forget to update the sidebar active state in each session
 - ❌ Add session-global styles that leak into the common CSS files
@@ -465,13 +701,15 @@ result = greet("Alice")`,
         desc: 'The function <code>greet</code> is defined but not called. It exists as a function object on the heap.',
         lines: [1, 2],
         memory: {
-          frame: { name: 'global', vars: [
-            { name: 'greet', ref: 'fObj', pyId: ADDRS.funcObj, type: 'function' },
-          ]},
-          heap: [
-            { id: 'fObj', pyId: ADDRS.funcObj, type: 'function', value: 'greet', refcount: 1, mutable: false },
+          frames: [
+            { name: 'global', vars: [
+              { name: 'greet', ref: 'fObj', pyId: ADDRS.funcObj, type: 'function', state: 'new' },
+            ]},
           ],
-          highlight: [],
+          heap: [
+            { id: 'fObj', pyId: ADDRS.funcObj, type: 'function', value: 'greet(name)', refcount: 1, mutable: false, state: 'new' },
+          ],
+          highlight: ['fObj'],
         },
       },
       // ... more steps

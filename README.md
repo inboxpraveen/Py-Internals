@@ -14,6 +14,7 @@
 [**View the Course →**](https://inboxpraveen.github.io/Py-Internals) &nbsp;·&nbsp;
 [**Session 01: Variables**](https://inboxpraveen.github.io/Py-Internals/sessions/01-variables/) &nbsp;·&nbsp;
 [**Session 02: Functions**](https://inboxpraveen.github.io/Py-Internals/sessions/02-functions/) &nbsp;·&nbsp;
+[**Session 03: Lists & Dicts**](https://inboxpraveen.github.io/Py-Internals/sessions/03-lists-dicts/) &nbsp;·&nbsp;
 [**Report a Bug**](https://github.com/inboxpraveen/Py-Internals/issues) &nbsp;·&nbsp;
 [**Request a Topic**](https://github.com/inboxpraveen/Py-Internals/discussions)
 
@@ -64,12 +65,11 @@ Py Internals closes that gap, visually, for free.
 |---|---------|--------|----------|
 | 01 | [Variables & Mutability](https://inboxpraveen.github.io/Py-Internals/sessions/01-variables/) | ✅ Live | Names vs objects, rebinding, aliasing, mutation, GC |
 | 02 | [Functions & Scope](https://inboxpraveen.github.io/Py-Internals/sessions/02-functions/) | ✅ Live | Call stack, frames, LEGB rule, argument binding, closures, `nonlocal` |
-| 03 | Lists & References | 📋 Planned | Shallow copy, deep copy, list internals |
-| 04 | Dictionaries | 📋 Planned | Hash tables, key lookup, collision |
-| 05 | Classes & Objects | 📋 Planned | `__init__`, `self`, method binding, `__dict__` |
-| 06 | Iterators & Generators | 📋 Planned | `__iter__`, `__next__`, `yield`, lazy evaluation |
-| 07 | Decorators | 📋 Planned | First-class functions, wrapper pattern, `functools` |
-| 08 | The GIL & Concurrency | 📋 Planned | GIL, threads vs processes, `asyncio` |
+| 03 | [Lists, Dicts & References](https://inboxpraveen.github.io/Py-Internals/sessions/03-lists-dicts/) | ✅ Live | Container references, aliasing, shallow copy, nested mutation |
+| 04 | Classes & Objects | 📋 Planned | `__init__`, `self`, method binding, `__dict__` |
+| 05 | Iterators & Generators | 📋 Planned | `__iter__`, `__next__`, `yield`, lazy evaluation |
+| 06 | Decorators | 📋 Planned | First-class functions, wrapper pattern, `functools` |
+| 07 | The GIL & Concurrency | 📋 Planned | GIL, threads vs processes, `asyncio` |
 
 ---
 
@@ -100,9 +100,12 @@ Py-Internals/
     ├── 01-variables/
     │   ├── index.html           ← Session page (imports shared CSS/JS)
     │   └── session.js           ← Demo definitions and step data
-    └── 02-functions/
-        ├── index.html           ← Function calls, scope, closures
-        └── session.js           ← Call-stack demo definitions
+    ├── 02-functions/
+    │   ├── index.html           ← Function calls, scope, closures
+    │   └── session.js           ← Call-stack demo definitions
+    └── 03-lists-dicts/
+        ├── index.html           ← Lists, dicts, copies, nested references
+        └── session.js           ← Container reference demo definitions
 ```
 
 ---

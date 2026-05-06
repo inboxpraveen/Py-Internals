@@ -213,6 +213,7 @@
 .type-chip--dict  { background: #FCEBfc; color: var(--clr-type-dict); border: 1px solid #F0C5F0; }
 .type-chip--tuple { background: #EBfCFC; color: var(--clr-type-tuple); border: 1px solid #C5F0F0; }
 .type-chip--set   { background: #FCF5EB; color: var(--clr-type-set);  border: 1px solid #F0E0C5; }
+.type-chip--function { background: #EEF2FF; color: var(--clr-type-function); border: 1px solid #C7D2FE; }
 
 /* ── Callout Boxes ────────────────────────────────────────── */
 .callout {
