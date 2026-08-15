@@ -537,6 +537,8 @@
         <button class="demo-pill" data-demo="defaultArgs" onclick="switchDemo('defaultArgs')">5 · Mutable defaults</button>
       </div>
 
+      <div class="demo-watch" id="demoWatch"></div>
+
       <div class="stage" id="stage">
         <div class="stage__code-panel">
           <div class="panel-header panel-header--dark">
@@ -596,7 +598,7 @@
         </div>
       </div>
 
-      <div class="explanation-strip">
+      <div class="explanation-strip" aria-live="polite">
         <div class="explanation-strip__step-num" id="stepNum">1</div>
         <div class="explanation-strip__content">
           <h3 id="stepTitle" class="explanation-text">Initial state - only the global frame exists</h3>
@@ -808,6 +810,24 @@
               Immutable defaults such as numbers and strings are safe to share.
             </div>
           </div>
+        </div>
+
+        <div class="try-this">
+          <div class="try-this__label">Try this in a REPL</div>
+          <p>
+            Define <code>def add_item(item, bag=[]): bag.append(item); return bag</code>,
+            then call it twice with <code>"a"</code> and <code>"b"</code>. Print both results.
+            Then inspect <code>add_item.__defaults__</code> — that is the shared list.
+          </p>
+        </div>
+
+        <div class="recap-box">
+          <div class="recap-box__label">What you should be able to draw</div>
+          <p>
+            A function object on the heap, a call frame that appears and disappears,
+            parameters as extra names for the caller's objects, and — for closures —
+            remembered outer names that outlive the outer frame.
+          </p>
         </div>
       </div>
     </article>

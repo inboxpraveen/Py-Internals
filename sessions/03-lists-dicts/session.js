@@ -39,6 +39,7 @@ const EMPTY_MEMORY = {
 
 const DEMOS = {
   listAlias: {
+    watch: 'Both names show the same list address. Mutation through one is visible through the other.',
     code: `nums = [10, 20]
 same = nums
 
@@ -150,6 +151,7 @@ print(nums is same)`,
   },
 
   shallowCopy: {
+    watch: 'The outer list is new. Nested objects keep the same address — that is what “shallow” means.',
     code: `original = [[1], [2]]
 copy = original.copy()
 
@@ -296,6 +298,7 @@ print(copy)`,
   },
 
   functionDict: {
+    watch: 'Mutation through the parameter is visible to the caller. Rebinding the parameter is not.',
     code: `def add_score(scores):
     scores["math"].append(95)
     scores = {"math": []}
@@ -450,6 +453,7 @@ print(new_book)`,
   },
 
   dictAlias: {
+    watch: 'A dict value can be a list. That list is still one object, reachable from every alias.',
     code: `profile = {"name": "Ada", "skills": ["Python"]}
 alias = profile
 
@@ -583,6 +587,7 @@ print(alias is profile)`,
   },
 
   deepCopy: {
+    watch: 'Nested objects get new addresses. Independence costs a full walk of the tree.',
     code: `import copy
 original = [[1]]
 shallow = original.copy()
@@ -712,10 +717,15 @@ function switchDemo(demoKey) {
   const demo = DEMOS[demoKey];
   if (!demo) return;
 
+  if (PJ.Session && PJ.Session.setWatch) PJ.Session.setWatch(demo.watch);
+
   const codePanel = document.getElementById('codePanel');
   PJ.Syntax.render(demo.code, codePanel);
 
-  if (currentAnimator) currentAnimator.pause();
+  if (currentAnimator) {
+    currentAnimator.pause();
+    if (currentAnimator.unmount) currentAnimator.unmount();
+  }
 
   currentAnimator = new PJ.Animator({
     steps: demo.steps,

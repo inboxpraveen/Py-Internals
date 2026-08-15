@@ -323,8 +323,65 @@
       line-height: var(--lh-loose);
     }
 
+    .course-path {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: var(--sp-3);
+      margin-top: var(--sp-6);
+    }
+
+    .course-path__step {
+      background: var(--clr-surface);
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius-lg);
+      padding: var(--sp-4);
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: border-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+    }
+
+    .course-path__step:hover {
+      border-color: var(--clr-accent);
+      transform: translateY(-2px);
+    }
+
+    .course-path__num {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--clr-accent);
+      margin-bottom: var(--sp-2);
+    }
+
+    .course-path__title {
+      font-family: var(--font-display);
+      font-size: var(--fs-sm);
+      font-weight: 600;
+      margin-bottom: var(--sp-1);
+    }
+
+    .course-path__idea {
+      font-size: var(--fs-xs);
+      color: var(--clr-text-3);
+      line-height: var(--lh-snug);
+    }
+
+    .last-session-note {
+      margin-top: var(--sp-4);
+      font-size: var(--fs-sm);
+      color: var(--clr-text-3);
+    }
+
+    .last-session-note a { color: var(--clr-accent); }
+
+    @media (max-width: 860px) {
+      .course-path { grid-template-columns: 1fr 1fr; }
+    }
+
     @media (max-width: 640px) {
       .howto-grid { grid-template-columns: 1fr; }
+      .course-path { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 640px) {
@@ -384,6 +441,7 @@
       </a>
       <a href="#sessions" class="btn btn--secondary btn--lg">View All Sessions</a>
     </div>
+    <p class="last-session-note" id="lastSessionNote" hidden></p>
   </section>
 
   <!-- Feature strip -->
@@ -417,7 +475,7 @@
       <div class="howto-card">
         <div class="howto-card__num">01</div>
         <h3>Step the animation</h3>
-        <p>Use <kbd>→</kbd> and <kbd>←</kbd>, or Play. Watch which object appears, which name rebinds, and whether a refcount changes.</p>
+        <p>Use <kbd>→</kbd> and <kbd>←</kbd>, or Play. <kbd>Space</kbd> pauses. <kbd>R</kbd> resets. Watch which object appears, which name rebinds, and whether a refcount changes.</p>
       </div>
       <div class="howto-card">
         <div class="howto-card__num">02</div>
@@ -429,6 +487,33 @@
         <h3>Check yourself</h3>
         <p>Every session ends with a short quiz. If an answer surprises you, rewind the demo. The <a href="glossary.html" style="color:var(--clr-accent)">glossary</a> is there when a term is fuzzy.</p>
       </div>
+    </div>
+    <div class="course-path" aria-label="How the five live sessions connect">
+      <a class="course-path__step" href="sessions/01-variables/">
+        <div class="course-path__num">01</div>
+        <div class="course-path__title">Names</div>
+        <div class="course-path__idea">A name points at an object. Rebind vs mutate.</div>
+      </a>
+      <a class="course-path__step" href="sessions/02-functions/">
+        <div class="course-path__num">02</div>
+        <div class="course-path__title">Frames</div>
+        <div class="course-path__idea">Calls create temporary namespaces on a stack.</div>
+      </a>
+      <a class="course-path__step" href="sessions/03-lists-dicts/">
+        <div class="course-path__num">03</div>
+        <div class="course-path__title">Containers</div>
+        <div class="course-path__idea">Slots are references. Copies have a depth.</div>
+      </a>
+      <a class="course-path__step" href="sessions/04-classes/">
+        <div class="course-path__num">04</div>
+        <div class="course-path__title">Objects</div>
+        <div class="course-path__idea">Data on the instance, behavior on the class.</div>
+      </a>
+      <a class="course-path__step" href="sessions/05-iterators/">
+        <div class="course-path__num">05</div>
+        <div class="course-path__title">Cursors</div>
+        <div class="course-path__idea">Iterators walk; generators pause a frame.</div>
+      </a>
     </div>
   </section>
 
@@ -510,7 +595,8 @@
         <div class="session-card__title">Classes &amp; Objects</div>
         <div class="session-card__desc">
           What <code>self</code> really is, where attributes live, how method binding works,
-          and why class variables are shared until an instance shadows them.
+          why class variables are shared until an instance shadows them, and how inheritance
+          is just a longer lookup.
         </div>
         <div class="session-card__tags">
           <span class="session-card__tag">class</span>
@@ -518,6 +604,7 @@
           <span class="session-card__tag">__init__</span>
           <span class="session-card__tag">__dict__</span>
           <span class="session-card__tag">bound method</span>
+          <span class="session-card__tag">MRO</span>
         </div>
       </div>
       <svg class="session-card__arrow" width="20" height="20" viewBox="0 0 20 20" fill="none">

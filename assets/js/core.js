@@ -174,6 +174,16 @@ PJ.Core = (function () {
       start.setAttribute('href', sessionHref(target.id));
     }
 
+    const lastNote = document.getElementById('lastSessionNote');
+    if (lastNote) {
+      const lastId = localStorage.getItem('pj_last');
+      const last = PJ.COURSE.find((s) => s.id === lastId);
+      if (last) {
+        lastNote.hidden = false;
+        lastNote.innerHTML = `Last opened: <a href="${sessionHref(last.id)}">Session ${last.num} — ${last.title}</a>`;
+      }
+    }
+
     const chip = document.getElementById('homeProgressChip');
     if (chip) {
       const done = state.completedSessions.filter((id) =>
@@ -219,15 +229,51 @@ PJ.Core = (function () {
       let answered = 0;
       let correct = 0;
 
-      cards.forEach((card) => {
+      cards.forEach((card, index) => {
+        const q = card.querySelector('.quiz-card__q');
+        if (q && !card.querySelector('.quiz-card__head')) {
+          q.innerHTML = q.innerHTML.replace(/^\s*\d+\.\s*/, '');
+          const head = document.createElement('div');
+          head.className = 'quiz-card__head';
+          head.innerHTML =
+            `<span class="quiz-card__num">${index + 1}</span>` +
+            `<span class="quiz-card__kind">Predict the memory</span>` +
+            `<span class="quiz-card__status" hidden></span>`;
+          card.insertBefore(head, q);
+        }
+
+        card.querySelectorAll('.quiz-option').forEach((btn, optIndex) => {
+          if (!btn.querySelector('.quiz-option__key')) {
+            const letter = String.fromCharCode(65 + optIndex);
+            btn.innerHTML =
+              `<span class="quiz-option__key">${letter}</span>` +
+              `<span class="quiz-option__text">${btn.innerHTML}</span>`;
+          }
+        });
+
+        const explain = card.querySelector('.quiz-explain');
+        if (explain && !explain.querySelector('.quiz-explain__label')) {
+          const label = document.createElement('span');
+          label.className = 'quiz-explain__label';
+          label.textContent = 'Why this is the model';
+          explain.insertBefore(label, explain.firstChild);
+        }
+
         const answer = card.dataset.answer;
         card.querySelectorAll('.quiz-option').forEach((btn) => {
           btn.addEventListener('click', () => {
             if (card.classList.contains('is-answered')) return;
             const choice = btn.dataset.choice;
             const isRight = choice === answer;
-            card.classList.add('is-answered');
+            card.classList.add('is-answered', isRight ? 'is-right' : 'is-miss');
             answered += 1;
+
+            const status = card.querySelector('.quiz-card__status');
+            if (status) {
+              status.hidden = false;
+              status.textContent = isRight ? 'Correct' : 'Not quite';
+            }
+
             if (isRight) {
               correct += 1;
               btn.classList.add('is-correct');
@@ -245,12 +291,20 @@ PJ.Core = (function () {
                 score.className = 'quiz-score';
                 quiz.appendChild(score);
               }
-              score.textContent = correct === cards.length
-                ? `All ${cards.length} correct — this mental model is sticking.`
-                : `${correct} of ${cards.length} correct. Re-read the highlighted explanations, then try the lab again.`;
+              const perfect = correct === cards.length;
+              score.classList.toggle('is-perfect', perfect);
+              score.classList.toggle('is-partial', !perfect);
+              score.innerHTML =
+                `<div class="quiz-score__label">Result</div>` +
+                `<h3 class="quiz-score__title">${perfect
+                  ? `All ${cards.length} correct`
+                  : `${correct} of ${cards.length} correct`}</h3>` +
+                `<p>${perfect
+                  ? 'This mental model is sticking. Move on when you can draw the same picture from memory.'
+                  : 'Re-read the teal explanations, then rewind the matching demo and try again.'}</p>`;
 
               const sessionId = quiz.dataset.session || currentSessionId();
-              if (sessionId && correct === cards.length) markSessionComplete(sessionId);
+              if (sessionId && perfect) markSessionComplete(sessionId);
             }
           });
         });
@@ -377,6 +431,18 @@ PJ.Core = (function () {
 })();
 
 PJ.Session = {
+  setWatch(html) {
+    const el = document.getElementById('demoWatch');
+    if (!el) return;
+    if (!html) {
+      el.hidden = true;
+      el.innerHTML = '';
+      return;
+    }
+    el.hidden = false;
+    el.innerHTML = `<span class="demo-watch__label">Watch for</span><span class="demo-watch__text">${html}</span>`;
+  },
+
   mount(options) {
     const demos = options.demos;
     const defaultDemo = options.defaultDemo;
@@ -392,6 +458,8 @@ PJ.Session = {
 
       const demo = demos[demoKey];
       if (!demo) return;
+
+      PJ.Session.setWatch(demo.watch);
 
       const codePanel = document.getElementById('codePanel');
       PJ.Syntax.render(demo.code, codePanel);

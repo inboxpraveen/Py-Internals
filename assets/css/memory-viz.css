@@ -374,3 +374,50 @@
 .dict-key   { color: var(--clr-type-str); font-weight: 600; }
 .dict-colon { color: var(--clr-text-3); }
 .dict-val   { color: var(--clr-type-int); }
+
+.mem-obj__dict-label {
+  padding: var(--sp-1) var(--sp-3) 0;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--clr-text-3);
+}
+
+.mem-obj__dict-empty {
+  padding: var(--sp-1) var(--sp-3) var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--clr-text-3);
+  font-style: italic;
+}
+
+.mem-obj__link {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-3);
+  background: rgba(159, 18, 57, 0.05);
+  border-bottom: 1px solid var(--clr-border);
+  font-size: var(--fs-xs);
+}
+
+.mem-obj__link-key {
+  color: var(--clr-type-class);
+  font-weight: 700;
+}
+
+.mem-obj__link-arrow { color: var(--clr-text-3); }
+
+.mem-obj__link-val {
+  color: var(--clr-text-2);
+  font-weight: 600;
+}
+
+.mem-obj__note {
+  padding: var(--sp-2) var(--sp-3);
+  font-size: 10px;
+  line-height: 1.45;
+  color: var(--clr-text-3);
+  border-top: 1px dashed var(--clr-border);
+  font-family: var(--font-body);
+}

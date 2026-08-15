@@ -72,7 +72,7 @@ Py Internals closes that gap, visually, for free.
 | 01 | [Variables & Mutability](https://inboxpraveen.github.io/Py-Internals/sessions/01-variables/) | ✅ Live | Names vs objects, rebinding, aliasing, mutation, GC |
 | 02 | [Functions & Scope](https://inboxpraveen.github.io/Py-Internals/sessions/02-functions/) | ✅ Live | Call stack, frames, LEGB, closures, mutable defaults |
 | 03 | [Lists, Dicts & References](https://inboxpraveen.github.io/Py-Internals/sessions/03-lists-dicts/) | ✅ Live | Aliasing, shallow copy, deep copy, nested mutation |
-| 04 | [Classes & Objects](https://inboxpraveen.github.io/Py-Internals/sessions/04-classes/) | ✅ Live | `self`, `__init__`, `__dict__`, class vs instance, bound methods |
+| 04 | [Classes & Objects](https://inboxpraveen.github.io/Py-Internals/sessions/04-classes/) | ✅ Live | `self`, `__init__`, `__dict__`, class vs instance, bound methods, MRO |
 | 05 | [Iterators & Generators](https://inboxpraveen.github.io/Py-Internals/sessions/05-iterators/) | ✅ Live | `iter` / `next`, `yield`, suspended frames, lazy vs eager |
 | 06 | Decorators | 📋 Planned | First-class functions, wrapper pattern, `functools` |
 | 07 | The GIL & Concurrency | 📋 Planned | GIL, threads vs processes, `asyncio` |

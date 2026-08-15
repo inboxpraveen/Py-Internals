@@ -36,10 +36,17 @@ const EMPTY = {
 
 const DEMOS = {
   forLoop: {
+    watch: 'A second object appears — the iterator — with a cursor. The list stays put.',
     code: `nums = [10, 20]
 for n in nums:
     print(n)`,
     steps: [
+      {
+        title: 'Initial state — nothing to loop over yet',
+        desc: 'A <code>for</code> loop will need two objects: the collection, and a separate iterator that remembers position.',
+        lines: [],
+        memory: EMPTY,
+      },
       {
         title: 'A list is iterable — it is not itself the iterator',
         desc: 'The list object holds the values. A <code>for</code> loop will ask the list for a <strong>separate iterator</strong> that remembers how far it has walked.',
@@ -152,11 +159,18 @@ for n in nums:
   },
 
   explicit: {
+    watch: 'You hold the iterator. <code>next()</code> only moves that cursor. The list does not walk itself.',
     code: `nums = [10, 20]
 it = iter(nums)
 a = next(it)
 b = next(it)`,
     steps: [
+      {
+        title: 'Initial state — the protocol is not running yet',
+        desc: 'This demo writes out what <code>for</code> hides: <code>iter</code>, then <code>next</code>, then <code>next</code> again.',
+        lines: [],
+        memory: EMPTY,
+      },
       {
         title: 'Same list, but you hold the iterator yourself',
         desc: 'This is the protocol <code>for</code> uses, written out. <code>iter(nums)</code> asks the list for an iterator object.',
@@ -230,6 +244,7 @@ b = next(it)`,
   },
 
   generator: {
+    watch: 'The frame sleeps inside the generator. Local <code>n</code> survives between <code>next</code> calls.',
     code: `def count_up():
     n = 1
     yield n
@@ -240,6 +255,12 @@ g = count_up()
 a = next(g)
 b = next(g)`,
     steps: [
+      {
+        title: 'Initial state — no generator yet',
+        desc: 'A function that contains <code>yield</code> is special: calling it will return a generator object instead of running the body.',
+        lines: [],
+        memory: EMPTY,
+      },
       {
         title: '<code>def count_up</code> creates a generator function',
         desc: 'Because the body contains <code>yield</code>, calling this function will <em>not</em> run the body. It will return a generator object.',
@@ -321,10 +342,17 @@ b = next(g)`,
   },
 
   lazy: {
+    watch: 'The list already holds both squares. The generator has not computed the second one.',
     code: `eager = [x * x for x in [2, 3]]
 lazy = (x * x for x in [2, 3])
 first = next(lazy)`,
     steps: [
+      {
+        title: 'Initial state — two recipes, two different heap costs',
+        desc: 'Eager evaluation pays for every result up front. Lazy evaluation pays per <code>next</code>.',
+        lines: [],
+        memory: EMPTY,
+      },
       {
         title: 'A list comprehension builds every value now',
         desc: '<code>eager</code> is a list object that already holds <code>4</code> and <code>9</code>. The work is done. Memory holds the full result.',

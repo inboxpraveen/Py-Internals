@@ -806,6 +806,8 @@
         </div>
       </div>
 
+      <div class="demo-watch" id="demoWatch"></div>
+
       <!-- Stage: Code + Memory -->
       <div class="stage" id="stage">
 
@@ -880,7 +882,7 @@
       </div>
 
       <!-- Explanation strip -->
-      <div class="explanation-strip">
+      <div class="explanation-strip" aria-live="polite">
         <div class="explanation-strip__step-num" id="stepNum">1</div>
         <div class="explanation-strip__content">
           <h3 id="stepTitle" class="explanation-text">Initial state — empty namespace</h3>
@@ -1443,6 +1445,22 @@
               <strong>Mutable objects</strong> need careful handling when passed around — anyone with a reference can change the object.
             </div>
           </div>
+        </div>
+
+        <div class="try-this">
+          <div class="try-this__label">Try this in a REPL</div>
+          <p>
+            <code>a = [1, 2]; b = a; print(a is b)</code> then <code>b = a.copy(); print(a is b)</code>.
+            First <code>True</code> (alias), then <code>False</code> (new list).
+          </p>
+        </div>
+
+        <div class="recap-box">
+          <div class="recap-box__label">What you should be able to draw</div>
+          <p>
+            A namespace of names, heap objects with identities, and arrows for references.
+            Rebinding moves an arrow. Mutation changes the object the arrows already point at.
+          </p>
         </div>
       </div>
 

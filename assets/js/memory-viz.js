@@ -254,7 +254,7 @@ PJ.MemoryViz = class {
     el.appendChild(header);
 
     // Value / items. Class, instance, method, and generator objects
-    // may show a short label plus optional key/value pairs (__dict__).
+    // may show a type link, a short label, and optional key/value pairs.
     const pairTypes = ['dict', 'class', 'instance', 'method', 'generator', 'iterator'];
     if (obj.type === 'list' || obj.type === 'tuple' || obj.type === 'set') {
       el.appendChild(this._renderCollectionItems(obj));
@@ -265,12 +265,55 @@ PJ.MemoryViz = class {
         valEl.innerHTML = this._renderValueHTML(obj.value, obj.type);
         el.appendChild(valEl);
       }
+      if (obj.classRef) {
+        el.appendChild(this._renderLinkRow('__class__', obj.classRef));
+      }
+      if (obj.bases && obj.bases.length) {
+        obj.bases.forEach((base) => {
+          el.appendChild(this._renderLinkRow('__bases__', base));
+        });
+      }
       if (obj.pairs && (pairTypes.includes(obj.type) || obj.type === 'dict')) {
+        const dictLabel = obj.dictLabel || this._defaultDictLabel(obj.type);
+        if (dictLabel) {
+          const lab = document.createElement('div');
+          lab.className = 'mem-obj__dict-label';
+          lab.textContent = dictLabel;
+          el.appendChild(lab);
+        }
         el.appendChild(this._renderDict(obj));
       }
     }
 
+    if (obj.note) {
+      const note = document.createElement('div');
+      note.className = 'mem-obj__note';
+      note.textContent = obj.note;
+      el.appendChild(note);
+    }
+
     return el;
+  }
+
+  _defaultDictLabel(type) {
+    if (type === 'class') return 'class namespace';
+    if (type === 'instance') return 'instance __dict__';
+    if (type === 'method') return 'bound method';
+    if (type === 'generator' || type === 'iterator') return 'internal state';
+    return '';
+  }
+
+  _renderLinkRow(key, ref) {
+    const row = document.createElement('div');
+    row.className = 'mem-obj__link';
+    const name = ref.name || ref.label || '';
+    const pyId = ref.pyId || '';
+    row.innerHTML = `
+      <span class="mem-obj__link-key">${key}</span>
+      <span class="mem-obj__link-arrow">→</span>
+      <span class="mem-obj__link-val">${name}${pyId ? ' @ ' + pyId : ''}</span>
+    `;
+    return row;
   }
 
   _renderCollectionItems(obj) {
@@ -290,7 +333,15 @@ PJ.MemoryViz = class {
 
   _renderDict(obj) {
     const wrap = document.createElement('div');
-    (obj.pairs || []).forEach(pair => {
+    const pairs = obj.pairs || [];
+    if (pairs.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'mem-obj__dict-empty';
+      empty.textContent = '(empty)';
+      wrap.appendChild(empty);
+      return wrap;
+    }
+    pairs.forEach(pair => {
       const row = document.createElement('div');
       row.className = 'mem-obj__dict-row';
       row.innerHTML = `

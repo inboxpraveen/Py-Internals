@@ -45,6 +45,8 @@
       <a href="#self" class="sidebar__item" onclick="scrollToSection('#self')">self &amp; __init__</a>
       <a href="#lookup" class="sidebar__item" onclick="scrollToSection('#lookup')">Attribute lookup</a>
       <a href="#methods" class="sidebar__item" onclick="scrollToSection('#methods')">Bound methods</a>
+      <a href="#inherit" class="sidebar__item" onclick="scrollToSection('#inherit')">Inheritance</a>
+      <a href="#mistakes" class="sidebar__item" onclick="scrollToSection('#mistakes')">Common mistakes</a>
       <a href="#quiz" class="sidebar__item" onclick="scrollToSection('#quiz')">Check yourself</a>
     </div>
     <div class="sidebar__section">
@@ -71,8 +73,8 @@
         Python stops feeling magical.
       </p>
       <div class="session-meta">
-        <div class="session-meta__item">~40 minutes</div>
-        <div class="session-meta__item">4 interactive demos</div>
+        <div class="session-meta__item">~45 minutes</div>
+        <div class="session-meta__item">5 interactive demos</div>
         <div class="session-meta__item">Builds on Sessions 01–03</div>
       </div>
     </div>
@@ -94,6 +96,7 @@
           <span class="type-chip type-chip--method">bound method</span>
           <span class="type-chip type-chip--dict">__dict__</span>
           <span class="type-chip type-chip--function">__init__</span>
+          <span class="type-chip type-chip--class">MRO</span>
         </div>
       </div>
       <div class="learning-card">
@@ -109,7 +112,7 @@
           </div>
           <div class="learning-path__step">
             <span class="learning-path__num">3</span>
-            <span><strong>Reuse earlier rules.</strong> Storing a list on <code>self</code> is still aliasing.</span>
+            <span><strong>Reuse earlier rules.</strong> Storing a list on <code>self</code> is still aliasing. Inheritance is just a longer lookup.</span>
           </div>
         </div>
       </div>
@@ -122,6 +125,7 @@
           <h2>Follow a class from definition to a method call</h2>
           <p>
             The memory panel shows the class object, instances, and call frames.
+            Each instance has a <code>__class__</code> link back to its type.
             Pair labels such as <code>__self__ -&gt; 0x7f...</code> are teaching labels for references.
           </p>
         </div>
@@ -142,7 +146,7 @@
 
       <div class="mem-legend" aria-label="How to read the memory diagram">
         <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--stack"></span> Call stack — names, including <code>self</code></div>
-        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--heap"></span> Heap — class, instance, method objects</div>
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--heap"></span> Heap — class, instance, method. <code>__class__</code> is the type link</div>
         <div class="mem-legend__item"><kbd>→</kbd> next <kbd>←</kbd> back <kbd>Space</kbd> play <kbd>R</kbd> reset</div>
       </div>
 
@@ -151,7 +155,10 @@
         <button class="demo-pill" data-demo="classAttr" onclick="switchDemo('classAttr')">2 · Class vs instance</button>
         <button class="demo-pill" data-demo="method" onclick="switchDemo('method')">3 · Bound methods</button>
         <button class="demo-pill" data-demo="sharedMut" onclick="switchDemo('sharedMut')">4 · Mutable on self</button>
+        <button class="demo-pill" data-demo="inherit" onclick="switchDemo('inherit')">5 · Inheritance</button>
       </div>
+
+      <div class="demo-watch" id="demoWatch"></div>
 
       <div class="stage" id="stage">
         <div class="stage__code-panel">
@@ -262,7 +269,8 @@
         <h2>Instance first, then class</h2>
         <p>
           Reading <code>a.lives</code> is a search. Python looks in <code>a.__dict__</code>.
-          If the name is missing, it looks in the class, then along the method resolution order (MRO)
+          If the name is missing, it looks in the class, then along the
+          <a href="../../glossary.html#mro">method resolution order (MRO)</a>
           of base classes. Writing <code>a.score = 10</code> does <em>not</em> search — it writes
           into the instance dict.
         </p>
@@ -338,13 +346,145 @@
             Then compare <code>g.hello.__self__ is g</code>. You should see <code>True</code>.
           </p>
         </div>
+      </div>
+
+      <div id="lookup-class">
+        <div class="section-divider"><div class="section-divider__label">type and __class__</div></div>
+        <h2>Every instance knows its class</h2>
+        <p>
+          An instance does not store a copy of its methods. It stores a link to its class.
+          <code>type(p)</code> and <code>p.__class__</code> are that link. Attribute lookup
+          starts on the instance, then follows this pointer.
+        </p>
+
+        <div class="reference-map" aria-label="Instance points at its class">
+          <div class="reference-map__row">
+            <div class="reference-map__name">p</div>
+            <div class="reference-map__arrow">-&gt;</div>
+            <div class="reference-map__object">
+              Point() @ 0x7f720010
+              <span class="reference-map__slot">__class__ -&gt; Point</span>
+              <span class="reference-map__slot">__dict__ { x, y }</span>
+            </div>
+          </div>
+          <div class="reference-map__row">
+            <div class="reference-map__name">Point</div>
+            <div class="reference-map__arrow">-&gt;</div>
+            <div class="reference-map__object">
+              class Point @ 0x7f7100a0
+              <span class="reference-map__slot">__init__ -&gt; function</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rule-grid">
+          <div class="rule-card">
+            <div class="rule-card__label">Allocate</div>
+            <h3><code>__new__</code> creates the instance</h3>
+            <p>
+              Calling <code>Point(3, 4)</code> first asks the class to allocate an object.
+              You almost never write <code>__new__</code>. The instance exists before <code>__init__</code> runs.
+            </p>
+          </div>
+          <div class="rule-card">
+            <div class="rule-card__label">Initialize</div>
+            <h3><code>__init__</code> fills it in</h3>
+            <p>
+              <code>__init__</code> receives that object as <code>self</code> and writes attributes.
+              It returns <code>None</code>. The caller receives the instance, not the return value of <code>__init__</code>.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div id="inherit">
+        <div class="section-divider"><div class="section-divider__label">Inheritance</div></div>
+        <h2>A subclass does not copy methods</h2>
+        <p>
+          <code>class Dog(Animal)</code> creates a new class object and records <code>Animal</code>
+          in <code>__bases__</code>. The method resolution order (MRO) is the search list:
+          <code>Dog → Animal → object</code>. <code>d.speak</code> walks that list.
+        </p>
+
+        <div class="lookup-path" aria-label="Lookup path for d.speak">
+          <div class="lookup-path__step is-miss">
+            <span class="lookup-path__where">1 · d</span>
+            <span>instance <code>__dict__</code></span>
+            <span class="lookup-path__result">miss</span>
+          </div>
+          <div class="lookup-path__step is-miss">
+            <span class="lookup-path__where">2 · Dog</span>
+            <span>class namespace — <code>pass</code> copied nothing</span>
+            <span class="lookup-path__result">miss</span>
+          </div>
+          <div class="lookup-path__step is-hit">
+            <span class="lookup-path__where">3 · Animal</span>
+            <span>finds <code>speak</code>, then binds <code>self</code> to <code>d</code></span>
+            <span class="lookup-path__result">hit</span>
+          </div>
+        </div>
+
+        <div class="callout callout--info">
+          <div class="callout__icon">Model</div>
+          <div>
+            <div class="callout__title"><code>self</code> is still the subclass instance</div>
+            <div class="callout__body">
+              The function was found on <code>Animal</code>, but the bound method remembers <code>d</code>.
+              That is how a base method can read subclass attributes: it receives the actual instance.
+              If <code>Dog</code> later defines its own <code>speak</code>, lookup stops there.
+            </div>
+          </div>
+        </div>
+
+        <div class="try-this">
+          <div class="try-this__label">Try this in a REPL</div>
+          <p>
+            After the inheritance demo, print <code>Dog.__mro__</code> and <code>d.speak.__func__ is Animal.speak</code>.
+            You should see the search order and <code>True</code>.
+          </p>
+        </div>
+      </div>
+
+      <div id="mistakes">
+        <div class="section-divider"><div class="section-divider__label">Pitfalls</div></div>
+        <h2>The bugs this model prevents</h2>
+        <p>
+          Most “weird OOP” bugs are the same three rules colliding: lookup vs assignment,
+          shared class objects, and aliasing through <code>self</code>.
+        </p>
+
+        <div class="mistake-list">
+          <div class="mistake-item">
+            <h3>A list on the class is one list for every instance</h3>
+            <p>
+              <code>class Team: members = []</code> then <code>a.members.append("Ada")</code> mutates
+              the class attribute. Lookup found the shared list; mutation changed it.
+              Put <code>self.members = []</code> inside <code>__init__</code> instead.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3><code>self.items = items</code> does not copy</h3>
+            <p>
+              Demo 4 is Session 03 in a new costume. If the caller still holds the list,
+              <code>append</code> on the instance is visible outside. Copy when you need a private container.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Methods are not copied onto each instance</h3>
+            <p>
+              Creating a thousand <code>Point</code> objects does not create a thousand <code>__init__</code>
+              functions. Instances share the class. That is why <code>__class__</code> matters.
+            </p>
+          </div>
+        </div>
 
         <div class="recap-box">
           <div class="recap-box__label">What you should be able to draw</div>
           <p>
-            A class object with methods on it. One or more instances with their own <code>__dict__</code>.
-            A bound method that points at both. And <code>self</code> in a call frame pointing at the same instance
-            the caller used.
+            A class object with methods (and maybe class attributes). Instances with their own
+            <code>__dict__</code> and a <code>__class__</code> arrow back to the class.
+            A bound method that points at both. A subclass with <code>__bases__</code> and an empty
+            namespace. And <code>self</code> in a call frame pointing at the same instance the caller used.
           </p>
         </div>
       </div>
@@ -382,6 +522,26 @@
         <button class="quiz-option" data-choice="2">Because <code>"Ada"</code> is assigned to <code>self</code></button>
         <div class="quiz-explain">
           Attribute access on the instance creates a bound method. The call only needs the remaining arguments.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="1">
+        <div class="quiz-card__q">4. <code>class Team: members = []</code> then <code>a = Team(); b = Team(); a.members.append("Ada")</code>. What is <code>b.members</code>?</div>
+        <button class="quiz-option" data-choice="0"><code>[]</code> — each instance got its own list</button>
+        <button class="quiz-option" data-choice="1"><code>["Ada"]</code> — lookup found the shared class list, then mutation changed it</button>
+        <button class="quiz-option" data-choice="2">An error, because instances cannot see class attributes</button>
+        <div class="quiz-explain">
+          Reading <code>a.members</code> misses on the instance and finds the class list. <code>append</code> mutates that one object. Put <code>self.members = []</code> in <code>__init__</code>.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="2">
+        <div class="quiz-card__q">5. <code>d</code> is a <code>Dog()</code> and <code>speak</code> is defined only on <code>Animal</code>. Where does <code>d.speak</code> come from?</div>
+        <button class="quiz-option" data-choice="0">Python copied <code>speak</code> onto <code>d</code> at construction</button>
+        <button class="quiz-option" data-choice="1">It lives on <code>Dog</code> because subclasses inherit by copying</button>
+        <button class="quiz-option" data-choice="2">Lookup misses on <code>d</code> and <code>Dog</code>, finds the function on <code>Animal</code>, then binds <code>self</code> to <code>d</code></button>
+        <div class="quiz-explain">
+          Inheritance is a search path (<code>__class__</code>, then <code>__bases__</code> / the MRO). The bound method still remembers the subclass instance.
         </div>
       </div>
     </section>

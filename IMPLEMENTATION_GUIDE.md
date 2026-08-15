@@ -215,7 +215,7 @@ touch sessions/02-functions/session.js
 
 ### Step 2: Copy the HTML shell
 
-Prefer Session 04 or 05 as the template — they load `session.css` and boot with `PJ.Session.mount`. Use Session 02 if you need a call stack, or Session 03 for container/reference topics. Replace:
+Prefer Session 04 or 05 as the template — they load `session.css` and boot with `PJ.Session.mount`. Session 04 is the richest object-model example (`classRef`, `bases`, inheritance). Use Session 02 if you need a call stack, or Session 03 for container/reference topics. Replace:
 - `<title>` — update session name
 - `<meta name="description">` — describe the session
 - `.session-hero__eyebrow` — e.g., "Foundations · Session 02"
@@ -482,6 +482,52 @@ For dicts, use `pairs` and the same label convention when a value points to a ne
 ```
 
 When explaining this to learners, say "at the Python level, think of this slot/value as referring to another object." This gives the right mental model without introducing C structs or implementation-specific storage details.
+
+### Classes, instances, and lookup links
+
+Session 04 uses extra snapshot fields so learners can see type links without stuffing them into `__dict__`:
+
+```js
+{
+  id: 'pInst',
+  pyId: ADDRS.pInst,
+  type: 'instance',
+  value: 'Point()',
+  refcount: 1,
+  mutable: true,
+  classRef: { name: 'Point', pyId: ADDRS.PointCls },  // type(p)
+  dictLabel: 'instance __dict__',                     // optional caption
+  pairs: [{ key: 'x', value: 3, type: 'int' }],
+  note: 'empty __dict__ — lookup walks to the class', // optional footer
+}
+```
+
+On a subclass, show bases instead of copying methods:
+
+```js
+{
+  id: 'DogCls',
+  type: 'class',
+  value: 'class Dog',
+  bases: [{ name: 'Animal', pyId: ADDRS.AnimalCls }],
+  pairs: [],
+  note: 'speak is not copied here',
+}
+```
+
+`classRef` and `bases` are teaching links for `__class__` / `__bases__`. Count them in `refcount` when you want the diagram to show that instances keep the class alive.
+
+### Demo "Watch for" hints
+
+Each demo may include a `watch` HTML string. `PJ.Session.mount` writes it into `#demoWatch`. Older sessions can call `PJ.Session.setWatch(demo.watch)` from their own `switchDemo`.
+
+```js
+create: {
+  watch: 'Find <code>self</code> and <code>p</code>. Same address means the same instance.',
+  code: `...`,
+  steps: [ /* ... */ ],
+}
+```
 
 ### Memory address conventions
 

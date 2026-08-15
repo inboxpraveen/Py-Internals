@@ -606,6 +606,8 @@
         <button class="demo-pill" data-demo="deepCopy" onclick="switchDemo('deepCopy')">5 · Deep copy</button>
       </div>
 
+      <div class="demo-watch" id="demoWatch"></div>
+
       <div class="stage" id="stage">
         <div class="stage__code-panel">
           <div class="panel-header panel-header--dark">
@@ -665,7 +667,7 @@
         </div>
       </div>
 
-      <div class="explanation-strip">
+      <div class="explanation-strip" aria-live="polite">
         <div class="explanation-strip__step-num" id="stepNum">1</div>
         <div class="explanation-strip__content">
           <h3 id="stepTitle" class="explanation-text">Initial state - no names, no list yet</h3>
@@ -932,6 +934,22 @@
             <h3>Choose the copy depth intentionally</h3>
             <p>Use assignment for sharing, shallow copy for a new outer container, and deep copy only when nested independence is truly required.</p>
           </div>
+        </div>
+
+        <div class="try-this">
+          <div class="try-this__label">Try this in a REPL</div>
+          <p>
+            <code>a = [[1]]; b = a.copy(); b[0].append(2); print(a)</code>.
+            Then repeat with <code>copy.deepcopy</code>. Shallow shares the inner list; deep does not.
+          </p>
+        </div>
+
+        <div class="recap-box">
+          <div class="recap-box__label">What you should be able to draw</div>
+          <p>
+            Container slots as arrows to other objects. Aliases sharing one outer object.
+            A shallow copy as a new outer box holding the same inner arrows.
+          </p>
         </div>
       </div>
     </article>

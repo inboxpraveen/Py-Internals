@@ -59,10 +59,36 @@
     }
     .term a { color: var(--clr-accent); }
     .term.is-hidden { display: none; }
+    .term.is-target {
+      outline: 2px solid var(--clr-accent);
+      outline-offset: 6px;
+      border-radius: var(--radius-md);
+    }
     .glossary-empty {
       display: none;
       color: var(--clr-text-3);
       font-size: var(--fs-sm);
+    }
+    .glossary-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sp-2);
+      margin: calc(var(--sp-4) * -1) 0 var(--sp-8);
+    }
+    .glossary-filter {
+      padding: var(--sp-1) var(--sp-3);
+      border-radius: var(--radius-full);
+      border: 1.5px solid var(--clr-border);
+      background: var(--clr-surface);
+      font-size: var(--fs-xs);
+      font-weight: 600;
+      color: var(--clr-text-2);
+      cursor: pointer;
+    }
+    .glossary-filter.is-active {
+      background: var(--clr-accent);
+      border-color: var(--clr-accent);
+      color: white;
     }
     .footer {
       text-align: center;
@@ -93,150 +119,186 @@
     Short definitions for the words this course uses again and again.
     Search, then jump back into the session that shows the idea in memory.
   </p>
-  <input class="glossary__search" id="glossarySearch" type="search" placeholder="Search terms — alias, frame, yield…" autocomplete="off" />
+  <input class="glossary__search" id="glossarySearch" type="search" placeholder="Search terms — alias, frame, yield, MRO…" autocomplete="off" />
+  <div class="glossary-filters" id="glossaryFilters" role="tablist" aria-label="Filter by topic">
+    <button type="button" class="glossary-filter is-active" data-filter="all">All</button>
+    <button type="button" class="glossary-filter" data-filter="objects">Objects</button>
+    <button type="button" class="glossary-filter" data-filter="functions">Functions</button>
+    <button type="button" class="glossary-filter" data-filter="containers">Containers</button>
+    <button type="button" class="glossary-filter" data-filter="classes">Classes</button>
+    <button type="button" class="glossary-filter" data-filter="iteration">Iteration</button>
+  </div>
   <p class="glossary-empty" id="glossaryEmpty">No terms match that search.</p>
 
-  <section class="glossary-group">
+  <section class="glossary-group" data-group="objects">
     <h2>Objects and names</h2>
-    <article class="term" data-terms="name variable namespace binding">
+    <article class="term" id="name" data-terms="name variable namespace binding">
       <h3>Name</h3>
       <p>A label in a namespace, such as <code>x</code>. It does not store a value. It points at an object. See <a href="sessions/01-variables/">Session 01</a>.</p>
     </article>
-    <article class="term" data-terms="object heap value">
+    <article class="term" id="object" data-terms="object heap value">
       <h3>Object</h3>
       <p>Everything in Python is an object: numbers, strings, lists, functions, classes, instances. An object has identity, a type, and a value. Objects live on the heap.</p>
     </article>
-    <article class="term" data-terms="reference pointer bind">
+    <article class="term" id="reference" data-terms="reference pointer bind">
       <h3>Reference</h3>
       <p>The connection from a name (or a container slot) to an object. Assignment creates or changes a reference. It does not copy the object unless you ask for a copy.</p>
     </article>
-    <article class="term" data-terms="identity id is">
+    <article class="term" id="identity" data-terms="identity id is">
       <h3>Identity</h3>
       <p>Which object something is, not what it looks like. <code>id(x)</code> and <code>x is y</code> test identity. Two names with the same identity are aliases.</p>
     </article>
-    <article class="term" data-terms="equality == value">
+    <article class="term" id="equality" data-terms="equality == value">
       <h3>Equality</h3>
       <p><code>==</code> asks whether two objects have the same value. They can be equal and still be different objects.</p>
     </article>
-    <article class="term" data-terms="alias aliasing share">
+    <article class="term" id="aliasing" data-terms="alias aliasing share">
       <h3>Aliasing</h3>
       <p>Two or more names (or slots) pointing at the same object. Mutations through any alias are visible to all of them.</p>
     </article>
-    <article class="term" data-terms="rebinding assignment =">
+    <article class="term" id="rebinding" data-terms="rebinding assignment =">
       <h3>Rebinding</h3>
       <p><code>x = something_else</code> makes the name point at a different object. The old object is unchanged; it just loses one reference.</p>
     </article>
-    <article class="term" data-terms="mutation mutate append in-place">
+    <article class="term" id="mutation" data-terms="mutation mutate append in-place">
       <h3>Mutation</h3>
       <p>Changing an object in place without creating a new one. <code>lst.append(1)</code> mutates. The object's <code>id()</code> stays the same.</p>
     </article>
-    <article class="term" data-terms="mutable immutable">
+    <article class="term" id="mutable" data-terms="mutable immutable">
       <h3>Mutable / immutable</h3>
       <p>A mutable object can change its contents (<code>list</code>, <code>dict</code>, <code>set</code>, instances). An immutable object cannot (<code>int</code>, <code>str</code>, <code>tuple</code>). “Changing” an immutable name always rebinds.</p>
     </article>
-    <article class="term" data-terms="refcount reference count garbage collection gc">
+    <article class="term" id="refcount" data-terms="refcount reference count garbage collection gc">
       <h3>Reference count</h3>
       <p>How many names or containers currently point at an object. In CPython, when this hits zero the object is freed immediately. Cycles need a separate collector.</p>
     </article>
-    <article class="term" data-terms="interning small int cache">
+    <article class="term" id="interning" data-terms="interning small int cache">
       <h3>Interning</h3>
       <p>CPython reuses some immutable objects, especially small integers (typically -5 to 256) and some strings. That is an optimization, not a language rule. Do not write code that depends on it.</p>
     </article>
   </section>
 
-  <section class="glossary-group">
+  <section class="glossary-group" data-group="functions">
     <h2>Functions and scope</h2>
-    <article class="term" data-terms="function object def">
+    <article class="term" id="function" data-terms="function object def">
       <h3>Function object</h3>
       <p><code>def</code> creates a function object and binds a name to it. The body does not run at definition time. See <a href="sessions/02-functions/">Session 02</a>.</p>
     </article>
-    <article class="term" data-terms="frame call stack">
+    <article class="term" id="frame" data-terms="frame call stack">
       <h3>Frame</h3>
       <p>The temporary workspace for one function call: local names, the current line, and the path back to the caller. Frames stack; the top one is running.</p>
     </article>
-    <article class="term" data-terms="legb scope local enclosing global builtin">
+    <article class="term" id="legb" data-terms="legb scope local enclosing global builtin">
       <h3>LEGB</h3>
       <p>Name lookup order: Local, Enclosing function scopes, Global, Built-ins. Assignment creates a local name unless you declare <code>global</code> or <code>nonlocal</code>.</p>
     </article>
-    <article class="term" data-terms="argument parameter pass by object">
+    <article class="term" id="argument" data-terms="argument parameter pass by object">
       <h3>Argument binding</h3>
       <p>A parameter is a local name bound to the object the caller passed. Python does not copy that object. Mutating it is visible to the caller; rebinding the parameter is not.</p>
     </article>
-    <article class="term" data-terms="closure nonlocal cell">
+    <article class="term" id="closure" data-terms="closure nonlocal cell">
       <h3>Closure</h3>
       <p>An inner function plus the outer names it still needs after the outer call returns. <code>nonlocal</code> updates a remembered outer name instead of creating a new local.</p>
     </article>
-    <article class="term" data-terms="default argument mutable default">
+    <article class="term" id="default" data-terms="default argument mutable default">
       <h3>Default argument</h3>
       <p>Default values are created once, when the function is defined, and stored on the function object. A mutable default is shared across calls — a classic surprise.</p>
     </article>
   </section>
 
-  <section class="glossary-group">
+  <section class="glossary-group" data-group="containers">
     <h2>Containers</h2>
-    <article class="term" data-terms="container list dict slot">
+    <article class="term" id="container" data-terms="container list dict slot">
       <h3>Container</h3>
       <p>An object whose contents are references to other objects. Lists, dicts, tuples, and sets are containers. See <a href="sessions/03-lists-dicts/">Session 03</a>.</p>
     </article>
-    <article class="term" data-terms="shallow copy copy">
+    <article class="term" id="shallow-copy" data-terms="shallow copy copy">
       <h3>Shallow copy</h3>
       <p>A new outer container filled with the same inner references. <code>list.copy()</code> and <code>dict.copy()</code> are shallow. Nested objects stay shared.</p>
     </article>
-    <article class="term" data-terms="deep copy deepcopy">
+    <article class="term" id="deep-copy" data-terms="deep copy deepcopy">
       <h3>Deep copy</h3>
       <p>A recursive copy of nested objects. Use it only when you need nested independence. Some objects should stay shared on purpose.</p>
     </article>
-    <article class="term" data-terms="hashable key">
+    <article class="term" id="hashable" data-terms="hashable key">
       <h3>Hashable</h3>
       <p>An object with a stable hash, required for dict keys and set elements. Built-in immutables are usually hashable. Lists and dicts are not.</p>
     </article>
   </section>
 
-  <section class="glossary-group">
+  <section class="glossary-group" data-group="classes">
     <h2>Classes</h2>
-    <article class="term" data-terms="class type">
+    <article class="term" id="class" data-terms="class type">
       <h3>Class object</h3>
       <p><code>class</code> creates a class object. It holds methods and class attributes. Calling the class creates an instance. See <a href="sessions/04-classes/">Session 04</a>.</p>
     </article>
-    <article class="term" data-terms="instance object self">
+    <article class="term" id="instance" data-terms="instance object self">
       <h3>Instance</h3>
       <p>An object created by calling a class. It has its own identity and usually its own <code>__dict__</code> for instance attributes.</p>
     </article>
-    <article class="term" data-terms="self">
+    <article class="term" id="self" data-terms="self">
       <h3>self</h3>
       <p>The conventional name for the instance a method is operating on. Python passes it automatically when you write <code>obj.method()</code>.</p>
     </article>
-    <article class="term" data-terms="__dict__ namespace attributes">
+    <article class="term" id="dict" data-terms="__dict__ namespace attributes">
       <h3>__dict__</h3>
       <p>The mapping that stores an object's writable attributes. Instance attributes live on the instance dict. Methods usually live on the class dict.</p>
     </article>
-    <article class="term" data-terms="attribute lookup mro">
+    <article class="term" id="lookup" data-terms="attribute lookup mro">
       <h3>Attribute lookup</h3>
       <p>Python looks on the instance first, then the class, then base classes (the MRO). That is why a class attribute is visible on every instance until one instance shadows it.</p>
     </article>
-    <article class="term" data-terms="bound method method binding">
+    <article class="term" id="bound-method" data-terms="bound method method binding">
       <h3>Bound method</h3>
       <p>Accessing a function on an instance creates a method object that already remembers <code>self</code>. <code>g.hello</code> is not the raw function; it is <code>hello</code> bound to <code>g</code>.</p>
     </article>
+    <article class="term" id="init" data-terms="__init__ constructor initialize">
+      <h3>__init__</h3>
+      <p>The initializer. After the instance exists, Python calls <code>__init__(self, ...)</code> to write attributes. It returns <code>None</code>. The caller receives the instance, not that return value. See <a href="sessions/04-classes/">Session 04</a>.</p>
+    </article>
+    <article class="term" id="new" data-terms="__new__ allocate">
+      <h3>__new__</h3>
+      <p>The allocator. Calling a class first creates the instance, then initializes it. You almost never override <code>__new__</code>. The important picture: the object exists before <code>__init__</code> runs.</p>
+    </article>
+    <article class="term" id="class-attr" data-terms="class attribute class variable shared">
+      <h3>Class attribute</h3>
+      <p>A name stored on the class object. Every instance can read it until it assigns the same name on itself. A mutable class attribute (a list on the class) is one shared object.</p>
+    </article>
+    <article class="term" id="instance-attr" data-terms="instance attribute shadow">
+      <h3>Instance attribute</h3>
+      <p>A name stored in the instance <code>__dict__</code>. Assignment on an instance usually creates one of these. It shadows a class attribute of the same name for that instance only.</p>
+    </article>
+    <article class="term" id="mro" data-terms="mro method resolution order bases inheritance">
+      <h3>MRO</h3>
+      <p>Method resolution order: the list of classes Python searches for an attribute. For <code>class Dog(Animal)</code> it is <code>Dog → Animal → object</code>. Subclasses do not copy methods; they walk this list.</p>
+    </article>
+    <article class="term" id="class-link" data-terms="__class__ type">
+      <h3>__class__ / type()</h3>
+      <p>The instance's link to its class. <code>type(p) is Point</code> and <code>p.__class__ is Point</code> are the same idea. Lookup follows this pointer after the instance dict misses.</p>
+    </article>
   </section>
 
-  <section class="glossary-group">
+  <section class="glossary-group" data-group="iteration">
     <h2>Iteration</h2>
-    <article class="term" data-terms="iterable iter">
+    <article class="term" id="iterable" data-terms="iterable iter">
       <h3>Iterable</h3>
       <p>An object you can loop over. It can produce an iterator via <code>iter(obj)</code>. Lists, strings, dicts, and generators are iterable. See <a href="sessions/05-iterators/">Session 05</a>.</p>
     </article>
-    <article class="term" data-terms="iterator next">
+    <article class="term" id="iterator" data-terms="iterator next">
       <h3>Iterator</h3>
       <p>An object with state that yields one item at a time through <code>next()</code>. When it is exhausted it raises <code>StopIteration</code>. A <code>for</code> loop hides this protocol.</p>
     </article>
-    <article class="term" data-terms="generator yield suspend">
+    <article class="term" id="generator" data-terms="generator yield suspend">
       <h3>Generator</h3>
       <p>A function that uses <code>yield</code>. Calling it does not run the body; it returns a generator object. Each <code>next()</code> resumes a suspended frame until the next <code>yield</code>.</p>
     </article>
-    <article class="term" data-terms="lazy evaluation">
+    <article class="term" id="lazy" data-terms="lazy evaluation">
       <h3>Lazy evaluation</h3>
       <p>Work is done only when the next value is requested. A generator expression keeps one pending computation; a list comprehension builds every value immediately.</p>
+    </article>
+    <article class="term" id="stopiteration" data-terms="stopiteration exhausted">
+      <h3>StopIteration</h3>
+      <p>The signal that an iterator is exhausted. A <code>for</code> loop catches it and exits. The collection is unchanged; the iterator is spent. A new <code>for</code> on a list creates a new iterator. A generator does not rewind.</p>
     </article>
   </section>
 </main>
@@ -250,12 +312,17 @@
   const input = document.getElementById('glossarySearch');
   const terms = [...document.querySelectorAll('.term')];
   const empty = document.getElementById('glossaryEmpty');
-  input.addEventListener('input', () => {
+  const filters = [...document.querySelectorAll('.glossary-filter')];
+  let activeGroup = 'all';
+
+  function applyFilter() {
     const q = input.value.trim().toLowerCase();
     let shown = 0;
     terms.forEach((el) => {
+      const group = el.closest('.glossary-group')?.dataset.group;
+      const inGroup = activeGroup === 'all' || group === activeGroup;
       const hay = (el.dataset.terms + ' ' + el.innerText).toLowerCase();
-      const match = !q || hay.includes(q);
+      const match = inGroup && (!q || hay.includes(q));
       el.classList.toggle('is-hidden', !match);
       if (match) shown += 1;
     });
@@ -264,7 +331,28 @@
       group.style.display = any ? '' : 'none';
     });
     empty.style.display = shown ? 'none' : 'block';
+  }
+
+  input.addEventListener('input', applyFilter);
+  filters.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      activeGroup = btn.dataset.filter;
+      filters.forEach((b) => b.classList.toggle('is-active', b === btn));
+      applyFilter();
+    });
   });
+
+  const hash = decodeURIComponent((location.hash || '').slice(1)).toLowerCase();
+  if (hash) {
+    const target = document.getElementById(hash) || terms.find((el) => {
+      const title = el.querySelector('h3')?.textContent.toLowerCase() || '';
+      return title === hash || (el.dataset.terms || '').toLowerCase().split(/\s+/).includes(hash);
+    });
+    if (target) {
+      target.classList.add('is-target');
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
 </script>
 </body>
 </html>

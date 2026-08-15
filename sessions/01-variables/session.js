@@ -31,6 +31,7 @@ const DEMOS = {
      ║  Demo 1 — Basic Variable Assignment                   ║
      ╚═══════════════════════════════════════════════════════╝ */
   basic: {
+    watch: 'A name appears, then an object. The name does not contain the value — it points at it.',
     code: `x = 42
 y = "hello"
 z = 3.14
@@ -151,6 +152,7 @@ print(id(z))   # yet another address`,
      ║  Demo 2 — Rebinding                                   ║
      ╚═══════════════════════════════════════════════════════╝ */
   rebind: {
+    watch: 'The name moves to a new object. The old object loses a reference — watch the refcount.',
     code: `x = 42
 print(id(x))    # 0x7f10a0c0
 
@@ -284,6 +286,7 @@ print(id(x))    # 0x7f10a0c0 — same address as line 1!`,
      ║  Demo 3 — Aliasing                                    ║
      ╚═══════════════════════════════════════════════════════╝ */
   aliasing: {
+    watch: 'Two names, one list. Same address. <code>append</code> through either name changes the same object.',
     code: `a = [1, 2, 3]
 b = a             # b is an ALIAS, not a copy!
 
@@ -458,6 +461,7 @@ print(a is b)     # True — same identity`,
      ║  Demo 4 — Mutation vs Rebinding                       ║
      ╚═══════════════════════════════════════════════════════╝ */
   mutation: {
+    watch: '<code>append</code> keeps the same address. <code>nums = ...</code> creates a new list and moves the name.',
     code: `nums = [10, 20, 30]
 print(id(nums))       # 0x7f60f010
 
@@ -663,12 +667,17 @@ function switchDemo(demoKey) {
   const demo = DEMOS[demoKey];
   if (!demo) return;
 
+  if (PJ.Session && PJ.Session.setWatch) PJ.Session.setWatch(demo.watch);
+
   /* Render code */
   const codePanel = document.getElementById('codePanel');
   PJ.Syntax.render(demo.code, codePanel);
 
   /* Tear down previous animator */
-  if (currentAnimator) currentAnimator.pause();
+  if (currentAnimator) {
+    currentAnimator.pause();
+    if (currentAnimator.unmount) currentAnimator.unmount();
+  }
 
   /* Build new animator */
   currentAnimator = new PJ.Animator({

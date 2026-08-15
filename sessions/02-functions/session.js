@@ -39,6 +39,7 @@ const EMPTY_MEMORY = {
 
 const DEMOS = {
   call: {
+    watch: 'A new frame appears on top, then disappears on return. Locals die with the frame.',
     code: `def add(a, b):
     total = a + b
     return total
@@ -159,6 +160,7 @@ answer = add(2, 3)`,
   },
 
   scope: {
+    watch: 'Assignment creates a local name, even if a global has the same spelling.',
     code: `message = "global"
 
 def show():
@@ -270,6 +272,7 @@ print(message)`,
   },
 
   mutableArgs: {
+    watch: 'The parameter points at the caller\'s list. <code>append</code> is visible outside; <code>items = ...</code> is not.',
     code: `def add_item(items):
     items.append("notebook")
     return items
@@ -407,6 +410,7 @@ print(bag is same_bag)`,
   },
 
   closure: {
+    watch: 'The inner function still sees <code>count</code> after the outer call returns. That remembered name is the closure.',
     code: `def make_counter():
     count = 0
 
@@ -578,6 +582,7 @@ value = counter()`,
   },
 
   defaultArgs: {
+    watch: 'The empty list lives on the function object. Each call that omits <code>bag</code> mutates that same list.',
     code: `def add_item(item, bag=[]):
     bag.append(item)
     return bag
@@ -682,10 +687,15 @@ function switchDemo(demoKey) {
   const demo = DEMOS[demoKey];
   if (!demo) return;
 
+  if (PJ.Session && PJ.Session.setWatch) PJ.Session.setWatch(demo.watch);
+
   const codePanel = document.getElementById('codePanel');
   PJ.Syntax.render(demo.code, codePanel);
 
-  if (currentAnimator) currentAnimator.pause();
+  if (currentAnimator) {
+    currentAnimator.pause();
+    if (currentAnimator.unmount) currentAnimator.unmount();
+  }
 
   currentAnimator = new PJ.Animator({
     steps: demo.steps,

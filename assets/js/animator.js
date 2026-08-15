@@ -112,7 +112,7 @@ PJ.Animator = class {
     this.steps.forEach((step, i) => {
       const dot = document.createElement('span');
       dot.className = 'step-track__dot';
-      dot.title = step.title || `Step ${i + 1}`;
+      dot.title = String(step.title || `Step ${i + 1}`).replace(/<[^>]+>/g, '');
       dot.addEventListener('click', () => this.goTo(i));
 
       if (i < this.steps.length - 1) {

@@ -151,6 +151,8 @@
         <button class="demo-pill" data-demo="lazy" onclick="switchDemo('lazy')">4 · Lazy vs eager</button>
       </div>
 
+      <div class="demo-watch" id="demoWatch"></div>
+
       <div class="stage" id="stage">
         <div class="stage__code-panel">
           <div class="panel-header panel-header--dark">
@@ -337,6 +339,18 @@
           </p>
         </div>
 
+        <div class="callout callout--warn">
+          <div class="callout__icon">Care</div>
+          <div>
+            <div class="callout__title">Exhausted is a state on the iterator, not the collection</div>
+            <div class="callout__body">
+              After a <code>for</code> loop, the list is still there. The hidden iterator is spent.
+              A second <code>for nums</code> creates a <em>new</em> iterator. A second loop over the
+              same generator object does not — generators are their own iterator and do not rewind.
+            </div>
+          </div>
+        </div>
+
         <div class="recap-box">
           <div class="recap-box__label">What you should be able to draw</div>
           <p>
@@ -380,6 +394,16 @@
         <button class="quiz-option" data-choice="2">The generator is an iterator that exhausted itself; it does not rewind</button>
         <div class="quiz-explain">
           A generator's <code>iter()</code> returns itself. After <code>StopIteration</code>, there is nothing left to yield unless you create a new generator.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="0">
+        <div class="quiz-card__q">4. Right after <code>eager = [x*x for x in [2, 3]]</code> and <code>lazy = (x*x for x in [2, 3])</code>, what exists on the heap?</div>
+        <button class="quiz-option" data-choice="0">A full list of two squares, and a generator that has not computed them yet</button>
+        <button class="quiz-option" data-choice="1">Nothing — both wait until you loop</button>
+        <button class="quiz-option" data-choice="2">Two identical lists; the parentheses are only style</button>
+        <div class="quiz-explain">
+          Square brackets are eager. Parentheses make a generator expression. Memory cost is the difference.
         </div>
       </div>
     </section>
