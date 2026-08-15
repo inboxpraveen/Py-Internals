@@ -357,7 +357,7 @@
       font-size: var(--fs-lg);
       line-height: var(--lh-loose);
       color: var(--clr-text-2);
-      margin-bottom: var(--sp-8);
+      margin-bottom: var(--sp-5);
     }
 
     .mental-model {
@@ -671,9 +671,9 @@
       <div class="session-hero__eyebrow">Foundations · Session 01</div>
       <h1 class="session-hero__title">Variables &amp; Mutability</h1>
       <p class="session-hero__subtitle">
-        What really happens when you write <code>x = 42</code>?
-        Why can you change a list but not a string?
-        We'll trace every step — through Python's memory, through references, through time.
+        <code>x = 42</code> is not putting a number in a box. It is sticking a nametag
+        on something that already lives in memory. Two nametags can share one thing.
+        We will start there, then get precise about identity, mutation, and references.
       </p>
       <div class="session-meta">
         <div class="session-meta__item">
@@ -706,12 +706,12 @@
       <div class="learning-card">
         <div class="learning-card__label">Learning goal</div>
         <h2 class="learning-card__title" id="learning-overview-title">
-          Build the mental model before memorizing rules.
+          A variable is a nametag, not a box.
         </h2>
         <p class="learning-card__body">
-          This session has one central idea: Python variables are names pointing at objects.
-          Once that is clear, identity, mutation, aliasing, and garbage collection all become
-          much easier to reason about.
+          Start there. <code>x</code> does not hold 42 — it points at an object that is 42.
+          Once that feels natural, the technical words (identity, mutation, aliasing, refcount)
+          are just names for things you can already see.
         </p>
         <div class="concept-chip-row" aria-label="Concepts covered">
           <span class="type-chip type-chip--int" style="font-family:var(--font-body);text-transform:none">Names vs objects</span>
@@ -752,8 +752,9 @@
           <div class="stage-intro__label">Interactive lab</div>
           <h2 id="stage-title">Follow one idea at a time</h2>
           <p>
-            Choose a demo, then move line by line. The left panel shows the Python code.
-            The right panel shows the namespace and heap objects Python is managing behind the scenes.
+            Choose a demo, then move line by line. Left: the Python you wrote.
+            Right: the nametags and the objects they stick to. Same address means
+            the same thing — two notes, one object.
           </p>
         </div>
         <div class="stage-intro__hint">
@@ -900,40 +901,47 @@
 
       <h2>What is a variable in Python?</h2>
 
-      <p class="narrative-lede">
-        The easiest way to understand Python variables is to separate three things:
-        the <strong>name</strong> in a namespace, the <strong>object</strong> on the heap,
-        and the <strong>reference</strong> connecting them.
+      <p class="in-plain">
+        <span class="in-plain__label">In plain words</span>
+        Imagine a sticky note that says <code>x</code>. The note is not the number.
+        It is stuck on a real thing sitting in memory. Two notes can sit on the same thing.
+        Moving a note does not change the thing — it just points the note somewhere else.
+      </p>
+
+      <p class="narrative-lede then-precise">
+        The precise model has three parts: the <strong>name</strong> (the sticky note),
+        the <strong>object</strong> (the thing in memory), and the <strong>reference</strong>
+        (the stickiness connecting them).
       </p>
 
       <div class="mental-model">
         <div class="mental-model__card">
           <h3>1. Name</h3>
           <p>
-            A variable name such as <code>x</code> lives in a namespace. It is a label,
-            not a storage box.
+            The label you type, such as <code>x</code>. It lives in a namespace.
+            It is not a storage box.
           </p>
         </div>
         <div class="mental-model__card">
           <h3>2. Object</h3>
           <p>
-            Values such as <code>42</code>, <code>"hello"</code>, and <code>[1, 2, 3]</code>
-            are objects stored on the heap.
+            The actual value: <code>42</code>, <code>"hello"</code>, <code>[1, 2, 3]</code>.
+            These live on the heap and each has its own identity.
           </p>
         </div>
         <div class="mental-model__card">
           <h3>3. Reference</h3>
           <p>
-            Assignment connects the name to the object. More than one name can reference
-            the same object.
+            The connection. Assignment sticks a name onto an object.
+            More than one name can share one object.
           </p>
         </div>
       </div>
 
       <p>
-        In many languages, a variable is often explained as a named box in memory.
-        Python's model is different. When you write <code>x = 42</code>, Python creates
-        or finds an integer object, then binds the name <code>x</code> to that object.
+        Many languages teach a variable as a named box that contains a value.
+        Python is different. When you write <code>x = 42</code>, Python creates or finds
+        an integer object, then binds the name <code>x</code> to it.
         The name does not contain the number; it points at the object that represents it.
       </p>
 
@@ -951,11 +959,16 @@
 
       <h2>What is <code>id()</code>?</h2>
 
-      <p>
-        Every object in Python has a unique identity: its memory address (or a proxy for it).
-        The built-in function <code>id(x)</code> returns this address as an integer.
-        Two variables with the <strong>same <code>id()</code> point to the exact same object</strong> —
-        no copy was made.
+      <p class="in-plain">
+        <span class="in-plain__label">In plain words</span>
+        <code>id()</code> answers: “are these two names looking at the <em>same</em> thing,
+        or just two things that happen to look alike?” Same id means one object, two nametags.
+      </p>
+
+      <p class="then-precise">
+        Every object has a unique identity — in CPython, a stand-in for its memory address.
+        <code>id(x)</code> returns that as an integer. Two names with the
+        <strong>same <code>id()</code> point to the exact same object</strong>. No copy was made.
       </p>
 
       <div class="code-block">
@@ -994,9 +1007,16 @@
         <div class="section-divider"><div class="section-divider__label">Mutable or Immutable</div></div>
         <h2>Can the object itself change?</h2>
 
-        <p>
-          Once a name points to an object, the next question is whether that object can change in-place.
-          This is the difference between immutable and mutable types.
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Some things you can edit (a shopping list). Some things you can only replace
+          (a printed number). If you “change” a number, Python throws the old one away
+          and points your name at a new one.
+        </p>
+
+        <p class="then-precise">
+          That is mutability. Once a name points at an object, ask: can this object change
+          in place, or must a “change” create a different object?
         </p>
 
         <div class="rule-grid">
@@ -1036,10 +1056,17 @@
         <div class="section-divider"><div class="section-divider__label">Reference Counting</div></div>
         <h2>How Python tracks when to free memory</h2>
 
-        <p>
-          Every heap object carries a hidden counter: its <strong>reference count</strong>.
-          It records how many names (or containers) currently point to the object.
-          CPython adjusts this counter automatically as variables are bound and unbound.
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Python counts how many nametags are stuck on an object. When you add a name,
+          the count goes up. When you peel one off, it goes down. When the last nametag
+          comes off, Python can throw the object away.
+        </p>
+
+        <p class="then-precise">
+          That hidden counter is the <strong>reference count</strong>. CPython updates it
+          as names and containers are bound and unbound. At zero, the object is freed immediately
+          — unless it is stuck in a cycle, which needs a separate collector.
         </p>
 
         <div class="key-idea">
@@ -1109,9 +1136,16 @@
         <div class="section-divider"><div class="section-divider__label">Mutation vs Rebinding</div></div>
         <h2>The most important distinction in Python</h2>
 
-        <p>
-          Understanding the difference between <strong>mutation</strong> and <strong>rebinding</strong>
-          is the single most useful mental model for reasoning about Python code.
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Did you move the nametag, or did you edit the thing it was stuck to?
+          Moving the nametag leaves other nametags alone. Editing the thing
+          is visible to everyone still pointing at it.
+        </p>
+
+        <p class="then-precise">
+          Those two operations are <strong>rebinding</strong> and <strong>mutation</strong>.
+          Almost every “why did my list change?” bug is mixing them up.
         </p>
 
         <div class="rule-grid">
@@ -1222,8 +1256,13 @@
         <div class="section-divider"><div class="section-divider__label">Python's Built-in Types</div></div>
         <h2>All the Variable Types</h2>
 
-        <p>Python has many built-in types. The most important thing to know about each is:
-           <strong>is it mutable or immutable?</strong></p>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          You do not need to memorize every type today. For each one, ask one question:
+          can I edit this thing, or can I only replace it?
+        </p>
+
+        <p class="then-precise">Python's built-in types differ mainly by <strong>mutability</strong> — and that decides whether a “change” is a mutation or a rebind.</p>
 
         <div class="type-explorer">
 

@@ -364,7 +364,28 @@
   font-size: var(--fs-lg);
   line-height: var(--lh-loose);
   color: var(--clr-text-2);
-  margin-bottom: var(--sp-8);
+  margin-bottom: var(--sp-5);
+}
+
+.in-plain {
+  font-size: var(--fs-md);
+  line-height: var(--lh-loose);
+  color: var(--clr-text);
+  margin: 0 0 var(--sp-5);
+}
+
+.in-plain__label {
+  display: block;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--clr-accent);
+  margin-bottom: var(--sp-2);
+}
+
+.then-precise {
+  color: var(--clr-text-2);
 }
 
 .flow-grid,

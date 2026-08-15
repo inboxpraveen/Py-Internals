@@ -68,9 +68,9 @@
       <div class="session-hero__eyebrow">Objects · Session 04</div>
       <h1 class="session-hero__title">Classes &amp; Objects</h1>
       <p class="session-hero__subtitle">
-        A class is an object. An instance is another object. <code>self</code> is just a name
-        for the instance. Once you see where attributes and methods actually live, object-oriented
-        Python stops feeling magical.
+        Think of a class as a recipe and an instance as one cake. <code>self</code> just means
+        “this cake.” Once you see where the ingredients live versus where the instructions live,
+        object-oriented Python stops feeling magical.
       </p>
       <div class="session-meta">
         <div class="session-meta__item">~45 minutes</div>
@@ -84,11 +84,11 @@
     <section class="learning-overview">
       <div class="learning-card">
         <div class="learning-card__label">Learning goal</div>
-        <h2 class="learning-card__title">Split data and behavior in memory.</h2>
+        <h2 class="learning-card__title">Data on the cake. Instructions on the recipe.</h2>
         <p class="learning-card__body">
-          Instance attributes live on the instance. Methods and class attributes live on the class.
-          <code>self</code> is the instance being passed into a function. Attribute lookup walks
-          instance → class → bases.
+          Each instance keeps its own attributes. Methods are shared on the class — they are not
+          copied onto every object. <code>self</code> is just that instance being passed in.
+          Reading a name walks instance → class → parent classes.
         </p>
         <div class="concept-chip-row">
           <span class="type-chip type-chip--class">class</span>
@@ -124,9 +124,10 @@
           <div class="stage-intro__label">Interactive lab</div>
           <h2>Follow a class from definition to a method call</h2>
           <p>
-            The memory panel shows the class object, instances, and call frames.
-            Each instance has a <code>__class__</code> link back to its type.
-            Pair labels such as <code>__self__ -&gt; 0x7f...</code> are teaching labels for references.
+            Watch the recipe appear, then one cake, then the cake getting its own labels.
+            The memory panel shows class, instance, and call frames. Each instance has a
+            <code>__class__</code> link back to its type. Pair labels such as
+            <code>__self__ -&gt; 0x7f...</code> are teaching labels for references.
           </p>
         </div>
         <div class="stage-intro__hint">
@@ -229,10 +230,16 @@
 
     <article class="narrative">
       <h2 id="self">What is <code>self</code>?</h2>
-      <p class="narrative-lede">
-        <code>self</code> is not a special kind of object. It is the conventional name for
-        <strong>the instance this method is running on</strong>. Python passes it for you
-        when you write <code>p = Point(3, 4)</code> or <code>g.hello("Ada")</code>.
+      <p class="in-plain">
+        <span class="in-plain__label">In plain words</span>
+        <code>self</code> is not a magic keyword. It means “the object I am talking about
+        right now.” When you write <code>p = Point(3, 4)</code>, Python hands that new
+        point into <code>__init__</code> as <code>self</code> so the function can label it.
+      </p>
+      <p class="narrative-lede then-precise">
+        It is the conventional name for <strong>the instance this method is running on</strong>.
+        Python passes it for you on <code>p = Point(3, 4)</code> or <code>g.hello("Ada")</code>.
+        You could spell the first parameter anything; the runtime only cares that it is bound to the instance.
       </p>
 
       <div class="flow-grid">
@@ -267,12 +274,16 @@
       <div id="lookup">
         <div class="section-divider"><div class="section-divider__label">Attribute lookup</div></div>
         <h2>Instance first, then class</h2>
-        <p>
-          Reading <code>a.lives</code> is a search. Python looks in <code>a.__dict__</code>.
-          If the name is missing, it looks in the class, then along the
-          <a href="../../glossary.html#mro">method resolution order (MRO)</a>
-          of base classes. Writing <code>a.score = 10</code> does <em>not</em> search — it writes
-          into the instance dict.
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Reading a name is like asking “does this cake have that label?” If not, ask the recipe.
+          If the recipe inherited from another recipe, keep asking. Writing a name usually
+          just sticks a new label on <em>this</em> cake — it does not edit the shared recipe.
+        </p>
+        <p class="then-precise">
+          Reading <code>a.lives</code> searches <code>a.__dict__</code>, then the class, then the
+          <a href="../../glossary.html#mro">method resolution order (MRO)</a>.
+          Writing <code>a.score = 10</code> does <em>not</em> search — it writes into the instance dict.
         </p>
 
         <div class="rule-grid">
@@ -304,10 +315,16 @@
       <div id="methods">
         <div class="section-divider"><div class="section-divider__label">Methods</div></div>
         <h2>Accessing a function on an instance binds <code>self</code></h2>
-        <p>
-          <code>g.hello</code> is not the function sitting on the class. It is a <strong>bound method</strong>:
-          a small object that remembers the function and the instance. Calling it supplies <code>self</code>
-          automatically. That is why the definition has two parameters and the call appears to pass one.
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          The greeting function lives on the recipe, shared by every greeter.
+          When you say <code>g.hello</code>, Python staples <code>g</code> onto that function
+          so you do not have to pass it yourself. That staple is why the definition has two
+          parameters and the call looks like it passes one.
+        </p>
+        <p class="then-precise">
+          <code>g.hello</code> is a <strong>bound method</strong>: a small object that remembers
+          the function and the instance. Calling it supplies <code>self</code> automatically.
         </p>
 
         <div style="overflow-x:auto">
@@ -351,10 +368,15 @@
       <div id="lookup-class">
         <div class="section-divider"><div class="section-divider__label">type and __class__</div></div>
         <h2>Every instance knows its class</h2>
-        <p>
-          An instance does not store a copy of its methods. It stores a link to its class.
-          <code>type(p)</code> and <code>p.__class__</code> are that link. Attribute lookup
-          starts on the instance, then follows this pointer.
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          A cake does not carry a photocopy of the whole recipe. It carries a note that says
+          “I was made from Point.” When you ask it to do something it does not have on itself,
+          it follows that note back to the recipe.
+        </p>
+        <p class="then-precise">
+          That note is <code>type(p)</code> / <code>p.__class__</code>. Methods stay on the class.
+          Lookup starts on the instance, then follows this pointer.
         </p>
 
         <div class="reference-map" aria-label="Instance points at its class">
@@ -376,6 +398,18 @@
             </div>
           </div>
         </div>
+
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Making a point is two jobs: first get a blank cake tin, then write the
+          ingredients on it. You almost never handle the tin yourself.
+          <code>Point(3, 4)</code> does both, then hands you the finished cake.
+        </p>
+        <p class="then-precise">
+          Those jobs are <code>__new__</code> (allocate) and <code>__init__</code> (initialize).
+          The instance exists before <code>__init__</code> runs. <code>__init__</code> returns
+          <code>None</code> — the caller receives the instance, not that return value.
+        </p>
 
         <div class="rule-grid">
           <div class="rule-card">
@@ -400,10 +434,17 @@
       <div id="inherit">
         <div class="section-divider"><div class="section-divider__label">Inheritance</div></div>
         <h2>A subclass does not copy methods</h2>
-        <p>
-          <code>class Dog(Animal)</code> creates a new class object and records <code>Animal</code>
-          in <code>__bases__</code>. The method resolution order (MRO) is the search list:
-          <code>Dog → Animal → object</code>. <code>d.speak</code> walks that list.
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          A puppy does not get a photocopied list of every parent trick.
+          If it does not know <code>speak</code>, it asks its parent recipe.
+          The trick still runs on <em>this</em> puppy — not on some generic animal.
+        </p>
+        <p class="then-precise">
+          <code>class Dog(Animal)</code> creates a new class and records <code>Animal</code>
+          in <code>__bases__</code>. The MRO is the search list:
+          <code>Dog → Animal → object</code>. <code>d.speak</code> walks that list, then binds
+          <code>self</code> to <code>d</code>.
         </p>
 
         <div class="lookup-path" aria-label="Lookup path for d.speak">
@@ -448,9 +489,15 @@
       <div id="mistakes">
         <div class="section-divider"><div class="section-divider__label">Pitfalls</div></div>
         <h2>The bugs this model prevents</h2>
-        <p>
-          Most “weird OOP” bugs are the same three rules colliding: lookup vs assignment,
-          shared class objects, and aliasing through <code>self</code>.
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          If something “weird” happens with a class, ask three everyday questions:
+          did I write on this one object or on the shared recipe? Did I share a list
+          by accident? Did I think each object got its own copy of the methods?
+        </p>
+        <p class="then-precise">
+          Those map to lookup vs assignment, mutable class attributes, and the fact
+          that methods live on the class — plus aliasing through <code>self</code>.
         </p>
 
         <div class="mistake-list">
@@ -481,10 +528,11 @@
         <div class="recap-box">
           <div class="recap-box__label">What you should be able to draw</div>
           <p>
-            A class object with methods (and maybe class attributes). Instances with their own
-            <code>__dict__</code> and a <code>__class__</code> arrow back to the class.
-            A bound method that points at both. A subclass with <code>__bases__</code> and an empty
-            namespace. And <code>self</code> in a call frame pointing at the same instance the caller used.
+            A class (the recipe) with shared methods. Instances (the cakes) with their own
+            <code>__dict__</code> and a <code>__class__</code> arrow back. A bound method
+            that staples the instance onto the function. A subclass with <code>__bases__</code>
+            that asks the parent instead of copying methods. And <code>self</code> in a
+            call frame pointing at the same instance the caller used.
           </p>
         </div>
       </div>
@@ -493,7 +541,7 @@
     <section class="quiz" id="quiz" data-session="04-classes">
       <div class="section-divider"><div class="section-divider__label">Check your understanding</div></div>
       <h2>Can you predict the memory?</h2>
-      <p class="quiz__lede">Answer before you peek. Each question has one best model, not a trick.</p>
+      <p class="quiz__lede">Ask: is this on the cake, on the recipe, or stapled onto a method?</p>
 
       <div class="quiz-card" data-answer="1">
         <div class="quiz-card__q">1. After <code>p = Point(3, 4)</code>, where does the name <code>x</code> live?</div>

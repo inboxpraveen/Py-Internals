@@ -240,7 +240,7 @@
       font-size: var(--fs-lg);
       line-height: var(--lh-loose);
       color: var(--clr-text-2);
-      margin-bottom: var(--sp-8);
+      margin-bottom: var(--sp-5);
     }
 
     .flow-grid,
@@ -430,8 +430,9 @@
       <div class="session-hero__eyebrow">Foundations · Session 02</div>
       <h1 class="session-hero__title">Functions, Scope &amp; the Call Stack</h1>
       <p class="session-hero__subtitle">
-        What happens when Python calls a function? We will trace function objects,
-        call frames, local names, argument references, return values, and closures step by step.
+        Calling a function is like opening a temporary desk, doing the work, then packing it away.
+        We will watch that desk appear — then get precise about function objects, frames,
+        arguments, returns, and closures.
       </p>
       <div class="session-meta">
         <div class="session-meta__item">
@@ -461,12 +462,12 @@
       <div class="learning-card">
         <div class="learning-card__label">Learning goal</div>
         <h2 class="learning-card__title" id="learning-overview-title">
-          See a function call as frames, names, objects, and a return path.
+          A call opens a temporary workspace, then closes it.
         </h2>
         <p class="learning-card__body">
-          Functions feel like a single operation, but Python performs several clear steps:
-          create a function object, create a call frame, bind arguments to local names,
-          run the body, return an object, then remove the frame.
+          That is the everyday picture. The technical steps are: create a function object,
+          create a call frame, bind arguments to local names, run the body, return an object,
+          then remove the frame.
         </p>
         <div class="concept-chip-row">
           <span class="type-chip type-chip--function">function object</span>
@@ -501,10 +502,11 @@
       <section class="stage-intro" aria-labelledby="stage-title">
         <div>
           <div class="stage-intro__label">Interactive lab</div>
-          <h2 id="stage-title">Move through each function behavior</h2>
+          <h2 id="stage-title">Watch the temporary desk appear</h2>
           <p>
-            Pick a demo and step line by line. The memory panel shows the call stack first,
-            then heap objects. The top stack frame is the currently running function.
+            Pick a demo and step line by line. A new call opens a desk on top of the stack.
+            When the function returns, that desk is packed away. The top frame is the
+            function running right now.
           </p>
         </div>
         <div class="stage-intro__hint">
@@ -611,10 +613,16 @@
 
     <article class="narrative" id="narrative">
       <h2 id="call-stack">What happens when Python calls a function?</h2>
-      <p class="narrative-lede">
-        A function call is not magic. Python creates a temporary workspace called a
-        <strong>frame</strong>, runs the function body inside that frame, then removes the frame when
-        the call returns.
+      <p class="in-plain">
+        <span class="in-plain__label">In plain words</span>
+        You write <code>add(2, 3)</code> and expect an answer. Behind the scenes Python
+        opens a short-lived workspace, does the math there, hands the answer back,
+        and throws the workspace away. Locals live on that desk — not forever.
+      </p>
+      <p class="narrative-lede then-precise">
+        That workspace is a <strong>frame</strong>. Python creates it on the call,
+        runs the body inside it, then removes it on return — unless a closure
+        must keep part of it alive.
       </p>
 
       <div class="flow-grid">
@@ -659,10 +667,16 @@
       <div id="scope">
         <div class="section-divider"><div class="section-divider__label">Scope</div></div>
         <h2>Local names are separate from global names</h2>
-        <p>
-          A scope is a place where names are looked up. When code inside a function reads a name,
-          Python searches in a predictable order: local, enclosing function scopes, global, then built-ins.
-          This is commonly called <strong>LEGB</strong>.
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          A name inside a function is not automatically the same as a name outside,
+          even if they are spelled the same. Think of two sticky notes that both say
+          <code>message</code>, stuck on two different desks.
+        </p>
+        <p class="then-precise">
+          A <strong>scope</strong> is where Python looks up a name. Reading searches outward:
+          local, enclosing functions, global, then built-ins — <strong>LEGB</strong>.
+          Assignment creates a local name unless you declare <code>global</code> or <code>nonlocal</code>.
         </p>
 
         <div class="rule-grid">
@@ -700,10 +714,16 @@
       <div id="arguments">
         <div class="section-divider"><div class="section-divider__label">Arguments</div></div>
         <h2>Arguments bind parameter names to existing objects</h2>
-        <p>
-          When you call <code>add_item(bag)</code>, Python does not copy the list. It binds the local
-          parameter name <code>items</code> to the same list object that <code>bag</code> already references.
-          This is why mutations inside a function can affect the caller's object.
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Passing a list into a function is like handing someone the same notebook,
+          not a photocopy. If they write on a page, you will see it.
+          If they put the notebook down and pick up a new one, yours is unchanged.
+        </p>
+        <p class="then-precise">
+          When you call <code>add_item(bag)</code>, Python does not copy the list.
+          It binds the local name <code>items</code> to the same object <code>bag</code> already
+          references. Mutation is visible to the caller. Rebinding the parameter is not.
         </p>
 
         <div style="overflow-x:auto">
@@ -739,10 +759,16 @@
       <div id="closures">
         <div class="section-divider"><div class="section-divider__label">Closures</div></div>
         <h2>Closures let a function remember an outer name</h2>
-        <p>
-          Normally, a function's local frame disappears after return. A closure is the important exception:
-          when an inner function uses a name from an outer function, Python keeps that remembered name alive
-          so the inner function can use it later.
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Usually, when a function finishes, its notes are thrown away.
+          A closure is the exception: an inner function keeps a note from the outer room
+          after that room has closed.
+        </p>
+        <p class="then-precise">
+          When an inner function uses a name from an outer function, Python keeps that
+          remembered name alive. <code>nonlocal</code> updates that remembered name
+          instead of creating a new local.
         </p>
 
         <div class="callout callout--insight">
@@ -795,10 +821,15 @@
       <div id="defaults">
         <div class="section-divider"><div class="section-divider__label">Default arguments</div></div>
         <h2>Mutable defaults are created once</h2>
-        <p>
-          Default argument values are evaluated when the function is <em>defined</em>, then stored on the function object.
-          A new empty list is not created on every call. That is why <code>def add_item(item, bag=[])</code>
-          shares one list across calls.
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          The empty list in <code>def add_item(item, bag=[])</code> is packed when you
+          <em>write</em> the function — not each time you call it. Every call that skips
+          <code>bag</code> reuses that one list, so it keeps growing.
+        </p>
+        <p class="then-precise">
+          Default values are evaluated at definition time and stored on the function object.
+          Immutable defaults (numbers, strings) are safe to share. Mutable ones are the classic surprise.
         </p>
         <div class="callout callout--warn">
           <div class="callout__icon">Care</div>
@@ -835,7 +866,7 @@
     <section class="quiz" id="quiz" data-session="02-functions">
       <div class="section-divider"><div class="section-divider__label">Check your understanding</div></div>
       <h2>Can you predict the memory?</h2>
-      <p class="quiz__lede">Think in frames and object identity, not in “pass by value.”</p>
+      <p class="quiz__lede">Ask which desk the name lives on, and whether two names share one object.</p>
 
       <div class="quiz-card" data-answer="1">
         <div class="quiz-card__q">1. You assign <code>message = "hi"</code> inside a function. There is also a global <code>message</code>. What happens?</div>

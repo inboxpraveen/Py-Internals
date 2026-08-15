@@ -242,7 +242,7 @@
       font-size: var(--fs-lg);
       line-height: var(--lh-loose);
       color: var(--clr-text-2);
-      margin-bottom: var(--sp-8);
+      margin-bottom: var(--sp-5);
     }
 
     .flow-grid,
@@ -498,9 +498,9 @@
       <div class="session-hero__eyebrow">Foundations · Session 03</div>
       <h1 class="session-hero__title">Lists, Dicts &amp; References</h1>
       <p class="session-hero__subtitle">
-        Lists and dictionaries feel simple until aliases, nested objects, and function calls enter the picture.
-        This session shows exactly what Python is tracking: container objects, element references, shared identity,
-        shallow copies, and mutations that travel through every alias.
+        If two variables share a list, changing one changes the other. That is not a bug —
+        they are looking at the same list. This session makes that picture precise:
+        containers, aliases, copies, and mutations that travel.
       </p>
       <div class="session-meta">
         <div class="session-meta__item">
@@ -530,11 +530,12 @@
       <div class="learning-card">
         <div class="learning-card__label">Learning goal</div>
         <h2 class="learning-card__title" id="learning-overview-title">
-          Stop seeing containers as boxes of values. See them as objects full of references.
+          A list is a tray of arrows, not a box of values.
         </h2>
         <p class="learning-card__body">
-          A list or dict is itself an object. Its elements or values are references to other objects.
-          Once that is clear, aliases, nested mutation, shallow copy, and function side effects become predictable.
+          Each slot points at some other object. Two names can share one tray.
+          A cheap copy makes a new tray but keeps the same arrows.
+          Once that feels true, aliases, nested mutation, and function side effects stop being surprises.
         </p>
         <div class="concept-chip-row">
           <span class="type-chip type-chip--list">list</span>
@@ -569,11 +570,11 @@
       <section class="stage-intro" aria-labelledby="stage-title">
         <div>
           <div class="stage-intro__label">Interactive lab</div>
-          <h2 id="stage-title">Follow references through real container code</h2>
+          <h2 id="stage-title">Watch the tray, then the arrows</h2>
           <p>
-            Pick a demo and step line by line. The code panel shows the Python statement being executed.
-            The memory panel shows stack frames first, then heap objects. For nested containers, labels like
-            <code>list -&gt; 0x7f...</code> represent a container slot pointing to another object.
+            Pick a demo and step line by line. Ask: is this a new tray, or the same tray
+            with another nametag? Nested labels such as <code>list -&gt; 0x7f...</code>
+            mean a slot pointing at another object — not a value stuffed inside the list.
           </p>
         </div>
         <div class="stage-intro__hint">
@@ -680,10 +681,16 @@
 
     <article class="narrative" id="narrative">
       <h2 id="containers">A list or dict is a container object</h2>
-      <p class="narrative-lede">
-        The important shift is this: a Python container does not make the objects inside it become part of the
-        container. The container stores references to them. The runtime handles the storage details, but this
-        Python-level model is enough to predict the behavior you see in normal code.
+      <p class="in-plain">
+        <span class="in-plain__label">In plain words</span>
+        Putting <code>99</code> in a list does not swallow the number into the list.
+        The list keeps a pointer that says “slot 0 is over there.” Another name can
+        point at the same list — then both of you are looking at the same tray.
+      </p>
+      <p class="narrative-lede then-precise">
+        A container does not absorb its contents. It stores <strong>references</strong> to other objects.
+        That Python-level model is enough to predict everyday code. You do not need CPython's
+        internal storage layout.
       </p>
 
       <div class="reference-map" aria-label="Reference diagram for a list alias">
@@ -737,9 +744,15 @@
       <div id="copying">
         <div class="section-divider"><div class="section-divider__label">Copying</div></div>
         <h2>Shallow copy copies one container level</h2>
-        <p>
-          The phrase <strong>shallow copy</strong> means Python creates a new outer container and fills it with
-          references to the same inner objects. The outer list or dict is independent. The nested objects are not.
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          A cheap copy is like getting a new folder and putting the <em>same papers</em> in it.
+          The folder is yours. Scribbling on a paper still shows up in the other folder.
+          A deep copy photocopies the papers too.
+        </p>
+        <p class="then-precise">
+          A <strong>shallow copy</strong> creates a new outer container filled with the same inner references.
+          The outer list or dict is independent. Nested objects are shared.
         </p>
 
         <div class="diagram-grid">
@@ -815,10 +828,14 @@
       <div id="functions">
         <div class="section-divider"><div class="section-divider__label">Functions</div></div>
         <h2>Passing a container passes the object reference</h2>
-        <p>
-          Session 2 showed that function parameters are local names. With containers, the local parameter name often
-          points to the same mutable object as the caller's name. Mutating the object is visible to the caller.
-          Rebinding the parameter name is not.
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Hand a function your scorebook and it can write a new score on the page you already have.
+          If it tosses that book aside and starts a blank one, your original book is still on your desk.
+        </p>
+        <p class="then-precise">
+          The parameter is a local name pointing at the same mutable object as the caller.
+          Mutation is visible. Rebinding the parameter is not.
         </p>
 
         <div class="rule-grid">
@@ -861,10 +878,15 @@
       <div id="dicts">
         <div class="section-divider"><div class="section-divider__label">Dictionaries</div></div>
         <h2>Dict keys and values are references too</h2>
-        <p>
-          A dictionary maps keys to values. The keys must be hashable, which usually means immutable for the built-in
-          types you use as keys: strings, integers, tuples of immutable values. The values can be anything, including
-          mutable lists and other dictionaries.
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          A dict is a labeled tray: each label points at some value. The value can be a list
+          you later append to. The label itself has to stay stable — if the key could change
+          after you filed it, Python could not find it again.
+        </p>
+        <p class="then-precise">
+          Keys must be <strong>hashable</strong>, which for built-ins usually means immutable
+          (strings, ints, tuples of immutables). Values can be anything, including mutable lists.
         </p>
 
         <div style="overflow-x:auto">
@@ -947,8 +969,8 @@
         <div class="recap-box">
           <div class="recap-box__label">What you should be able to draw</div>
           <p>
-            Container slots as arrows to other objects. Aliases sharing one outer object.
-            A shallow copy as a new outer box holding the same inner arrows.
+            A tray of arrows, not a box of values. Two nametags on one tray.
+            A cheap copy as a new tray holding the same inner arrows.
           </p>
         </div>
       </div>

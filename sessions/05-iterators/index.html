@@ -65,9 +65,10 @@
       <div class="session-hero__eyebrow">Control flow · Session 05</div>
       <h1 class="session-hero__title">Iterators &amp; Generators</h1>
       <p class="session-hero__subtitle">
-        A <code>for</code> loop is not magic. It asks for an iterator, calls <code>next</code>,
-        and stops on <code>StopIteration</code>. A generator is a function whose frame stays
-        alive between yields — local names included.
+        A <code>for</code> loop is a bookmark walking through a collection.
+        The list stays put; a separate cursor remembers “I am on item 2.”
+        A generator is a function that takes a nap mid-sentence and wakes up
+        where it left off — notes still on the desk.
       </p>
       <div class="session-meta">
         <div class="session-meta__item">~35 minutes</div>
@@ -81,10 +82,12 @@
     <section class="learning-overview">
       <div class="learning-card">
         <div class="learning-card__label">Learning goal</div>
-        <h2 class="learning-card__title">Separate the collection from the cursor.</h2>
+        <h2 class="learning-card__title">The shelf stays. The bookmark moves.</h2>
         <p class="learning-card__body">
-          An iterable can produce an iterator. The iterator is the object with state.
-          A generator is an iterator whose state is a suspended function frame.
+          The collection is the shelf of books. The iterator is the bookmark.
+          A generator is a reader who dozes off mid-page and keeps their finger
+          on the line. Once that feels true, <code>iter</code>, <code>next</code>,
+          and <code>yield</code> are just names for those two objects.
         </p>
         <div class="concept-chip-row">
           <span class="type-chip type-chip--list">iterable</span>
@@ -99,7 +102,7 @@
         <div class="learning-path">
           <div class="learning-path__step">
             <span class="learning-path__num">1</span>
-            <span><strong>Watch the extra object.</strong> The list stays put; a new iterator walks it.</span>
+            <span><strong>Watch the extra object.</strong> The shelf stays put; a new bookmark walks it.</span>
           </div>
           <div class="learning-path__step">
             <span class="learning-path__num">2</span>
@@ -117,10 +120,11 @@
       <section class="stage-intro">
         <div>
           <div class="stage-intro__label">Interactive lab</div>
-          <h2>Watch iteration as objects, not syntax</h2>
+          <h2>Watch the bookmark, not just the loop</h2>
           <p>
-            The iterator's <code>index</code> and the generator's <code>n</code> are teaching labels
-            for internal state. The important idea is that state lives on a separate object.
+            The list does not walk itself. A second object remembers the place.
+            Labels such as <code>index</code> and <code>n</code> are teaching names
+            for that hidden state.
           </p>
         </div>
         <div class="stage-intro__hint">
@@ -222,10 +226,15 @@
 
     <article class="narrative">
       <h2 id="protocol">The iterator protocol</h2>
-      <p class="narrative-lede">
-        Python's loop is three operations: get an iterator, ask for the next object,
-        stop when the iterator is exhausted. Everything that works in a <code>for</code>
-        loop implements that protocol.
+      <p class="in-plain">
+        <span class="in-plain__label">In plain words</span>
+        A <code>for</code> loop is three polite questions: “May I have a bookmark?”
+        “What’s next?” and “Are we done?” When the bookmark says there is nothing
+        left, the loop stops. Anything you can <code>for</code> over answers those questions.
+      </p>
+      <p class="narrative-lede then-precise">
+        Those questions are <code>iter</code>, <code>next</code>, and
+        <code>StopIteration</code>. That trio is the <strong>iterator protocol</strong>.
       </p>
 
       <div class="flow-grid">
@@ -261,10 +270,16 @@
       <div id="yield">
         <div class="section-divider"><div class="section-divider__label">Generators</div></div>
         <h2><code>yield</code> pauses a frame instead of destroying it</h2>
-        <p>
-          A normal function call creates a frame, runs to <code>return</code>, then throws the frame away.
-          A generator function returns a generator object immediately. Each <code>next()</code> resumes
-          that frame until the next <code>yield</code>, then leaves the locals sitting there.
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          A normal function finishes the whole job, then throws its notes away.
+          A generator says “here is one answer” and takes a nap with the notes still out.
+          The next time you ask, it wakes up on the same line.
+        </p>
+        <p class="then-precise">
+          Calling a generator function returns a generator object immediately — it does not
+          run the body yet. Each <code>next()</code> resumes the suspended frame until the
+          next <code>yield</code>. Locals such as <code>n</code> stay alive on that object.
         </p>
 
         <div class="rule-grid">
@@ -295,10 +310,17 @@
       <div id="lazy">
         <div class="section-divider"><div class="section-divider__label">Lazy vs eager</div></div>
         <h2>When does the heap pay for the result?</h2>
-        <p>
-          A list comprehension is eager: every value is created before you use the list.
-          A generator expression is lazy: values appear as you pull them. Neither is always better.
-          Eager gives you length, indexing, and reuse. Lazy saves work and memory when you only need a prefix.
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Baking every cookie before anyone asks is <em>eager</em>. Baking one cookie
+          when someone reaches for the jar is <em>lazy</em>. The first way lets you
+          count the cookies and eat them twice. The second way saves the oven
+          if you only wanted the first two.
+        </p>
+        <p class="then-precise">
+          A list comprehension is eager: every value exists before you use the list.
+          A generator expression is lazy: values appear as you pull them.
+          Eager gives length, indexing, and reuse. Lazy saves work when you only need a prefix.
         </p>
 
         <div style="overflow-x:auto">
@@ -354,7 +376,7 @@
         <div class="recap-box">
           <div class="recap-box__label">What you should be able to draw</div>
           <p>
-            A collection object, a separate iterator with a cursor, and — for generators —
+            A collection (the shelf), a separate iterator (the bookmark), and — for generators —
             a paused frame whose locals survive between yields. If you can draw those three,
             <code>for</code>, <code>yield</code>, and lazy expressions all fit the same picture.
           </p>
@@ -365,7 +387,7 @@
     <section class="quiz" id="quiz" data-session="05-iterators">
       <div class="section-divider"><div class="section-divider__label">Check your understanding</div></div>
       <h2>Can you predict the memory?</h2>
-      <p class="quiz__lede">These are the surprises that show up in real code.</p>
+      <p class="quiz__lede">Ask where the bookmark lives — on the shelf, or on a separate cursor.</p>
 
       <div class="quiz-card" data-answer="1">
         <div class="quiz-card__q">1. In <code>for n in nums</code>, what object remembers how far the loop has gone?</div>
