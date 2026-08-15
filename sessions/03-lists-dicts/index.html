@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="../../assets/css/components.css" />
   <link rel="stylesheet" href="../../assets/css/memory-viz.css" />
   <link rel="stylesheet" href="../../assets/css/animations.css" />
+  <link rel="stylesheet" href="../../assets/css/session.css" />
 
   <style>
     .code-panel-body {
@@ -419,7 +420,8 @@
     </a>
   </div>
   <div class="topbar__actions">
-    <span style="font-size:var(--fs-xs);color:var(--clr-text-3);font-weight:500">Session 03 of 05</span>
+    <a href="../../glossary.html" class="btn btn--ghost btn--sm">Glossary</a>
+    <span style="font-size:var(--fs-xs);color:var(--clr-text-3);font-weight:500" data-role="session-count">Session 03 of 05</span>
   </div>
 </header>
 
@@ -465,6 +467,7 @@
         </svg>
         Dicts
       </a>
+      <a href="#quiz" class="sidebar__item" onclick="scrollTo('#quiz')">Check yourself</a>
     </div>
     <div class="sidebar__section">
       <div class="sidebar__label">Course</div>
@@ -474,6 +477,8 @@
         </svg>
         Previous Session
       </a>
+      <a href="../04-classes/" class="sidebar__item">Next Session</a>
+      <a href="../../glossary.html" class="sidebar__item">Glossary</a>
       <a href="../../index.html" class="sidebar__item">
         <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M3 9L9 3l6 6M5 7v8h8V7"/>
@@ -508,7 +513,7 @@
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M2 7l3 3 7-7"/>
           </svg>
-          4 interactive demos
+          5 interactive demos
         </div>
         <div class="session-meta__item">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -580,11 +585,17 @@
       <div class="demo-guide">
         <div class="demo-guide__step"><span class="demo-guide__badge">1</span> Choose a demo</div>
         <span class="demo-guide__arrow">›</span>
-        <div class="demo-guide__step"><span class="demo-guide__badge">2</span> Step through highlighted code</div>
+        <div class="demo-guide__step"><span class="demo-guide__badge">2</span> Step with <kbd>→</kbd> or Play</div>
         <span class="demo-guide__arrow">›</span>
         <div class="demo-guide__step"><span class="demo-guide__badge">3</span> Watch refcounts and mutation states</div>
         <span class="demo-guide__arrow">›</span>
         <div class="demo-guide__step"><span class="demo-guide__badge">4</span> Read the model below</div>
+      </div>
+
+      <div class="mem-legend" aria-label="How to read the memory diagram">
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--stack"></span> Names / frames</div>
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--heap"></span> Container objects and nested refs</div>
+        <div class="mem-legend__item"><kbd>→</kbd> next <kbd>←</kbd> back <kbd>Space</kbd> play <kbd>R</kbd> reset</div>
       </div>
 
       <div class="demo-selector">
@@ -592,6 +603,7 @@
         <button class="demo-pill" data-demo="shallowCopy" onclick="switchDemo('shallowCopy')">2 · Shallow copy</button>
         <button class="demo-pill" data-demo="functionDict" onclick="switchDemo('functionDict')">3 · Function mutation</button>
         <button class="demo-pill" data-demo="dictAlias" onclick="switchDemo('dictAlias')">4 · Dict aliases</button>
+        <button class="demo-pill" data-demo="deepCopy" onclick="switchDemo('deepCopy')">5 · Deep copy</button>
       </div>
 
       <div class="stage" id="stage">
@@ -924,14 +936,44 @@
       </div>
     </article>
 
+    <section class="quiz" id="quiz" data-session="03-lists-dicts">
+      <div class="section-divider"><div class="section-divider__label">Check your understanding</div></div>
+      <h2>Can you predict the memory?</h2>
+      <p class="quiz__lede">Same address means same object. That rule solves most container bugs.</p>
+
+      <div class="quiz-card" data-answer="0">
+        <div class="quiz-card__q">1. After <code>b = a.copy()</code> on a nested list, what is shared?</div>
+        <button class="quiz-option" data-choice="0">The inner objects — only the outer list is new</button>
+        <button class="quiz-option" data-choice="1">Nothing. Copy always clones every level</button>
+        <button class="quiz-option" data-choice="2">The outer list only; inner lists become integers</button>
+        <div class="quiz-explain">Shallow copy fills the new container with the same references. Use <code>deepcopy</code> when nested independence is required.</div>
+      </div>
+
+      <div class="quiz-card" data-answer="2">
+        <div class="quiz-card__q">2. Why can a list not be a dict key?</div>
+        <button class="quiz-option" data-choice="0">Lists are too large</button>
+        <button class="quiz-option" data-choice="1">Dicts can only store strings</button>
+        <button class="quiz-option" data-choice="2">Lists are mutable, so they are unhashable — a key must have a stable identity for lookup</button>
+        <div class="quiz-explain">If a key could change after insertion, the dict could not find it again. Tuples of immutables are allowed.</div>
+      </div>
+
+      <div class="quiz-card" data-answer="1">
+        <div class="quiz-card__q">3. You pass a dict into a function that does <code>scores["math"].append(95)</code> and then <code>scores = {}</code>. What does the caller see?</div>
+        <button class="quiz-option" data-choice="0">An empty dict — both operations affect the caller</button>
+        <button class="quiz-option" data-choice="1">The appended score, but not the empty dict — mutation is shared, rebinding is local</button>
+        <button class="quiz-option" data-choice="2">Nothing. Function arguments are copies</button>
+        <div class="quiz-explain">The parameter starts as an alias. <code>append</code> mutates the nested list. <code>scores = {}</code> only rebinds the local name.</div>
+      </div>
+    </section>
+
     <div class="session-footer">
       <a href="../02-functions/" class="btn btn--secondary">
         ← Session 02: Functions
       </a>
-      <div style="text-align:center;font-size:var(--fs-xs);color:var(--clr-text-3)">
+      <div style="text-align:center;font-size:var(--fs-xs);color:var(--clr-text-3)" data-role="session-count">
         Session 03 of 05
       </div>
-      <a href="#" class="btn btn--primary" style="opacity:.5;pointer-events:none">
+      <a href="../04-classes/" class="btn btn--primary">
         Session 04: Classes & Objects →
       </a>
     </div>

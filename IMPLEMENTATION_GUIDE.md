@@ -36,7 +36,8 @@ Py-Internals/
 │   │   ├── layout.css          ← App shell, sidebar, stage, hero, narrative
 │   │   ├── components.css      ← Buttons, badges, callouts, type chips, controls
 │   │   ├── memory-viz.css      ← Memory visualizer — stack, heap, objects
-│   │   └── animations.css      ← Keyframes and animation utilities
+│   │   ├── animations.css      ← Keyframes and animation utilities
+│   │   └── session.css         ← Shared session-page layout (overview, lab, tables)
 │   │
 │   └── js/
 │       ├── core.js             ← App init, sidebar, utilities
@@ -50,7 +51,11 @@ Py-Internals/
     │   └── session.js          ← Demo definitions + step data
     ├── 02-functions/           ← Functions, scope, call-stack frames
     ├── 03-lists-dicts/         ← Containers, aliases, shallow copies
+    ├── 04-classes/             ← Instances, self, __dict__, methods
+    ├── 05-iterators/           ← iter/next, yield, lazy evaluation
     └── ...
+
+`glossary.html` at the repo root is the searchable term list. Link it from every session topbar.
 ```
 
 **Rule:** Each session lives in its own folder under `sessions/`.
@@ -69,6 +74,7 @@ Session-specific logic lives only in `session.js`.
 <link rel="stylesheet" href="../../assets/css/components.css" />
 <link rel="stylesheet" href="../../assets/css/memory-viz.css" />
 <link rel="stylesheet" href="../../assets/css/animations.css" />
+<link rel="stylesheet" href="../../assets/css/session.css" />
 ```
 
 ### Design Tokens (in `base.css`)
@@ -148,6 +154,12 @@ Keep these styles session-local until at least one more session needs them uncha
 - **`PJ.Core.formatPyValue(val, type)`** — Formats a value with Python repr (adds quotes for strings, etc.)
 - **`PJ.Core.getTypeColor(type)`** — Returns the CSS variable for a type's color
 - **`PJ.Core.markSessionComplete(id)`** — Saves completion to localStorage
+- **`PJ.Core.scrollToSection(selector)`** — Smooth-scroll helper for sidebar anchors
+- **`PJ.Session.mount({ sessionId, demos, defaultDemo, defaultSpeed })`** — Preferred session bootstrap (wires the lab, keyboard, and completion)
+
+Keyboard playback (once an animator is mounted): `→` next, `←` previous, `Space` play/pause, `R` reset.
+
+Quizzes are plain HTML. Add `<section class="quiz" data-session="NN-topic">` with `.quiz-card` elements. Set `data-answer` to the winning `data-choice`. `PJ.Core` scores them automatically.
 
 ### `PJ.Syntax`
 - **`PJ.Syntax.render(source, container, opts)`** — Highlights Python source and renders numbered lines into `container`
@@ -203,7 +215,7 @@ touch sessions/02-functions/session.js
 
 ### Step 2: Copy the HTML shell
 
-Use Session 01's `index.html` as your template for object/memory sessions, Session 02's `index.html` for sessions that need a call stack, multiple scopes, or function-style flow cards, or Session 03's `index.html` for container/reference topics such as lists, dictionaries, shallow copies, nested mutation, or aliasing. Replace:
+Prefer Session 04 or 05 as the template — they load `session.css` and boot with `PJ.Session.mount`. Use Session 02 if you need a call stack, or Session 03 for container/reference topics. Replace:
 - `<title>` — update session name
 - `<meta name="description">` — describe the session
 - `.session-hero__eyebrow` — e.g., "Foundations · Session 02"
@@ -507,7 +519,7 @@ Use sequential `0x7fXXXX` format. Real CPython addresses look like this.
 <span class="type-chip type-chip--str">str</span>
 <span class="type-chip type-chip--list">list</span>
 <span class="type-chip type-chip--function">function</span>
-<!-- values: int, float, str, bool, none, list, dict, tuple, set, function -->
+<!-- values: int, float, str, bool, none, list, dict, tuple, set, function, class, instance, method, generator, iterator -->
 ```
 
 Use `type: 'function'` in memory snapshots for objects created by `def`. The shared chip style is available in `components.css`.

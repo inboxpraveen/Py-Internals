@@ -24,6 +24,11 @@ const ADDRS = {
   closureDict:  '0x7f440010',
   int0:         '0x7f110000',
   int1:         '0x7f110010',
+
+  addItemDef:   '0x7f2105f0',
+  defaultBag:   '0x7f3300aa',
+  strA:         '0x7f220301',
+  strB:         '0x7f220302',
 };
 
 const EMPTY_MEMORY = {
@@ -567,6 +572,94 @@ value = counter()`,
             { id: 'int1', pyId: ADDRS.int1, type: 'int', value: 1, refcount: 1, mutable: false, state: 'normal' },
           ],
           highlight: ['closureDict', 'int1'],
+        },
+      },
+    ],
+  },
+
+  defaultArgs: {
+    code: `def add_item(item, bag=[]):
+    bag.append(item)
+    return bag
+
+first = add_item("a")
+second = add_item("b")`,
+    steps: [
+      {
+        title: 'The default list is created once, at <code>def</code> time',
+        desc: 'Python evaluates <code>bag=[]</code> when the function is defined, not on each call. That empty list is stored on the function object and reused.',
+        lines: [1, 2, 3],
+        memory: {
+          frames: [{ name: 'global', vars: [
+            { name: 'add_item', ref: 'addItemDef', pyId: ADDRS.addItemDef, type: 'function', state: 'new' },
+          ]}],
+          heap: [
+            { id: 'addItemDef', pyId: ADDRS.addItemDef, type: 'function', value: 'add_item(item, bag=[])', refcount: 1, mutable: false, state: 'new' },
+            { id: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', refcount: 1, mutable: true, state: 'new', items: [] },
+          ],
+          highlight: ['defaultBag', 'addItemDef'],
+        },
+      },
+      {
+        title: 'First call uses the shared default list',
+        desc: '<code>add_item("a")</code> does not create a new list. The local name <code>bag</code> is bound to the default list already sitting on the function. Then <code>append</code> mutates it.',
+        lines: [5],
+        memory: {
+          frames: [
+            { name: 'global', vars: [
+              { name: 'add_item', ref: 'addItemDef', pyId: ADDRS.addItemDef, type: 'function', state: 'normal' },
+            ]},
+            { name: 'add_item(item, bag)', vars: [
+              { name: 'item', ref: 'strA', pyId: ADDRS.strA, type: 'str', state: 'new' },
+              { name: 'bag', ref: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', state: 'new' },
+            ]},
+          ],
+          heap: [
+            { id: 'addItemDef', pyId: ADDRS.addItemDef, type: 'function', value: 'add_item(item, bag=[])', refcount: 1, mutable: false, state: 'normal' },
+            { id: 'strA', pyId: ADDRS.strA, type: 'str', value: 'a', refcount: 1, mutable: false, state: 'new' },
+            { id: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', refcount: 2, mutable: true, state: 'mutated', items: [
+              { value: 'a', type: 'str' },
+            ] },
+          ],
+          highlight: ['defaultBag'],
+        },
+      },
+      {
+        title: '<code>first</code> and the default are the same list',
+        desc: 'The function returns the default list. <code>first</code> is another name for it. The list is no longer empty.',
+        lines: [5],
+        memory: {
+          frames: [{ name: 'global', vars: [
+            { name: 'add_item', ref: 'addItemDef', pyId: ADDRS.addItemDef, type: 'function', state: 'normal' },
+            { name: 'first', ref: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', state: 'new' },
+          ]}],
+          heap: [
+            { id: 'addItemDef', pyId: ADDRS.addItemDef, type: 'function', value: 'add_item(item, bag=[])', refcount: 1, mutable: false, state: 'normal' },
+            { id: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', refcount: 2, mutable: true, state: 'normal', items: [
+              { value: 'a', type: 'str' },
+            ] },
+          ],
+          highlight: ['defaultBag'],
+        },
+      },
+      {
+        title: 'Second call appends to the <em>same</em> default list',
+        desc: '<code>add_item("b")</code> does not start from <code>[]</code>. It mutates the list that already holds <code>"a"</code>. That is why <code>second</code> is <code>["a", "b"]</code> — and so is <code>first</code>.',
+        lines: [6],
+        memory: {
+          frames: [{ name: 'global', vars: [
+            { name: 'add_item', ref: 'addItemDef', pyId: ADDRS.addItemDef, type: 'function', state: 'normal' },
+            { name: 'first', ref: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', state: 'normal' },
+            { name: 'second', ref: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', state: 'new' },
+          ]}],
+          heap: [
+            { id: 'addItemDef', pyId: ADDRS.addItemDef, type: 'function', value: 'add_item(item, bag=[])', refcount: 1, mutable: false, state: 'normal' },
+            { id: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', refcount: 3, mutable: true, state: 'mutated', items: [
+              { value: 'a', type: 'str' },
+              { value: 'b', type: 'str' },
+            ] },
+          ],
+          highlight: ['defaultBag'],
         },
       },
     ],

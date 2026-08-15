@@ -23,6 +23,12 @@ const ADDRS = {
   profileDict:   '0x7f570010',
   skillsList:    '0x7f580010',
   strAda:        '0x7f590010',
+
+  deepOuter:     '0x7f5a0010',
+  deepInner:     '0x7f5a1010',
+  shallowOuter:  '0x7f5a2010',
+  deepCopyOuter: '0x7f5a3010',
+  deepCopyInner: '0x7f5a4010',
 };
 
 const EMPTY_MEMORY = {
@@ -571,6 +577,119 @@ print(alias is profile)`,
             ]},
           ],
           highlight: ['profileDict', 'skillsList'],
+        },
+      },
+    ],
+  },
+
+  deepCopy: {
+    code: `import copy
+original = [[1]]
+shallow = original.copy()
+deep = copy.deepcopy(original)
+original[0].append(2)`,
+    steps: [
+      {
+        title: '<code>original</code> is an outer list holding one inner list',
+        desc: 'Two container objects already. A shallow copy will clone only the outer one. A deep copy will clone both.',
+        lines: [1, 2],
+        memory: {
+          frames: [{ name: 'global', vars: [
+            { name: 'original', ref: 'deepOuter', pyId: ADDRS.deepOuter, type: 'list', state: 'new' },
+          ]}],
+          heap: [
+            { id: 'deepInner', pyId: ADDRS.deepInner, type: 'list', refcount: 1, mutable: true, state: 'new', items: [
+              { value: 1, type: 'int' },
+            ] },
+            { id: 'deepOuter', pyId: ADDRS.deepOuter, type: 'list', refcount: 1, mutable: true, state: 'new', items: [
+              { value: 'inner -> 0x7f5a1010', type: 'str' },
+            ] },
+          ],
+          highlight: ['deepOuter', 'deepInner'],
+        },
+      },
+      {
+        title: '<code>original.copy()</code> shares the inner list',
+        desc: 'A new outer list appears. Its slot still points at the same inner list. This is the shallow-copy rule from demo 2.',
+        lines: [3],
+        memory: {
+          frames: [{ name: 'global', vars: [
+            { name: 'original', ref: 'deepOuter', pyId: ADDRS.deepOuter, type: 'list', state: 'normal' },
+            { name: 'shallow', ref: 'shallowOuter', pyId: ADDRS.shallowOuter, type: 'list', state: 'new' },
+          ]}],
+          heap: [
+            { id: 'deepInner', pyId: ADDRS.deepInner, type: 'list', refcount: 2, mutable: true, state: 'normal', items: [
+              { value: 1, type: 'int' },
+            ] },
+            { id: 'deepOuter', pyId: ADDRS.deepOuter, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
+              { value: 'inner -> 0x7f5a1010', type: 'str' },
+            ] },
+            { id: 'shallowOuter', pyId: ADDRS.shallowOuter, type: 'list', refcount: 1, mutable: true, state: 'new', items: [
+              { value: 'inner -> 0x7f5a1010', type: 'str' },
+            ] },
+          ],
+          highlight: ['shallowOuter', 'deepInner'],
+        },
+      },
+      {
+        title: '<code>deepcopy</code> clones the inner list too',
+        desc: '<code>deep</code> is a new outer list whose slot points at a <em>new</em> inner list with the same values. Nested identity is no longer shared.',
+        lines: [4],
+        memory: {
+          frames: [{ name: 'global', vars: [
+            { name: 'original', ref: 'deepOuter', pyId: ADDRS.deepOuter, type: 'list', state: 'normal' },
+            { name: 'shallow', ref: 'shallowOuter', pyId: ADDRS.shallowOuter, type: 'list', state: 'normal' },
+            { name: 'deep', ref: 'deepCopyOuter', pyId: ADDRS.deepCopyOuter, type: 'list', state: 'new' },
+          ]}],
+          heap: [
+            { id: 'deepInner', pyId: ADDRS.deepInner, type: 'list', refcount: 2, mutable: true, state: 'normal', items: [
+              { value: 1, type: 'int' },
+            ] },
+            { id: 'deepCopyInner', pyId: ADDRS.deepCopyInner, type: 'list', refcount: 1, mutable: true, state: 'new', items: [
+              { value: 1, type: 'int' },
+            ] },
+            { id: 'deepOuter', pyId: ADDRS.deepOuter, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
+              { value: 'inner -> 0x7f5a1010', type: 'str' },
+            ] },
+            { id: 'shallowOuter', pyId: ADDRS.shallowOuter, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
+              { value: 'inner -> 0x7f5a1010', type: 'str' },
+            ] },
+            { id: 'deepCopyOuter', pyId: ADDRS.deepCopyOuter, type: 'list', refcount: 1, mutable: true, state: 'new', items: [
+              { value: 'inner -> 0x7f5a4010', type: 'str' },
+            ] },
+          ],
+          highlight: ['deepCopyOuter', 'deepCopyInner'],
+        },
+      },
+      {
+        title: 'Mutating the original inner list leaves <code>deep</code> alone',
+        desc: '<code>original[0].append(2)</code> changes the shared inner list, so <code>shallow</code> sees <code>2</code> as well. <code>deep</code> still holds <code>[1]</code> because its inner list is a different object.',
+        lines: [5],
+        memory: {
+          frames: [{ name: 'global', vars: [
+            { name: 'original', ref: 'deepOuter', pyId: ADDRS.deepOuter, type: 'list', state: 'normal' },
+            { name: 'shallow', ref: 'shallowOuter', pyId: ADDRS.shallowOuter, type: 'list', state: 'normal' },
+            { name: 'deep', ref: 'deepCopyOuter', pyId: ADDRS.deepCopyOuter, type: 'list', state: 'normal' },
+          ]}],
+          heap: [
+            { id: 'deepInner', pyId: ADDRS.deepInner, type: 'list', refcount: 2, mutable: true, state: 'mutated', items: [
+              { value: 1, type: 'int' },
+              { value: 2, type: 'int' },
+            ] },
+            { id: 'deepCopyInner', pyId: ADDRS.deepCopyInner, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
+              { value: 1, type: 'int' },
+            ] },
+            { id: 'deepOuter', pyId: ADDRS.deepOuter, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
+              { value: 'inner -> 0x7f5a1010', type: 'str' },
+            ] },
+            { id: 'shallowOuter', pyId: ADDRS.shallowOuter, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
+              { value: 'inner -> 0x7f5a1010', type: 'str' },
+            ] },
+            { id: 'deepCopyOuter', pyId: ADDRS.deepCopyOuter, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
+              { value: 'inner -> 0x7f5a4010', type: 'str' },
+            ] },
+          ],
+          highlight: ['deepInner', 'deepCopyInner'],
         },
       },
     ],

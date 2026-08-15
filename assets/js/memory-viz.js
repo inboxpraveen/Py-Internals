@@ -253,16 +253,21 @@ PJ.MemoryViz = class {
     `;
     el.appendChild(header);
 
-    // Value / items
+    // Value / items. Class, instance, method, and generator objects
+    // may show a short label plus optional key/value pairs (__dict__).
+    const pairTypes = ['dict', 'class', 'instance', 'method', 'generator', 'iterator'];
     if (obj.type === 'list' || obj.type === 'tuple' || obj.type === 'set') {
       el.appendChild(this._renderCollectionItems(obj));
-    } else if (obj.type === 'dict') {
-      el.appendChild(this._renderDict(obj));
     } else {
-      const valEl = document.createElement('div');
-      valEl.className = 'mem-obj__value';
-      valEl.innerHTML = this._renderValueHTML(obj.value, obj.type);
-      el.appendChild(valEl);
+      if (obj.value !== undefined && obj.value !== null && obj.type !== 'dict') {
+        const valEl = document.createElement('div');
+        valEl.className = 'mem-obj__value';
+        valEl.innerHTML = this._renderValueHTML(obj.value, obj.type);
+        el.appendChild(valEl);
+      }
+      if (obj.pairs && (pairTypes.includes(obj.type) || obj.type === 'dict')) {
+        el.appendChild(this._renderDict(obj));
+      }
     }
 
     return el;
@@ -305,6 +310,12 @@ PJ.MemoryViz = class {
     if (type === 'float') return `<span style="color:var(--clr-type-float)">${value}</span>`;
     if (type === 'bool')  return `<span style="color:var(--clr-type-bool)">${value ? 'True' : 'False'}</span>`;
     if (type === 'none')  return `<span style="color:var(--clr-type-none)">None</span>`;
+    if (type === 'function') return `<span style="color:var(--clr-type-function)">${value}</span>`;
+    if (type === 'class')    return `<span style="color:var(--clr-type-class)">${value}</span>`;
+    if (type === 'instance') return `<span style="color:var(--clr-type-instance)">${value}</span>`;
+    if (type === 'method')   return `<span style="color:var(--clr-type-method)">${value}</span>`;
+    if (type === 'generator')return `<span style="color:var(--clr-type-generator)">${value}</span>`;
+    if (type === 'iterator') return `<span style="color:var(--clr-type-iterator)">${value}</span>`;
     return `<span>${value}</span>`;
   }
 

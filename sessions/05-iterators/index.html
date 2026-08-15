@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Session 05: Iterators & Generators — Py Internals</title>
+  <meta name="description" content="See how Python for-loops, iterators, yield, and lazy evaluation work in memory." />
+  <link rel="icon" type="image/png" href="../../assets/images/Python-logo.png" />
+  <link rel="apple-touch-icon" href="../../assets/images/Python-logo.png" />
+  <link rel="stylesheet" href="../../assets/css/base.css" />
+  <link rel="stylesheet" href="../../assets/css/layout.css" />
+  <link rel="stylesheet" href="../../assets/css/components.css" />
+  <link rel="stylesheet" href="../../assets/css/memory-viz.css" />
+  <link rel="stylesheet" href="../../assets/css/animations.css" />
+  <link rel="stylesheet" href="../../assets/css/session.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar__logo">
+    <button class="menu-toggle" aria-label="Toggle menu" onclick="PJ.Core.toggleSidebar()">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <a href="../../index.html" style="display:flex;align-items:center;gap:10px;text-decoration:none">
+      <div class="topbar__logo-mark">Py</div>
+      <span class="topbar__brand">Py<span>Internals</span></span>
+    </a>
+  </div>
+  <div class="topbar__actions">
+    <a href="../../glossary.html" class="btn btn--ghost btn--sm">Glossary</a>
+    <span style="font-size:var(--fs-xs);color:var(--clr-text-3);font-weight:500" data-role="session-count">Session 05 of 05</span>
+  </div>
+</header>
+
+<div class="sidebar-overlay" onclick="PJ.Core.closeSidebar()"></div>
+
+<div class="app-shell" style="grid-template-rows:unset">
+  <aside class="sidebar">
+    <div class="sidebar__section">
+      <div class="sidebar__label">Session 05</div>
+      <a href="#intro" class="sidebar__item active" onclick="scrollToSection('#intro')">Introduction</a>
+      <a href="#demo-basic" class="sidebar__item" onclick="scrollToSection('#demo-basic')">Interactive Lab</a>
+      <a href="#protocol" class="sidebar__item" onclick="scrollToSection('#protocol')">Iterator protocol</a>
+      <a href="#yield" class="sidebar__item" onclick="scrollToSection('#yield')">yield</a>
+      <a href="#lazy" class="sidebar__item" onclick="scrollToSection('#lazy')">Lazy vs eager</a>
+      <a href="#quiz" class="sidebar__item" onclick="scrollToSection('#quiz')">Check yourself</a>
+    </div>
+    <div class="sidebar__section">
+      <div class="sidebar__label">Course</div>
+      <a href="../04-classes/" class="sidebar__item">Previous Session</a>
+      <a href="../../glossary.html" class="sidebar__item">Glossary</a>
+      <a href="../../index.html" class="sidebar__item">All Sessions</a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="session-hero" id="intro">
+      <div class="session-hero__breadcrumb">
+        <a href="../../index.html">Home</a>
+        <span>›</span>
+        Session 05
+      </div>
+      <div class="session-hero__eyebrow">Control flow · Session 05</div>
+      <h1 class="session-hero__title">Iterators &amp; Generators</h1>
+      <p class="session-hero__subtitle">
+        A <code>for</code> loop is not magic. It asks for an iterator, calls <code>next</code>,
+        and stops on <code>StopIteration</code>. A generator is a function whose frame stays
+        alive between yields — local names included.
+      </p>
+      <div class="session-meta">
+        <div class="session-meta__item">~35 minutes</div>
+        <div class="session-meta__item">4 interactive demos</div>
+        <div class="session-meta__item">Builds on functions and objects</div>
+      </div>
+    </div>
+
+    <div class="progress-bar"><div class="progress-bar__fill" id="readProgress" style="width:0%"></div></div>
+
+    <section class="learning-overview">
+      <div class="learning-card">
+        <div class="learning-card__label">Learning goal</div>
+        <h2 class="learning-card__title">Separate the collection from the cursor.</h2>
+        <p class="learning-card__body">
+          An iterable can produce an iterator. The iterator is the object with state.
+          A generator is an iterator whose state is a suspended function frame.
+        </p>
+        <div class="concept-chip-row">
+          <span class="type-chip type-chip--list">iterable</span>
+          <span class="type-chip type-chip--iterator">iterator</span>
+          <span class="type-chip type-chip--generator">generator</span>
+          <span class="type-chip type-chip--function">yield</span>
+          <span class="type-chip type-chip--bool">lazy</span>
+        </div>
+      </div>
+      <div class="learning-card">
+        <div class="learning-card__label">Recommended path</div>
+        <div class="learning-path">
+          <div class="learning-path__step">
+            <span class="learning-path__num">1</span>
+            <span><strong>Watch the extra object.</strong> The list stays put; a new iterator walks it.</span>
+          </div>
+          <div class="learning-path__step">
+            <span class="learning-path__num">2</span>
+            <span><strong>Name the protocol.</strong> <code>iter</code> → <code>next</code> → <code>StopIteration</code>.</span>
+          </div>
+          <div class="learning-path__step">
+            <span class="learning-path__num">3</span>
+            <span><strong>See the paused frame.</strong> <code>yield</code> keeps locals alive inside the generator.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="demo-basic">
+      <section class="stage-intro">
+        <div>
+          <div class="stage-intro__label">Interactive lab</div>
+          <h2>Watch iteration as objects, not syntax</h2>
+          <p>
+            The iterator's <code>index</code> and the generator's <code>n</code> are teaching labels
+            for internal state. The important idea is that state lives on a separate object.
+          </p>
+        </div>
+        <div class="stage-intro__hint">
+          Tip: after a loop ends, ask whether the iterator is exhausted and whether the original collection still exists.
+        </div>
+      </section>
+
+      <div class="demo-guide">
+        <div class="demo-guide__step"><span class="demo-guide__badge">1</span> Choose a demo</div>
+        <span class="demo-guide__arrow">›</span>
+        <div class="demo-guide__step"><span class="demo-guide__badge">2</span> Step with <kbd>→</kbd> or Play</div>
+        <span class="demo-guide__arrow">›</span>
+        <div class="demo-guide__step"><span class="demo-guide__badge">3</span> Watch the cursor or suspended frame</div>
+        <span class="demo-guide__arrow">›</span>
+        <div class="demo-guide__step"><span class="demo-guide__badge">4</span> Read the model below</div>
+      </div>
+
+      <div class="mem-legend" aria-label="How to read the memory diagram">
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--stack"></span> Names in the current frame</div>
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--heap"></span> Collection, iterator, or generator</div>
+        <div class="mem-legend__item"><kbd>→</kbd> next <kbd>←</kbd> back <kbd>Space</kbd> play <kbd>R</kbd> reset</div>
+      </div>
+
+      <div class="demo-selector">
+        <button class="demo-pill active" data-demo="forLoop" onclick="switchDemo('forLoop')">1 · for loop</button>
+        <button class="demo-pill" data-demo="explicit" onclick="switchDemo('explicit')">2 · iter / next</button>
+        <button class="demo-pill" data-demo="generator" onclick="switchDemo('generator')">3 · yield</button>
+        <button class="demo-pill" data-demo="lazy" onclick="switchDemo('lazy')">4 · Lazy vs eager</button>
+      </div>
+
+      <div class="stage" id="stage">
+        <div class="stage__code-panel">
+          <div class="panel-header panel-header--dark">
+            <span>python</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+            </div>
+          </div>
+          <div class="code-panel-body" id="codePanel"></div>
+          <div class="step-track" data-role="step-track" id="stepTrack"></div>
+          <div class="playback-controls" id="controls">
+            <div class="playback-controls__left">
+              <button class="step-btn" data-action="prev" title="Previous step" disabled>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M8 2L4 6l4 4"/></svg>
+              </button>
+              <button class="play-btn" data-action="play" title="Play / Pause">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M3 2.5l8 4.5-8 4.5z"/></svg>
+              </button>
+              <button class="step-btn" data-action="next" title="Next step">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M4 2l4 4-4 4"/></svg>
+              </button>
+              <button class="btn btn--ghost btn--sm" data-action="reset" title="Reset">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M10 6A4 4 0 112 6" stroke-linecap="round"/>
+                  <path d="M2 3v3h3" fill="currentColor" stroke="none"/>
+                </svg>
+              </button>
+            </div>
+            <div class="playback-controls__right">
+              <div class="speed-control">
+                Speed:
+                <select class="speed-select" data-action="speed">
+                  <option value="1700">0.5×</option>
+                  <option value="950" selected>1×</option>
+                  <option value="650">1.5×</option>
+                  <option value="400">2×</option>
+                </select>
+              </div>
+              <span class="step-counter" data-role="step-counter">1 / 1</span>
+            </div>
+          </div>
+        </div>
+        <div class="stage__memory-panel">
+          <div class="panel-header">
+            <span style="color:var(--clr-text-3)">Memory</span>
+            <div style="display:flex;align-items:center;gap:6px;font-size:var(--fs-xs);color:var(--clr-text-3)">
+              <span style="display:inline-block;width:8px;height:8px;background:var(--clr-mem-stack);border-radius:2px;opacity:.6"></span>
+              stack
+              <span style="display:inline-block;width:8px;height:8px;background:var(--clr-mem-heap);border-radius:2px;opacity:.6;margin-left:4px"></span>
+              heap
+            </div>
+          </div>
+          <div class="mem-panel-body" id="memPanel"></div>
+        </div>
+      </div>
+
+      <div class="explanation-strip" aria-live="polite">
+        <div class="explanation-strip__step-num" id="stepNum">1</div>
+        <div class="explanation-strip__content">
+          <h3 id="stepTitle" class="explanation-text">A list is iterable — it is not itself the iterator</h3>
+          <p id="stepDesc" class="explanation-text">Press Play or use Next to watch <code>for</code> create an iterator.</p>
+        </div>
+      </div>
+    </div>
+
+    <article class="narrative">
+      <h2 id="protocol">The iterator protocol</h2>
+      <p class="narrative-lede">
+        Python's loop is three operations: get an iterator, ask for the next object,
+        stop when the iterator is exhausted. Everything that works in a <code>for</code>
+        loop implements that protocol.
+      </p>
+
+      <div class="flow-grid">
+        <div class="flow-card">
+          <div class="section-label">1 · iter</div>
+          <h3>Get a cursor</h3>
+          <p><code>iter(nums)</code> returns an iterator. The list stays a list. The iterator remembers position.</p>
+        </div>
+        <div class="flow-card">
+          <div class="section-label">2 · next</div>
+          <h3>Ask for one object</h3>
+          <p><code>next(it)</code> returns a reference to the next item and advances the cursor.</p>
+        </div>
+        <div class="flow-card">
+          <div class="section-label">3 · StopIteration</div>
+          <h3>Signal the end</h3>
+          <p>When nothing is left, the iterator raises <code>StopIteration</code>. <code>for</code> catches it and exits.</p>
+        </div>
+      </div>
+
+      <div class="callout callout--info">
+        <div class="callout__icon">Model</div>
+        <div>
+          <div class="callout__title">Iterable vs iterator</div>
+          <div class="callout__body">
+            An <strong>iterable</strong> can produce an iterator (<code>list</code>, <code>str</code>, <code>dict</code>).
+            An <strong>iterator</strong> produces values and holds the walk state. Many iterators are also iterable
+            and return themselves from <code>iter()</code> — that is why you cannot restart a generator by looping over it twice.
+          </div>
+        </div>
+      </div>
+
+      <div id="yield">
+        <div class="section-divider"><div class="section-divider__label">Generators</div></div>
+        <h2><code>yield</code> pauses a frame instead of destroying it</h2>
+        <p>
+          A normal function call creates a frame, runs to <code>return</code>, then throws the frame away.
+          A generator function returns a generator object immediately. Each <code>next()</code> resumes
+          that frame until the next <code>yield</code>, then leaves the locals sitting there.
+        </p>
+
+        <div class="rule-grid">
+          <div class="rule-card">
+            <div class="rule-card__label">Ordinary function</div>
+            <h3>Frame dies on return</h3>
+            <p>Locals are gone. To remember state you need an object, a closure, or a global.</p>
+          </div>
+          <div class="rule-card">
+            <div class="rule-card__label">Generator</div>
+            <h3>Frame sleeps on yield</h3>
+            <p><code>n</code> is still there on the next <code>next()</code>. The generator object is the handle to that sleeping frame.</p>
+          </div>
+        </div>
+
+        <div class="callout callout--insight">
+          <div class="callout__icon">Key</div>
+          <div>
+            <div class="callout__title">Calling a generator function is cheap</div>
+            <div class="callout__body">
+              <code>count_up()</code> does not compute a list of numbers. It allocates a generator.
+              Work happens later, one <code>next</code> at a time. That is the same idea as lazy evaluation.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="lazy">
+        <div class="section-divider"><div class="section-divider__label">Lazy vs eager</div></div>
+        <h2>When does the heap pay for the result?</h2>
+        <p>
+          A list comprehension is eager: every value is created before you use the list.
+          A generator expression is lazy: values appear as you pull them. Neither is always better.
+          Eager gives you length, indexing, and reuse. Lazy saves work and memory when you only need a prefix.
+        </p>
+
+        <div style="overflow-x:auto">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Form</th>
+                <th>What exists immediately</th>
+                <th>Can you reuse it?</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>[x * x for x in xs]</code></td>
+                <td>A full list of results</td>
+                <td>Yes. Index it, loop twice, pass it around.</td>
+              </tr>
+              <tr>
+                <td><code>(x * x for x in xs)</code></td>
+                <td>A generator object</td>
+                <td>Once. After exhaustion, another loop sees nothing.</td>
+              </tr>
+              <tr>
+                <td><code>range(1_000_000)</code></td>
+                <td>A small range object, not a million ints</td>
+                <td>Yes. It is iterable and can produce a fresh iterator.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="try-this">
+          <div class="try-this__label">Try this in a REPL</div>
+          <p>
+            <code>g = (x for x in [1, 2])</code> then <code>list(g)</code> twice.
+            The second call is <code>[]</code> because the generator was exhausted.
+            Compare with <code>r = range(2)</code> and <code>list(r)</code> twice — both succeed.
+          </p>
+        </div>
+
+        <div class="recap-box">
+          <div class="recap-box__label">What you should be able to draw</div>
+          <p>
+            A collection object, a separate iterator with a cursor, and — for generators —
+            a paused frame whose locals survive between yields. If you can draw those three,
+            <code>for</code>, <code>yield</code>, and lazy expressions all fit the same picture.
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <section class="quiz" id="quiz" data-session="05-iterators">
+      <div class="section-divider"><div class="section-divider__label">Check your understanding</div></div>
+      <h2>Can you predict the memory?</h2>
+      <p class="quiz__lede">These are the surprises that show up in real code.</p>
+
+      <div class="quiz-card" data-answer="1">
+        <div class="quiz-card__q">1. In <code>for n in nums</code>, what object remembers how far the loop has gone?</div>
+        <button class="quiz-option" data-choice="0">The list <code>nums</code> itself</button>
+        <button class="quiz-option" data-choice="1">A separate iterator created by <code>iter(nums)</code></button>
+        <button class="quiz-option" data-choice="2">The name <code>n</code></button>
+        <div class="quiz-explain">
+          The list is the iterable. The iterator is a different object with a cursor. A second <code>for</code> creates a new iterator.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="0">
+        <div class="quiz-card__q">2. What happens when you call a function that contains <code>yield</code>?</div>
+        <button class="quiz-option" data-choice="0">You get a generator object; the body has not run yet</button>
+        <button class="quiz-option" data-choice="1">The body runs to completion and returns a list</button>
+        <button class="quiz-option" data-choice="2">You get the first yielded value immediately</button>
+        <div class="quiz-explain">
+          The first <code>next()</code> (or the first loop step) is what runs the body up to the first <code>yield</code>.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="2">
+        <div class="quiz-card__q">3. You loop over a generator twice. The second loop prints nothing. Why?</div>
+        <button class="quiz-option" data-choice="0">Generators delete the original data</button>
+        <button class="quiz-option" data-choice="1">Python forbids looping over generators</button>
+        <button class="quiz-option" data-choice="2">The generator is an iterator that exhausted itself; it does not rewind</button>
+        <div class="quiz-explain">
+          A generator's <code>iter()</code> returns itself. After <code>StopIteration</code>, there is nothing left to yield unless you create a new generator.
+        </div>
+      </div>
+    </section>
+
+    <div class="session-footer">
+      <a href="../04-classes/" class="btn btn--secondary">← Session 04: Classes</a>
+      <div style="text-align:center;font-size:var(--fs-xs);color:var(--clr-text-3)" data-role="session-count">Session 05 of 05</div>
+      <a href="../../index.html" class="btn btn--primary">Back to course</a>
+    </div>
+  </main>
+</div>
+
+<script src="../../assets/js/core.js"></script>
+<script src="../../assets/js/syntax.js"></script>
+<script src="../../assets/js/memory-viz.js"></script>
+<script src="../../assets/js/animator.js"></script>
+<script src="session.js"></script>
+</body>
+</html>

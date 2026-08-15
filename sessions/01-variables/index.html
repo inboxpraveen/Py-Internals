@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="../../assets/css/components.css" />
   <link rel="stylesheet" href="../../assets/css/memory-viz.css" />
   <link rel="stylesheet" href="../../assets/css/animations.css" />
+  <link rel="stylesheet" href="../../assets/css/session.css" />
 
   <style>
     /* ── Stage specific tweaks ────────────────────────────── */
@@ -587,7 +588,8 @@
     </a>
   </div>
   <div class="topbar__actions">
-    <span style="font-size:var(--fs-xs);color:var(--clr-text-3);font-weight:500">Session 01 of 05</span>
+    <a href="../../glossary.html" class="btn btn--ghost btn--sm">Glossary</a>
+    <span style="font-size:var(--fs-xs);color:var(--clr-text-3);font-weight:500" data-role="session-count">Session 01 of 05</span>
     <a href="../02-functions/" class="btn btn--secondary btn--sm" id="nextSessionBtn" style="display:none">
       Next Session →
     </a>
@@ -641,9 +643,12 @@
         </svg>
         All Types
       </a>
+      <a href="#quiz" class="sidebar__item" onclick="scrollTo('#quiz')">Check yourself</a>
     </div>
     <div class="sidebar__section">
       <div class="sidebar__label">Course</div>
+      <a href="../02-functions/" class="sidebar__item">Next Session</a>
+      <a href="../../glossary.html" class="sidebar__item">Glossary</a>
       <a href="../../index.html" class="sidebar__item">
         <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M3 9L9 3l6 6M5 7v8h8V7"/>
@@ -766,7 +771,7 @@
         <span class="demo-guide__arrow">›</span>
         <div class="demo-guide__step">
           <span class="demo-guide__badge">2</span>
-          Press <strong style="color:var(--clr-text-2);margin:0 3px">Play</strong> or <strong style="color:var(--clr-text-2);margin:0 3px">Next</strong>
+          Press <strong style="color:var(--clr-text-2);margin:0 3px">Play</strong>, <strong style="color:var(--clr-text-2);margin:0 3px">Next</strong>, or <kbd>→</kbd>
         </div>
         <span class="demo-guide__arrow">›</span>
         <div class="demo-guide__step">
@@ -778,6 +783,12 @@
           <span class="demo-guide__badge">4</span>
           Read the explanation below
         </div>
+      </div>
+
+      <div class="mem-legend" aria-label="How to read the memory diagram">
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--stack"></span> Namespace — names pointing at objects</div>
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--heap"></span> Heap — objects with type, value, refcount</div>
+        <div class="mem-legend__item"><kbd>→</kbd> next <kbd>←</kbd> back <kbd>Space</kbd> play <kbd>R</kbd> reset</div>
       </div>
 
       <!-- Demo selector tabs (grouped by mutability) -->
@@ -1437,12 +1448,42 @@
 
     </article>
 
+    <section class="quiz" id="quiz" data-session="01-variables">
+      <div class="section-divider"><div class="section-divider__label">Check your understanding</div></div>
+      <h2>Can you predict the memory?</h2>
+      <p class="quiz__lede">If an answer surprises you, rewind the matching demo above.</p>
+
+      <div class="quiz-card" data-answer="1">
+        <div class="quiz-card__q">1. After <code>x = 42</code> then <code>y = x</code>, what is true?</div>
+        <button class="quiz-option" data-choice="0"><code>y</code> holds a copy of 42 in a separate box</button>
+        <button class="quiz-option" data-choice="1"><code>x</code> and <code>y</code> are two names pointing at the same integer object</button>
+        <button class="quiz-option" data-choice="2"><code>y</code> points at <code>x</code>, which points at 42</button>
+        <div class="quiz-explain">Assignment binds a name to an object. <code>y = x</code> copies the reference, not the integer.</div>
+      </div>
+
+      <div class="quiz-card" data-answer="0">
+        <div class="quiz-card__q">2. <code>a = [1, 2]</code> then <code>b = a</code> then <code>b.append(3)</code>. What is <code>a</code>?</div>
+        <button class="quiz-option" data-choice="0"><code>[1, 2, 3]</code> — both names alias one list</button>
+        <button class="quiz-option" data-choice="1"><code>[1, 2]</code> — append only changes <code>b</code></button>
+        <button class="quiz-option" data-choice="2">An error, because lists cannot be shared</button>
+        <div class="quiz-explain">Mutation changes the object. Every alias sees it. Use <code>b = a.copy()</code> if you need a separate list.</div>
+      </div>
+
+      <div class="quiz-card" data-answer="2">
+        <div class="quiz-card__q">3. When does CPython free an object that is not in a reference cycle?</div>
+        <button class="quiz-option" data-choice="0">At the end of the program only</button>
+        <button class="quiz-option" data-choice="1">The next time you call <code>gc.collect()</code></button>
+        <button class="quiz-option" data-choice="2">As soon as its reference count hits zero</button>
+        <div class="quiz-explain">Reference counting frees the object immediately. The cyclic collector is only needed when objects point at each other.</div>
+      </div>
+    </section>
+
     <!-- ── Session Footer ──────────────────────────────────── -->
     <div class="session-footer">
       <a href="../../index.html" class="btn btn--secondary">
         ← Back to Course
       </a>
-      <div style="text-align:center;font-size:var(--fs-xs);color:var(--clr-text-3)">
+      <div style="text-align:center;font-size:var(--fs-xs);color:var(--clr-text-3)" data-role="session-count">
         Session 01 of 05
       </div>
       <a href="../02-functions/" class="btn btn--primary">

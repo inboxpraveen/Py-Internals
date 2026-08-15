@@ -272,6 +272,61 @@
 
     .footer a { color: var(--clr-accent); }
 
+    .howto-section {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: var(--sp-12) var(--sp-8) 0;
+    }
+
+    .howto-section h2 {
+      font-size: var(--fs-2xl);
+      letter-spacing: -0.3px;
+      margin-bottom: var(--sp-2);
+    }
+
+    .howto-section > p {
+      color: var(--clr-text-2);
+      margin-bottom: var(--sp-6);
+    }
+
+    .howto-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--sp-4);
+    }
+
+    .howto-card {
+      background: var(--clr-surface);
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius-xl);
+      padding: var(--sp-5);
+    }
+
+    .howto-card__num {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xl);
+      font-weight: 700;
+      color: var(--clr-accent);
+      opacity: 0.45;
+      margin-bottom: var(--sp-2);
+    }
+
+    .howto-card h3 {
+      font-family: var(--font-display);
+      font-size: var(--fs-md);
+      margin-bottom: var(--sp-2);
+    }
+
+    .howto-card p {
+      font-size: var(--fs-sm);
+      color: var(--clr-text-2);
+      line-height: var(--lh-loose);
+    }
+
+    @media (max-width: 640px) {
+      .howto-grid { grid-template-columns: 1fr; }
+    }
+
     @media (max-width: 640px) {
       .home-hero { padding: var(--sp-12) var(--sp-5) var(--sp-10); }
       .sessions-grid { padding: var(--sp-8) var(--sp-5); }
@@ -290,6 +345,8 @@
     <span class="topbar__brand">Py<span>Internals</span></span>
   </div>
   <div class="topbar__actions">
+    <span class="progress-chip" id="homeProgressChip">5 live sessions</span>
+    <a href="glossary.html" class="btn btn--ghost btn--sm">Glossary</a>
     <a href="https://github.com/inboxpraveen/Py-Internals"
        target="_blank"
        class="btn btn--secondary btn--sm"
@@ -319,7 +376,7 @@
       Python from first principles.
     </p>
     <div class="home-hero__cta animate-fade-up delay-3">
-      <a href="sessions/01-variables/index.html" class="btn btn--primary btn--lg">
+      <a href="sessions/01-variables/index.html" class="btn btn--primary btn--lg" id="startCta">
         Start Learning
         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
           <path d="M6.5 3L11.5 8L6.5 13" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
@@ -353,13 +410,35 @@
     </div>
   </div>
 
+  <section class="howto-section" id="how-to-learn">
+    <h2>How to learn here</h2>
+    <p>The course is built so you can see Python's memory, then name what just happened.</p>
+    <div class="howto-grid">
+      <div class="howto-card">
+        <div class="howto-card__num">01</div>
+        <h3>Step the animation</h3>
+        <p>Use <kbd>→</kbd> and <kbd>←</kbd>, or Play. Watch which object appears, which name rebinds, and whether a refcount changes.</p>
+      </div>
+      <div class="howto-card">
+        <div class="howto-card__num">02</div>
+        <h3>Read the model</h3>
+        <p>The narrative under each lab puts the same picture into words: names, objects, frames, and references — not syntax trivia.</p>
+      </div>
+      <div class="howto-card">
+        <div class="howto-card__num">03</div>
+        <h3>Check yourself</h3>
+        <p>Every session ends with a short quiz. If an answer surprises you, rewind the demo. The <a href="glossary.html" style="color:var(--clr-accent)">glossary</a> is there when a term is fuzzy.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- Sessions -->
   <section class="sessions-grid" id="sessions">
     <h2 class="sessions-grid__title">Course Sessions</h2>
-    <p class="sessions-grid__subtitle">Each session builds on the last. Animations, quizzes, memory diagrams — all included.</p>
+    <p class="sessions-grid__subtitle">Each session builds on the last. Watch the memory, read the model, then check your understanding.</p>
 
     <!-- Session 01 -->
-    <a href="sessions/01-variables/" class="session-card animate-fade-up">
+    <a href="sessions/01-variables/" class="session-card animate-fade-up" data-session="01-variables">
       <div class="session-card__num">01</div>
       <div class="session-card__body">
         <div class="session-card__title">Variables & Mutability</div>
@@ -382,7 +461,7 @@
     </a>
 
     <!-- Session 02 -->
-    <a href="sessions/02-functions/" class="session-card animate-fade-up delay-1">
+    <a href="sessions/02-functions/" class="session-card animate-fade-up delay-1" data-session="02-functions">
       <div class="session-card__num">02</div>
       <div class="session-card__body">
         <div class="session-card__title">Functions, Scope & the Call Stack</div>
@@ -404,7 +483,7 @@
     </a>
 
     <!-- Session 03 -->
-    <a href="sessions/03-lists-dicts/" class="session-card animate-fade-up delay-2">
+    <a href="sessions/03-lists-dicts/" class="session-card animate-fade-up delay-2" data-session="03-lists-dicts">
       <div class="session-card__num">03</div>
       <div class="session-card__body">
         <div class="session-card__title">Lists, Dicts &amp; References</div>
@@ -425,35 +504,73 @@
       </svg>
     </a>
 
-    <!-- Future sessions -->
-    <div class="session-card locked">
+    <a href="sessions/04-classes/" class="session-card animate-fade-up delay-3" data-session="04-classes">
       <div class="session-card__num">04</div>
       <div class="session-card__body">
-        <div class="session-card__title" style="display:flex;align-items:center;gap:8px;">
-          Classes & Objects <span class="coming-soon-badge">soon</span>
+        <div class="session-card__title">Classes &amp; Objects</div>
+        <div class="session-card__desc">
+          What <code>self</code> really is, where attributes live, how method binding works,
+          and why class variables are shared until an instance shadows them.
         </div>
-        <div class="session-card__desc">What is <code>self</code>? How does Python find attributes? The MRO, <code>__init__</code>, and instance vs class vars.</div>
         <div class="session-card__tags">
           <span class="session-card__tag">class</span>
           <span class="session-card__tag">self</span>
           <span class="session-card__tag">__init__</span>
-          <span class="session-card__tag">MRO</span>
+          <span class="session-card__tag">__dict__</span>
+          <span class="session-card__tag">bound method</span>
         </div>
       </div>
-    </div>
+      <svg class="session-card__arrow" width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M7 10h6M10 7l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
 
-    <div class="session-card locked">
+    <a href="sessions/05-iterators/" class="session-card animate-fade-up delay-4" data-session="05-iterators">
       <div class="session-card__num">05</div>
       <div class="session-card__body">
-        <div class="session-card__title" style="display:flex;align-items:center;gap:8px;">
-          Iterators & Generators <span class="coming-soon-badge">soon</span>
+        <div class="session-card__title">Iterators &amp; Generators</div>
+        <div class="session-card__desc">
+          How <code>for</code> loops call <code>iter</code> and <code>next</code>, why a generator
+          keeps a suspended frame, and what lazy evaluation means in memory.
         </div>
-        <div class="session-card__desc">How <code>for</code> loops really work. The iterator protocol. Lazy evaluation and yield.</div>
         <div class="session-card__tags">
           <span class="session-card__tag">iterator</span>
           <span class="session-card__tag">generator</span>
           <span class="session-card__tag">yield</span>
           <span class="session-card__tag">lazy evaluation</span>
+        </div>
+      </div>
+      <svg class="session-card__arrow" width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M7 10h6M10 7l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+
+    <div class="session-card locked" data-session="06-decorators">
+      <div class="session-card__num">06</div>
+      <div class="session-card__body">
+        <div class="session-card__title" style="display:flex;align-items:center;gap:8px;">
+          Decorators <span class="coming-soon-badge">soon</span>
+        </div>
+        <div class="session-card__desc">First-class functions, the wrapper pattern, and what <code>@decorator</code> does to a name.</div>
+        <div class="session-card__tags">
+          <span class="session-card__tag">wrapper</span>
+          <span class="session-card__tag">closure</span>
+          <span class="session-card__tag">functools</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="session-card locked" data-session="07-gil">
+      <div class="session-card__num">07</div>
+      <div class="session-card__body">
+        <div class="session-card__title" style="display:flex;align-items:center;gap:8px;">
+          The GIL &amp; Concurrency <span class="coming-soon-badge">soon</span>
+        </div>
+        <div class="session-card__desc">Why threads share one interpreter lock, when processes help, and how asyncio interleaves work.</div>
+        <div class="session-card__tags">
+          <span class="session-card__tag">GIL</span>
+          <span class="session-card__tag">threads</span>
+          <span class="session-card__tag">asyncio</span>
         </div>
       </div>
     </div>
@@ -514,6 +631,7 @@
   Py Internals — Open Source Interactive Python Course<br>
   Created with care. Licensed under
   <a href="LICENSE">PI Community License</a>.
+  <a href="glossary.html">Glossary</a>.
   <a href="https://github.com/inboxpraveen/Py-Internals" target="_blank">Contribute on GitHub</a>.
 </footer>
 

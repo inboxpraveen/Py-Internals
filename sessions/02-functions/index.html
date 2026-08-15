@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="../../assets/css/components.css" />
   <link rel="stylesheet" href="../../assets/css/memory-viz.css" />
   <link rel="stylesheet" href="../../assets/css/animations.css" />
+  <link rel="stylesheet" href="../../assets/css/session.css" />
 
   <style>
     .code-panel-body {
@@ -350,7 +351,8 @@
     </a>
   </div>
   <div class="topbar__actions">
-    <span style="font-size:var(--fs-xs);color:var(--clr-text-3);font-weight:500">Session 02 of 05</span>
+    <a href="../../glossary.html" class="btn btn--ghost btn--sm">Glossary</a>
+    <span style="font-size:var(--fs-xs);color:var(--clr-text-3);font-weight:500" data-role="session-count">Session 02 of 05</span>
   </div>
 </header>
 
@@ -396,6 +398,8 @@
         </svg>
         Closures
       </a>
+      <a href="#defaults" class="sidebar__item" onclick="scrollTo('#defaults')">Defaults</a>
+      <a href="#quiz" class="sidebar__item" onclick="scrollTo('#quiz')">Check yourself</a>
     </div>
     <div class="sidebar__section">
       <div class="sidebar__label">Course</div>
@@ -405,6 +409,8 @@
         </svg>
         Previous Session
       </a>
+      <a href="../03-lists-dicts/" class="sidebar__item">Next Session</a>
+      <a href="../../glossary.html" class="sidebar__item">Glossary</a>
       <a href="../../index.html" class="sidebar__item">
         <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M3 9L9 3l6 6M5 7v8h8V7"/>
@@ -438,7 +444,7 @@
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M2 7l3 3 7-7"/>
           </svg>
-          4 interactive demos
+          5 interactive demos
         </div>
         <div class="session-meta__item">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -510,11 +516,17 @@
       <div class="demo-guide">
         <div class="demo-guide__step"><span class="demo-guide__badge">1</span> Choose a demo</div>
         <span class="demo-guide__arrow">›</span>
-        <div class="demo-guide__step"><span class="demo-guide__badge">2</span> Step through the highlighted code</div>
+        <div class="demo-guide__step"><span class="demo-guide__badge">2</span> Step with <kbd>→</kbd> or Play</div>
         <span class="demo-guide__arrow">›</span>
         <div class="demo-guide__step"><span class="demo-guide__badge">3</span> Watch frames appear and disappear</div>
         <span class="demo-guide__arrow">›</span>
         <div class="demo-guide__step"><span class="demo-guide__badge">4</span> Read the explanation below</div>
+      </div>
+
+      <div class="mem-legend" aria-label="How to read the memory diagram">
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--stack"></span> Call stack — the top frame is running</div>
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--heap"></span> Heap — function objects and values</div>
+        <div class="mem-legend__item"><kbd>→</kbd> next <kbd>←</kbd> back <kbd>Space</kbd> play <kbd>R</kbd> reset</div>
       </div>
 
       <div class="demo-selector">
@@ -522,6 +534,7 @@
         <button class="demo-pill" data-demo="scope" onclick="switchDemo('scope')">2 · Local scope</button>
         <button class="demo-pill" data-demo="mutableArgs" onclick="switchDemo('mutableArgs')">3 · Mutable arguments</button>
         <button class="demo-pill" data-demo="closure" onclick="switchDemo('closure')">4 · Closures</button>
+        <button class="demo-pill" data-demo="defaultArgs" onclick="switchDemo('defaultArgs')">5 · Mutable defaults</button>
       </div>
 
       <div class="stage" id="stage">
@@ -776,13 +789,64 @@
           </table>
         </div>
       </div>
+
+      <div id="defaults">
+        <div class="section-divider"><div class="section-divider__label">Default arguments</div></div>
+        <h2>Mutable defaults are created once</h2>
+        <p>
+          Default argument values are evaluated when the function is <em>defined</em>, then stored on the function object.
+          A new empty list is not created on every call. That is why <code>def add_item(item, bag=[])</code>
+          shares one list across calls.
+        </p>
+        <div class="callout callout--warn">
+          <div class="callout__icon">Care</div>
+          <div>
+            <div class="callout__title">The safe pattern</div>
+            <div class="callout__body">
+              Use <code>None</code> as the default and create a new list inside the function:
+              <code>def add_item(item, bag=None):</code> then <code>if bag is None: bag = []</code>.
+              Immutable defaults such as numbers and strings are safe to share.
+            </div>
+          </div>
+        </div>
+      </div>
     </article>
+
+    <section class="quiz" id="quiz" data-session="02-functions">
+      <div class="section-divider"><div class="section-divider__label">Check your understanding</div></div>
+      <h2>Can you predict the memory?</h2>
+      <p class="quiz__lede">Think in frames and object identity, not in “pass by value.”</p>
+
+      <div class="quiz-card" data-answer="1">
+        <div class="quiz-card__q">1. You assign <code>message = "hi"</code> inside a function. There is also a global <code>message</code>. What happens?</div>
+        <button class="quiz-option" data-choice="0">The global is overwritten</button>
+        <button class="quiz-option" data-choice="1">A new local name is created in the call frame, unless you declared <code>global</code></button>
+        <button class="quiz-option" data-choice="2">Python raises an error because the name already exists</button>
+        <div class="quiz-explain">Assignment makes a local by default. Same spelling, different frames, different names.</div>
+      </div>
+
+      <div class="quiz-card" data-answer="0">
+        <div class="quiz-card__q">2. A function does <code>items.append("x")</code> on a list the caller passed. Does the caller see it?</div>
+        <button class="quiz-option" data-choice="0">Yes — the parameter is another name for the same list</button>
+        <button class="quiz-option" data-choice="1">No — arguments are always copied</button>
+        <button class="quiz-option" data-choice="2">Only if the function also returns the list</button>
+        <div class="quiz-explain">Mutation is visible through every alias. Rebinding <code>items = []</code> would not change the caller.</div>
+      </div>
+
+      <div class="quiz-card" data-answer="2">
+        <div class="quiz-card__q">3. Why can a mutable default argument grow across calls?</div>
+        <button class="quiz-option" data-choice="0">Because Python caches return values</button>
+        <button class="quiz-option" data-choice="1">Because lists are global by default</button>
+        <button class="quiz-option" data-choice="2">Because the default object is created once at <code>def</code> time and reused</button>
+        <div class="quiz-explain">The empty list lives on the function object. Each call that omits <code>bag</code> mutates that same list.</div>
+      </div>
+    </section>
 
     <div class="session-footer">
       <a href="../01-variables/" class="btn btn--secondary">
         ← Session 01: Variables
       </a>
-      <div style="text-align:center;font-size:var(--fs-xs);color:var(--clr-text-3)">
+      <div style="text-align:center;font-size:var(--fs-xs);color:var(--clr-text-3)" data-role="session-count">
         Session 02 of 05
       </div>
       <a href="../03-lists-dicts/" class="btn btn--primary">

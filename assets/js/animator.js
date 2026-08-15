@@ -61,6 +61,11 @@ PJ.Animator = class {
 
     this._container = root;
 
+    if (PJ.Animator._active && PJ.Animator._active !== this) {
+      PJ.Animator._active.unmount();
+    }
+    PJ.Animator._active = this;
+
     // Wire controls
     this._els.playBtn   = root.querySelector('[data-action="play"]');
     this._els.prevBtn   = root.querySelector('[data-action="prev"]');
@@ -70,14 +75,21 @@ PJ.Animator = class {
     this._els.counter   = root.querySelector('[data-role="step-counter"]');
     this._els.track     = root.querySelector('[data-role="step-track"]');
 
-    this._els.playBtn?.addEventListener('click',  () => this.togglePlay());
-    this._els.prevBtn?.addEventListener('click',  () => this.prev());
-    this._els.nextBtn?.addEventListener('click',  () => this.next());
-    this._els.resetBtn?.addEventListener('click', () => this.reset());
+    this._handlers = {
+      play:  () => this.togglePlay(),
+      prev:  () => this.prev(),
+      next:  () => this.next(),
+      reset: () => this.reset(),
+      speed: (e) => { this.speed = parseInt(e.target.value, 10); },
+      key:   (e) => this._handleKey(e),
+    };
 
-    this._els.speedSel?.addEventListener('change', (e) => {
-      this.speed = parseInt(e.target.value, 10);
-    });
+    this._els.playBtn?.addEventListener('click',  this._handlers.play);
+    this._els.prevBtn?.addEventListener('click',  this._handlers.prev);
+    this._els.nextBtn?.addEventListener('click',  this._handlers.next);
+    this._els.resetBtn?.addEventListener('click', this._handlers.reset);
+    this._els.speedSel?.addEventListener('change', this._handlers.speed);
+    document.addEventListener('keydown', this._handlers.key);
 
     // Build step track dots
     this._buildTrack();
@@ -180,6 +192,39 @@ PJ.Animator = class {
     this.pause();
     this.onReset();
     this.goTo(0);
+  }
+
+  unmount() {
+    this.pause();
+    if (this._handlers) {
+      this._els.playBtn?.removeEventListener('click',  this._handlers.play);
+      this._els.prevBtn?.removeEventListener('click',  this._handlers.prev);
+      this._els.nextBtn?.removeEventListener('click',  this._handlers.next);
+      this._els.resetBtn?.removeEventListener('click', this._handlers.reset);
+      this._els.speedSel?.removeEventListener('change', this._handlers.speed);
+      document.removeEventListener('keydown', this._handlers.key);
+      this._handlers = null;
+    }
+    if (PJ.Animator._active === this) PJ.Animator._active = null;
+  }
+
+  _handleKey(e) {
+    const tag = (e.target && e.target.tagName) || '';
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      this.next();
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      this.prev();
+    } else if (e.key === ' ') {
+      e.preventDefault();
+      this.togglePlay();
+    } else if (e.key === 'r' || e.key === 'R') {
+      this.reset();
+    }
   }
 
   goTo(index) {

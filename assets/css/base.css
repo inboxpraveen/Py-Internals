@@ -43,6 +43,15 @@
   --clr-type-tuple:  #1A8A8A;
   --clr-type-set:    #8A6B1A;
   --clr-type-function:#4338CA;
+  --clr-type-class:   #9F1239;
+  --clr-type-instance:#BE185D;
+  --clr-type-method:  #6D28D9;
+  --clr-type-generator:#0F766E;
+  --clr-type-iterator:#155E75;
+
+  /* Code panel */
+  --clr-code-bg:     #1C2333;
+  --clr-code-fg:     #CDD6F4;
 
   /* Typography */
   --font-display: 'Lora', Georgia, serif;

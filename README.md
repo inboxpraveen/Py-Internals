@@ -15,6 +15,9 @@
 [**Session 01: Variables**](https://inboxpraveen.github.io/Py-Internals/sessions/01-variables/) &nbsp;·&nbsp;
 [**Session 02: Functions**](https://inboxpraveen.github.io/Py-Internals/sessions/02-functions/) &nbsp;·&nbsp;
 [**Session 03: Lists & Dicts**](https://inboxpraveen.github.io/Py-Internals/sessions/03-lists-dicts/) &nbsp;·&nbsp;
+[**Session 04: Classes**](https://inboxpraveen.github.io/Py-Internals/sessions/04-classes/) &nbsp;·&nbsp;
+[**Session 05: Iterators**](https://inboxpraveen.github.io/Py-Internals/sessions/05-iterators/) &nbsp;·&nbsp;
+[**Glossary**](https://inboxpraveen.github.io/Py-Internals/glossary.html) &nbsp;·&nbsp;
 [**Report a Bug**](https://github.com/inboxpraveen/Py-Internals/issues) &nbsp;·&nbsp;
 [**Request a Topic**](https://github.com/inboxpraveen/Py-Internals/discussions)
 
@@ -51,6 +54,9 @@ Py Internals closes that gap, visually, for free.
 - 🎞️ **Step-by-step animations** — walk through code execution one step at a time, or let it autoplay
 - 🧠 **Real memory diagrams** — see the actual heap, stack frames, reference counts, and GC cycles
 - 🔬 **Type explorer** — every built-in Python type, its mutability, and its memory behavior
+- ✅ **Check-your-understanding quizzes** — predict the memory, then see why
+- 📚 **Glossary** — plain-English definitions you can search mid-lesson
+- ⌨️ **Keyboard playback** — `→` `←` Space `R` to step the lab
 - 📖 **Narrative articles** — each session pairs the visual with a clear written explanation
 - 📱 **Fully responsive** — reads well on mobile, animates beautifully on desktop
 - ⚡ **No login, no account, no tracking** — just open and learn
@@ -64,10 +70,10 @@ Py Internals closes that gap, visually, for free.
 | # | Session | Status | Concepts |
 |---|---------|--------|----------|
 | 01 | [Variables & Mutability](https://inboxpraveen.github.io/Py-Internals/sessions/01-variables/) | ✅ Live | Names vs objects, rebinding, aliasing, mutation, GC |
-| 02 | [Functions & Scope](https://inboxpraveen.github.io/Py-Internals/sessions/02-functions/) | ✅ Live | Call stack, frames, LEGB rule, argument binding, closures, `nonlocal` |
-| 03 | [Lists, Dicts & References](https://inboxpraveen.github.io/Py-Internals/sessions/03-lists-dicts/) | ✅ Live | Container references, aliasing, shallow copy, nested mutation |
-| 04 | Classes & Objects | 📋 Planned | `__init__`, `self`, method binding, `__dict__` |
-| 05 | Iterators & Generators | 📋 Planned | `__iter__`, `__next__`, `yield`, lazy evaluation |
+| 02 | [Functions & Scope](https://inboxpraveen.github.io/Py-Internals/sessions/02-functions/) | ✅ Live | Call stack, frames, LEGB, closures, mutable defaults |
+| 03 | [Lists, Dicts & References](https://inboxpraveen.github.io/Py-Internals/sessions/03-lists-dicts/) | ✅ Live | Aliasing, shallow copy, deep copy, nested mutation |
+| 04 | [Classes & Objects](https://inboxpraveen.github.io/Py-Internals/sessions/04-classes/) | ✅ Live | `self`, `__init__`, `__dict__`, class vs instance, bound methods |
+| 05 | [Iterators & Generators](https://inboxpraveen.github.io/Py-Internals/sessions/05-iterators/) | ✅ Live | `iter` / `next`, `yield`, suspended frames, lazy vs eager |
 | 06 | Decorators | 📋 Planned | First-class functions, wrapper pattern, `functools` |
 | 07 | The GIL & Concurrency | 📋 Planned | GIL, threads vs processes, `asyncio` |
 
@@ -88,7 +94,8 @@ Py-Internals/
 │   │   ├── layout.css           ← App shell, sidebar, stage, hero, narrative
 │   │   ├── components.css       ← Buttons, badges, callouts, type chips
 │   │   ├── memory-viz.css       ← Stack frames, heap objects, reference arrows
-│   │   └── animations.css       ← All keyframes and transition utilities
+│   │   ├── animations.css       ← All keyframes and transition utilities
+│   │   └── session.css          ← Shared session layout, quizzes, legends
 │   │
 │   └── js/
 │       ├── core.js              ← App init, sidebar, utilities (PJ.Core)
@@ -96,16 +103,14 @@ Py-Internals/
 │       ├── memory-viz.js        ← Memory snapshot renderer (PJ.MemoryViz)
 │       └── syntax.js            ← Python syntax highlighter (PJ.Syntax)
 │
+├── glossary.html                ← Searchable term list
+│
 └── sessions/
-    ├── 01-variables/
-    │   ├── index.html           ← Session page (imports shared CSS/JS)
-    │   └── session.js           ← Demo definitions and step data
-    ├── 02-functions/
-    │   ├── index.html           ← Function calls, scope, closures
-    │   └── session.js           ← Call-stack demo definitions
-    └── 03-lists-dicts/
-        ├── index.html           ← Lists, dicts, copies, nested references
-        └── session.js           ← Container reference demo definitions
+    ├── 01-variables/            ← Names, objects, mutation, GC
+    ├── 02-functions/            ← Frames, LEGB, closures, defaults
+    ├── 03-lists-dicts/          ← Aliases, shallow/deep copy
+    ├── 04-classes/              ← self, __dict__, bound methods
+    └── 05-iterators/            ← iter/next, yield, lazy evaluation
 ```
 
 ---

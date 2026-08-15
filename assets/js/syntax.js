@@ -11,7 +11,7 @@ PJ.Syntax = (function () {
 
   // Python keywords, builtins, constants
   const KEYWORDS  = /\b(def|class|return|if|elif|else|for|while|in|not|and|or|import|from|as|with|try|except|finally|raise|pass|break|continue|lambda|yield|del|global|nonlocal|assert|is)\b/g;
-  const BUILTINS  = /\b(print|len|type|id|range|list|dict|tuple|set|int|float|str|bool|input|enumerate|zip|map|filter|sorted|reversed|sum|min|max|abs|isinstance|hasattr|getattr|setattr|append|extend|insert|remove|pop|update|keys|values|items)\b/g;
+  const BUILTINS  = /\b(print|len|type|id|range|list|dict|tuple|set|int|float|str|bool|input|enumerate|zip|map|filter|sorted|reversed|sum|min|max|abs|isinstance|hasattr|getattr|setattr|super|staticmethod|classmethod|property|iter|next|append|extend|insert|remove|pop|update|keys|values|items|copy|deepcopy)\b/g;
   const CONSTANTS = /\b(True|False|None)\b/g;
   const STRINGS1  = /("""[\s\S]*?"""|'''[\s\S]*?'''|"[^"\n]*"|'[^'\n]*')/g;
   const NUMBERS   = /\b(\d+\.?\d*)\b/g;
