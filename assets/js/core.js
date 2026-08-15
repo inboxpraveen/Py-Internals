@@ -229,6 +229,22 @@ PJ.Core = (function () {
       let answered = 0;
       let correct = 0;
 
+      const lede = quiz.querySelector('.quiz__lede');
+      if (lede && !quiz.querySelector('.quiz__hint')) {
+        const hint = document.createElement('p');
+        hint.className = 'quiz__hint';
+        hint.textContent = 'Pick the model that matches the memory diagram. The explanation appears after you choose.';
+        lede.after(hint);
+
+        const meta = document.createElement('div');
+        meta.className = 'quiz__meta';
+        meta.innerHTML =
+          `<span>${cards.length} question${cards.length === 1 ? '' : 's'}</span>` +
+          `<span>One best model each</span>` +
+          `<span>No tricks</span>`;
+        hint.after(meta);
+      }
+
       cards.forEach((card, index) => {
         const q = card.querySelector('.quiz-card__q');
         if (q && !card.querySelector('.quiz-card__head')) {
