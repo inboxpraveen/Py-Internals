@@ -12,6 +12,10 @@
   font-size: 13.5px;
   line-height: 1.7;
   color: var(--clr-code-fg);
+  /* Indentation IS the syntax in Python. Without this the browser collapses
+     every run of spaces to one, and nesting depth becomes unreadable. */
+  white-space: pre;
+  tab-size: 4;
 }
 
 .mem-panel-body {
@@ -343,6 +347,13 @@
   margin: var(--sp-5) 0;
 }
 
+@media (max-width: 768px) {
+  .explanation-strip {
+    padding: var(--sp-5);
+    margin: 0;
+  }
+}
+
 .step-track {
   padding: var(--sp-3) var(--sp-5) var(--sp-4);
 }
@@ -401,6 +412,14 @@
 .rule-grid,
 .diagram-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .mental-model { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.rule-card--rebind { border-top: 3px solid var(--clr-text-3); }
+.rule-card--mutate { border-top: 3px solid var(--clr-accent); }
+
+.rule-card code {
+  display: inline-block;
+  margin-top: var(--sp-1);
+}
 
 .flow-card h3,
 .rule-card h3,
@@ -550,6 +569,88 @@
   line-height: var(--lh-snug);
 }
 
+.type-card {
+  transition: border-color var(--dur-base) var(--ease-out),
+              box-shadow var(--dur-base) var(--ease-out),
+              transform var(--dur-base) var(--ease-out);
+}
+
+.type-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.type-card--mutable   { border-left: 3px solid var(--clr-accent); }
+.type-card--immutable { border-left: 3px solid var(--clr-text-3); }
+
+.type-card__mutability {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+}
+
+.type-card__mutability--immutable {
+  background: var(--clr-surface-2);
+  color: var(--clr-text-3);
+}
+
+.type-card__mutability--mutable {
+  background: var(--clr-accent-lt);
+  color: var(--clr-accent);
+}
+
+/* ── Grouped demo pills (immutable vs mutable, and similar pairings) ─── */
+.demo-group {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.demo-group__label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.demo-group__label--immutable {
+  background: var(--clr-surface-2);
+  color: var(--clr-text-3);
+  border: 1px solid var(--clr-border);
+}
+
+.demo-group__label--mutable {
+  background: var(--clr-accent-lt);
+  color: var(--clr-accent);
+  border: 1px solid rgba(26,107,92,0.2);
+}
+
+.demo-group-divider {
+  width: 1px;
+  height: 22px;
+  background: var(--clr-border);
+  margin: 0 var(--sp-1);
+  flex-shrink: 0;
+}
+
+/* Full-bleed sections have no natural measure — cap the text so a 27" monitor
+   does not turn every paragraph into a 120-character line. */
+.stage-intro > div > p,
+.learning-card__body,
+.explanation-strip__content p,
+.explanation-strip__content h3 {
+  max-width: 68ch;
+}
+
+.explanation-strip__content { min-width: 0; }
+
 @media (max-width: 980px) {
   .learning-overview,
   .stage-intro,
@@ -563,10 +664,32 @@
   .stage-intro__hint { max-width: none; }
 }
 
-@media (max-width: 860px) {
-  .stage { grid-template-columns: 1fr; }
-  .stage__code-panel { min-height: 360px; }
-  .stage__memory-panel { min-height: 420px; }
+/* The sidebar keeps 240px until 768px, so a two-column stage above 860px was
+   splitting an already-narrow content area into two ~330px panels and wrapping
+   code mid-expression. Stack until there is genuinely room for both. */
+@media (max-width: 1024px) {
+  /* Single column: each panel sizes to its own content, with a floor so short
+     snapshots still feel like a panel and a ceiling so tall ones scroll
+     internally instead of pushing the page. */
+  .stage {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .stage__code-panel {
+    min-height: 320px;
+    max-height: 70vh;
+  }
+
+  .stage__memory-panel {
+    min-height: 360px;
+    max-height: 75vh;
+  }
+
+  .stage__code-panel {
+    border-right: none;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
 }
 
 @media (max-width: 768px) {

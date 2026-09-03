@@ -9,67 +9,68 @@ window.PJ = window.PJ || {};
 
 PJ.Syntax = (function () {
 
-  // Python keywords, builtins, constants
-  const KEYWORDS  = /\b(def|class|return|if|elif|else|for|while|in|not|and|or|import|from|as|with|try|except|finally|raise|pass|break|continue|lambda|yield|del|global|nonlocal|assert|is)\b/g;
-  const BUILTINS  = /\b(print|len|type|id|range|list|dict|tuple|set|int|float|str|bool|input|enumerate|zip|map|filter|sorted|reversed|sum|min|max|abs|isinstance|hasattr|getattr|setattr|super|staticmethod|classmethod|property|iter|next|append|extend|insert|remove|pop|update|keys|values|items|copy|deepcopy)\b/g;
-  const CONSTANTS = /\b(True|False|None)\b/g;
-  const STRINGS1  = /("""[\s\S]*?"""|'''[\s\S]*?'''|"[^"\n]*"|'[^'\n]*')/g;
-  const NUMBERS   = /\b(\d+\.?\d*)\b/g;
-  const COMMENTS  = /(#[^\n]*)/g;
-  const OPERATORS = /([=!<>+\-*\/&|^~%]+|:)/g;
-  const DECORATORS = /(@\w+)/g;
+  const KEYWORDS = new Set(('def class return if elif else for while in not and or import from as ' +
+    'with try except finally raise pass break continue lambda yield del global nonlocal assert is')
+    .split(' '));
+
+  const BUILTINS = new Set(('print len type id range list dict tuple set int float str bool input ' +
+    'enumerate zip map filter sorted reversed sum min max abs isinstance hasattr getattr setattr ' +
+    'super staticmethod classmethod property iter next append extend insert remove pop update ' +
+    'keys values items copy deepcopy').split(' '));
+
+  const CONSTANTS = new Set(['True', 'False', 'None']);
+
+  /* One pass, left to right. Each token is consumed exactly once, so the
+     markup this emits can never be re-matched by a later rule — the previous
+     multi-pass version wrapped the word `bool` inside its own `tok-bool`
+     class attribute, and lost string placeholders that landed in comments. */
+  const TOKEN = new RegExp([
+    '("""[\\s\\S]*?"""|\'\'\'[\\s\\S]*?\'\'\')',   // 1 triple-quoted string
+    '("[^"\\n]*"|\'[^\'\\n]*\')',                  // 2 single-line string
+    '(#[^\\n]*)',                                  // 3 comment
+    '(@[A-Za-z_][\\w.]*)',                         // 4 decorator
+    '([A-Za-z_]\\w*)',                             // 5 word
+    '(\\d+\\.?\\d*)',                              // 6 number
+  ].join('|'), 'g');
+
+  function escapeHTML(text) {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function wrap(cls, text) {
+    return `<span class="tok-${cls}">${escapeHTML(text)}</span>`;
+  }
 
   /**
    * Highlight a Python source string → HTML string
    */
   function highlight(source) {
-    // Escape HTML first
-    let s = source
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+    let out = '';
+    let last = 0;
+    let m;
 
-    // Order matters: strings first (avoid highlighting inside strings)
-    // We'll use a token-based approach with placeholders
+    TOKEN.lastIndex = 0;
+    while ((m = TOKEN.exec(source)) !== null) {
+      out += escapeHTML(source.slice(last, m.index));
+      last = TOKEN.lastIndex;
 
-    const tokens = [];
-    let idx = 0;
+      if (m[1] || m[2])      out += wrap('str', m[1] || m[2]);
+      else if (m[3])         out += wrap('cmt', m[3]);
+      else if (m[4])         out += wrap('kw', m[4]);
+      else if (m[5]) {
+        const word = m[5];
+        if (KEYWORDS.has(word))       out += wrap('kw', word);
+        else if (CONSTANTS.has(word)) out += wrap('bool', word);
+        else if (BUILTINS.has(word))  out += wrap('fn', word);
+        else                          out += escapeHTML(word);
+      }
+      else if (m[6])         out += wrap('num', m[6]);
+    }
 
-    // Extract strings (single + triple quoted)
-    s = s.replace(/("""[\s\S]*?"""|'''[\s\S]*?'''|"[^"\n]*"|'[^'\n]*')/g, (m) => {
-      const key = `\x00STR${idx++}\x00`;
-      tokens.push({ key, html: `<span class="tok-str">${m}</span>` });
-      return key;
-    });
-
-    // Extract comments
-    s = s.replace(/(#[^\n]*)/g, (m) => {
-      const key = `\x00CMT${idx++}\x00`;
-      tokens.push({ key, html: `<span class="tok-cmt">${m}</span>` });
-      return key;
-    });
-
-    // Keywords
-    s = s.replace(KEYWORDS, (m) => `<span class="tok-kw">${m}</span>`);
-
-    // Constants
-    s = s.replace(CONSTANTS, (m) => `<span class="tok-bool">${m}</span>`);
-
-    // Built-ins
-    s = s.replace(BUILTINS, (m) => `<span class="tok-fn">${m}</span>`);
-
-    // Numbers
-    s = s.replace(NUMBERS, (m) => `<span class="tok-num">${m}</span>`);
-
-    // Decorators
-    s = s.replace(DECORATORS, (m) => `<span class="tok-kw">${m}</span>`);
-
-    // Restore placeholders
-    tokens.forEach(({ key, html }) => {
-      s = s.replace(key, html);
-    });
-
-    return s;
+    return out + escapeHTML(source.slice(last));
   }
 
   /**
@@ -101,7 +102,7 @@ PJ.Syntax = (function () {
         width:2.5em;
         text-align:right;
         margin-right:1em;
-        color:rgba(255,255,255,0.2);
+        color:rgba(255,255,255,0.42);
         user-select:none;
         font-size:.9em;
       `;
@@ -128,13 +129,22 @@ PJ.Syntax = (function () {
       el.classList.remove('highlighted', 'highlighting');
     });
 
+    let first = null;
     target.forEach(lineNum => {
       const el = container.querySelector(`[data-line="${lineNum}"]`);
       if (el) {
         el.classList.add('highlighted', 'highlighting');
-        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        if (!first) first = el;
       }
     });
+
+    // Scroll the code panel itself, never the page. scrollIntoView() would drag
+    // the whole document around every step on a phone.
+    if (first && container.scrollHeight > container.clientHeight) {
+      const top = first.offsetTop - container.clientHeight / 2 + first.offsetHeight / 2;
+      const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      container.scrollTo({ top: Math.max(0, top), behavior: calm ? 'auto' : 'smooth' });
+    }
   }
 
   /**

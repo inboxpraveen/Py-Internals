@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Session 06: Decorators — Py Internals</title>
+  <meta name="description" content="See what @decorator really does: a function goes in, a wrapper comes out, and the name is rebound. Closure cells, functools.wraps, decorator factories and stacking, shown in memory." />
+  <meta name="theme-color" content="#1A6B5C" />
+  <link rel="icon" type="image/png" href="../../assets/images/Python-logo.png" />
+  <link rel="apple-touch-icon" href="../../assets/images/Python-logo.png" />
+  <link rel="stylesheet" href="../../assets/css/base.css" />
+  <link rel="stylesheet" href="../../assets/css/layout.css" />
+  <link rel="stylesheet" href="../../assets/css/components.css" />
+  <link rel="stylesheet" href="../../assets/css/memory-viz.css" />
+  <link rel="stylesheet" href="../../assets/css/animations.css" />
+  <link rel="stylesheet" href="../../assets/css/session.css" />
+</head>
+<body>
+
+<a class="skip-link" href="#demo-basic">Skip to the interactive lab</a>
+
+<header class="topbar">
+  <div class="topbar__logo">
+    <button class="menu-toggle" aria-label="Open session menu">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+        <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <a href="../../index.html" class="topbar__home" aria-label="Py Internals home">
+      <div class="topbar__logo-mark">Py</div>
+      <span class="topbar__brand">Py<span>Internals</span></span>
+    </a>
+  </div>
+  <div class="topbar__actions">
+    <a href="../../glossary.html" class="btn btn--ghost btn--sm">Glossary</a>
+    <span class="session-count" data-role="session-count">Session 06 of 06</span>
+  </div>
+</header>
+
+<div class="sidebar-overlay"></div>
+
+<div class="app-shell" style="grid-template-rows:unset">
+  <aside class="sidebar" aria-label="Session sections">
+    <div class="sidebar__section">
+      <div class="sidebar__label">Session 06</div>
+      <a href="#intro" class="sidebar__item active">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <circle cx="9" cy="9" r="7"/><path d="M9 6v4l2 2"/>
+        </svg>
+        Introduction
+      </a>
+      <a href="#demo-basic" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M2 9h14M9 2v14"/>
+        </svg>
+        Interactive Lab
+      </a>
+      <a href="#sugar" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M11.5 6.5a3.5 3.5 0 10-2.5 6h4"/><circle cx="9" cy="9" r="7"/>
+        </svg>
+        What <code>@</code> means
+      </a>
+      <a href="#wrapper" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <rect x="2.5" y="2.5" width="13" height="13" rx="2"/><rect x="6" y="6" width="6" height="6" rx="1"/>
+        </svg>
+        Inside the wrapper
+      </a>
+      <a href="#identity" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <rect x="2.5" y="4" width="13" height="10" rx="2"/><path d="M5.5 8h3M5.5 11h6"/>
+        </svg>
+        The lost name tag
+      </a>
+      <a href="#factory" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M3 15V8l4-2.5V15M9 15V5l5-3v13"/><path d="M2 15h14"/>
+        </svg>
+        Decorators with arguments
+      </a>
+      <a href="#stacking" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <rect x="3" y="3" width="12" height="3.5" rx="1"/><rect x="3" y="7.5" width="12" height="3.5" rx="1"/><rect x="3" y="12" width="12" height="3" rx="1"/>
+        </svg>
+        Stacking
+      </a>
+      <a href="#mistakes" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M9 2.5l6.5 12h-13z" stroke-linejoin="round"/><path d="M9 7v3.5M9 12.5h.01"/>
+        </svg>
+        Common mistakes
+      </a>
+      <a href="#quiz" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <circle cx="9" cy="9" r="7"/><path d="M7 7a2 2 0 113 1.8v1.2M9 13h.01"/>
+        </svg>
+        Check yourself
+      </a>
+    </div>
+    <div class="sidebar__section">
+      <div class="sidebar__label">Course</div>
+      <a href="../05-iterators/" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M11 5l-4 4 4 4"/>
+        </svg>
+        Previous Session
+      </a>
+      <a href="../../glossary.html" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M4 3.5h8a2 2 0 012 2V15H6a2 2 0 01-2-2z"/><path d="M4 13a2 2 0 012-2h8"/>
+        </svg>
+        Glossary
+      </a>
+      <a href="../../index.html" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M3 9L9 3l6 6M5 7v8h8V7"/>
+        </svg>
+        All Sessions
+      </a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <div class="session-hero" id="intro">
+      <div class="session-hero__breadcrumb">
+        <a href="../../index.html">Home</a>
+        <span>›</span>
+        Session 06
+      </div>
+      <div class="session-hero__eyebrow">Functions · Session 06</div>
+      <h1 class="session-hero__title">Decorators</h1>
+      <p class="session-hero__subtitle">
+        A decorator looks like magic and is actually one line of assignment.
+        You hand your function to another function, it hands back a replacement,
+        and your old name gets pointed at the replacement. The original does not
+        vanish — it is tucked inside, still doing the real work.
+      </p>
+      <div class="session-meta">
+        <div class="session-meta__item">~40 minutes</div>
+        <div class="session-meta__item">5 interactive demos</div>
+        <div class="session-meta__item">Builds on Sessions 01 and 02</div>
+      </div>
+    </div>
+
+    <div class="progress-bar"><div class="progress-bar__fill" id="readProgress" style="width:0%"></div></div>
+
+    <section class="learning-overview">
+      <div class="learning-card">
+        <div class="learning-card__label">Learning goal</div>
+        <h2 class="learning-card__title"><code>@deco</code> means <code>f = deco(f)</code>.</h2>
+        <p class="learning-card__body">
+          That is the entire feature. Session 01 taught that assignment moves a nametag;
+          Session 02 taught that a function can remember an outer name. Put those two
+          together and you have decorators. Everything else — arguments, stacking,
+          the lost docstring — is a consequence of that one line.
+        </p>
+        <div class="concept-chip-row">
+          <span class="type-chip type-chip--function">function</span>
+          <span class="type-chip type-chip--function">wrapper</span>
+          <span class="type-chip type-chip--dict">closure cell</span>
+          <span class="type-chip type-chip--method">functools.wraps</span>
+          <span class="type-chip type-chip--class">factory</span>
+        </div>
+      </div>
+      <div class="learning-card">
+        <div class="learning-card__label">Recommended path</div>
+        <div class="learning-path">
+          <div class="learning-path__step">
+            <span class="learning-path__num">1</span>
+            <span><strong>Do it by hand first.</strong> Demo 1 has no <code>@</code> at all — just an assignment.</span>
+          </div>
+          <div class="learning-path__step">
+            <span class="learning-path__num">2</span>
+            <span><strong>Then add the <code>@</code>.</strong> Demo 2 ends in the same picture. Only the order is worth watching.</span>
+          </div>
+          <div class="learning-path__step">
+            <span class="learning-path__num">3</span>
+            <span><strong>Ask where the original went.</strong> It is alive inside a closure cell, with no name pointing at it.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="demo-basic">
+      <section class="stage-intro" aria-labelledby="stage-title">
+        <div>
+          <div class="stage-intro__label">Interactive lab</div>
+          <h2 id="stage-title">Follow the nametag, not the <code>@</code></h2>
+          <p>
+            Two things happen in every demo: a new function object appears, and an
+            existing name is pointed somewhere new. If you can spot those two events,
+            you can read any decorator you ever meet.
+          </p>
+        </div>
+        <div class="stage-intro__hint">
+          Tip: at the last step of each demo, ask &ldquo;which object does the name point at,
+          and what is keeping the original alive?&rdquo;
+        </div>
+      </section>
+
+      <div class="demo-guide">
+        <div class="demo-guide__step"><span class="demo-guide__badge">1</span> Choose a demo</div>
+        <span class="demo-guide__arrow">›</span>
+        <div class="demo-guide__step"><span class="demo-guide__badge">2</span> Step with <kbd>→</kbd> or Play</div>
+        <span class="demo-guide__arrow">›</span>
+        <div class="demo-guide__step"><span class="demo-guide__badge">3</span> Watch the name rebind</div>
+        <span class="demo-guide__arrow">›</span>
+        <div class="demo-guide__step"><span class="demo-guide__badge">4</span> Read the model below</div>
+      </div>
+
+      <div class="mem-legend" aria-label="How to read the memory diagram">
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--stack"></span> Names in the current frame</div>
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--heap"></span> Function objects and closure cells</div>
+        <div class="mem-legend__item"><kbd>→</kbd> next <kbd>←</kbd> back <kbd>Space</kbd> play <kbd>R</kbd> reset</div>
+      </div>
+
+      <div class="demo-selector">
+        <button class="demo-pill active" data-demo="manual">1 · f = deco(f)</button>
+        <button class="demo-pill" data-demo="sugar">2 · The @ shorthand</button>
+        <button class="demo-pill" data-demo="identity">3 · functools.wraps</button>
+        <button class="demo-pill" data-demo="factory">4 · Decorator with an argument</button>
+        <button class="demo-pill" data-demo="stacking">5 · Stacking two</button>
+      </div>
+
+      <div class="demo-watch" id="demoWatch"></div>
+
+      <div class="stage" id="stage">
+        <div class="stage__code-panel">
+          <div class="panel-header panel-header--dark">
+            <span>python</span>
+            <div style="display:flex;align-items:center;gap:6px" aria-hidden="true">
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+            </div>
+          </div>
+          <div class="code-panel-body" id="codePanel"></div>
+          <div class="step-track" data-role="step-track" id="stepTrack" role="group" aria-label="Jump to a step"></div>
+          <div class="playback-controls" id="controls">
+            <div class="playback-controls__left">
+              <button class="step-btn" data-action="prev" title="Previous step" aria-label="Previous step" disabled>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M8 2L4 6l4 4"/></svg>
+              </button>
+              <button class="play-btn" data-action="play" title="Play / Pause" aria-label="Play the walkthrough">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true"><path d="M3 2.5l8 4.5-8 4.5z"/></svg>
+              </button>
+              <button class="step-btn" data-action="next" title="Next step" aria-label="Next step">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M4 2l4 4-4 4"/></svg>
+              </button>
+              <button class="btn btn--ghost btn--sm" data-action="reset" title="Reset" aria-label="Reset to the first step">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path d="M10 6A4 4 0 112 6" stroke-linecap="round"/>
+                  <path d="M2 3v3h3" fill="currentColor" stroke="none"/>
+                </svg>
+                Reset
+              </button>
+            </div>
+            <div class="playback-controls__right">
+              <div class="speed-control">
+                <label for="speedSelect">Speed:</label>
+                <select class="speed-select" id="speedSelect" data-action="speed">
+                  <option value="1700">0.5×</option>
+                  <option value="900" selected>1×</option>
+                  <option value="600">1.5×</option>
+                  <option value="400">2×</option>
+                </select>
+              </div>
+              <span class="step-counter" data-role="step-counter">1 / 1</span>
+            </div>
+          </div>
+        </div>
+        <div class="stage__memory-panel">
+          <div class="panel-header">
+            <span style="color:var(--clr-text-3)">Memory</span>
+            <div style="display:flex;align-items:center;gap:6px;font-size:var(--fs-xs);color:var(--clr-text-3)">
+              <span style="display:inline-block;width:8px;height:8px;background:var(--clr-mem-stack);border-radius:2px;opacity:.6"></span>
+              stack
+              <span style="display:inline-block;width:8px;height:8px;background:var(--clr-mem-heap);border-radius:2px;opacity:.6;margin-left:4px"></span>
+              heap
+            </div>
+          </div>
+          <div class="mem-panel-body" id="memPanel"></div>
+        </div>
+      </div>
+
+      <div class="explanation-strip" aria-live="polite">
+        <div class="explanation-strip__step-num" id="stepNum">1</div>
+        <div class="explanation-strip__content">
+          <h3 id="stepTitle" class="explanation-text">Nothing has run yet</h3>
+          <p id="stepDesc" class="explanation-text">Press Play or use Next to watch a decorator take a function apart.</p>
+        </div>
+      </div>
+    </div>
+
+    <article class="narrative">
+      <h2 id="sugar">What the <code>@</code> line actually means</h2>
+      <p class="in-plain">
+        <span class="in-plain__label">In plain words</span>
+        You wrote a function. Someone hands it to a helper and says &ldquo;give me back a
+        better version.&rdquo; The better version goes under the old name, and your
+        original goes in the helper's pocket. That is a decorator. The <code>@</code>
+        symbol is just a shorter way to write the handover.
+      </p>
+      <p class="narrative-lede then-precise">
+        Precisely: <code>@deco</code> above <code>def f</code> compiles to
+        <code>f = deco(f)</code>. The <code>def</code> runs first and produces a
+        function object, that object is passed to <code>deco</code>, and the name
+        <code>f</code> is bound to whatever comes back.
+      </p>
+
+      <div class="flow-grid">
+        <div class="flow-card">
+          <div class="section-label">1 · Build</div>
+          <h3>The <code>def</code> runs</h3>
+          <p>A function object appears on the heap. It has no name yet — the decorator line has not finished.</p>
+        </div>
+        <div class="flow-card">
+          <div class="section-label">2 · Hand over</div>
+          <h3>The decorator is called</h3>
+          <p>Your function object goes in as an argument. Whatever comes out is usually a new function.</p>
+        </div>
+        <div class="flow-card">
+          <div class="section-label">3 · Rebind</div>
+          <h3>The name is assigned</h3>
+          <p>The name in your module now points at the returned object. Session 01's rule, applied to a function.</p>
+        </div>
+      </div>
+
+      <div class="callout callout--info">
+        <div class="callout__icon">Model</div>
+        <div>
+          <div class="callout__title">A decorator is not a keyword</div>
+          <div class="callout__body">
+            There is no <code>decorator</code> type in Python. Anything callable that
+            accepts one argument works — a function, a class, an object with
+            <code>__call__</code>. The <code>@</code> is punctuation, not machinery.
+          </div>
+        </div>
+      </div>
+
+      <div class="try-this">
+        <div class="try-this__label">Try this in a REPL</div>
+        <p>
+          Define <code>def shout(f): ...</code> and a plain <code>def greet(name): ...</code>,
+          then run <code>greet = shout(greet)</code> by hand. Compare <code>id(greet)</code>
+          before and after. You just decorated a function without typing <code>@</code> once.
+        </p>
+      </div>
+
+      <div id="wrapper">
+        <div class="section-divider"><div class="section-divider__label">Inside the wrapper</div></div>
+        <h2>Where your original function goes</h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Nothing is thrown away. Your function is still there, holding the same
+          address it always had. What changed is that no <em>name</em> points at it
+          any more. It is reachable only through the wrapper that swallowed it.
+        </p>
+        <p class="then-precise">
+          The wrapper uses <code>func</code>, a name from the enclosing call. That makes
+          <code>func</code> a free variable, so Python attaches a <strong>closure cell</strong>
+          to the wrapper holding a reference to your function. The decorator's frame is
+          discarded when it returns; the cell survives because it belongs to the wrapper.
+        </p>
+
+        <div class="reference-map" aria-label="Reference diagram after decorating">
+          <div class="reference-map__row">
+            <div class="reference-map__name">greet</div>
+            <div class="reference-map__arrow">-&gt;</div>
+            <div class="reference-map__object">
+              function wrapper @ 0x7f9101f0
+              <span class="reference-map__slot">closure cell -&gt; function greet @ 0x7f9100c8</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rule-grid">
+          <div class="rule-card rule-card--rebind">
+            <div class="rule-card__label">What moved</div>
+            <h3>The name</h3>
+            <p><code>greet</code> was pointing at your function. Now it points at the wrapper. Nothing was copied or edited.</p>
+          </div>
+          <div class="rule-card rule-card--mutate">
+            <div class="rule-card__label">What stayed</div>
+            <h3>The object</h3>
+            <p>Your function still exists at the same address, with its refcount held up by the closure cell alone.</p>
+          </div>
+        </div>
+
+        <div class="callout callout--insight">
+          <div class="callout__icon">Key</div>
+          <div>
+            <div class="callout__title">This is Session 02's closure, doing a job</div>
+            <div class="callout__body">
+              In Session 02 a closure remembered a counter. Here it remembers a function.
+              Same mechanism, same diagram — only the thing being remembered has changed.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="identity">
+        <div class="section-divider"><div class="section-divider__label">Identity</div></div>
+        <h2>The wrapper wears the wrong name tag</h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          You asked for a coat and got the coat back with someone else's name sewn in.
+          Your function still runs, but every tool that reads its label — <code>help()</code>,
+          a traceback, a log line — now reports the wrapper's name instead of yours.
+        </p>
+        <p class="then-precise">
+          <code>functools.wraps(original)</code> is a decorator you apply to the wrapper.
+          It copies <code>__name__</code>, <code>__qualname__</code>, <code>__doc__</code>,
+          <code>__module__</code> and <code>__annotations__</code> from the original onto
+          the wrapper, updates <code>__dict__</code>, and sets <code>__wrapped__</code> to
+          the original object so tools can unwrap it.
+        </p>
+
+        <div style="overflow-x:auto">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>You call</th>
+                <th>Without <code>wraps</code></th>
+                <th>With <code>wraps</code></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>greet.__name__</code></td>
+                <td><code>'wrapper'</code></td>
+                <td><code>'greet'</code></td>
+              </tr>
+              <tr>
+                <td><code>greet.__doc__</code></td>
+                <td><code>None</code></td>
+                <td>Your docstring</td>
+              </tr>
+              <tr>
+                <td><code>greet.__wrapped__</code></td>
+                <td><code>AttributeError</code></td>
+                <td>The undecorated function</td>
+              </tr>
+              <tr>
+                <td><code>greet("ada")</code></td>
+                <td><code>'HI ADA'</code></td>
+                <td><code>'HI ADA'</code> — behaviour is identical</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout--warn">
+          <div class="callout__icon">Care</div>
+          <div>
+            <div class="callout__title">Skipping <code>wraps</code> is a debugging tax you pay later</div>
+            <div class="callout__body">
+              It costs one line and never changes behaviour. Without it, a stack trace three
+              months from now points at <code>wrapper</code> in every decorated function in
+              your codebase, and they all look the same.
+            </div>
+          </div>
+        </div>
+
+        <div class="try-this">
+          <div class="try-this__label">Try this in a REPL</div>
+          <p>
+            Decorate a function twice — once with <code>@functools.wraps(func)</code> on the
+            wrapper and once without — then compare <code>help()</code> on each. The difference
+            is what your future self will be reading.
+          </p>
+        </div>
+      </div>
+
+      <div id="factory">
+        <div class="section-divider"><div class="section-divider__label">Arguments</div></div>
+        <h2>Why <code>@repeat(2)</code> needs one more <code>def</code></h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          The <code>@</code> line only ever passes your function to one thing. If you also
+          want to pass a number, you need something that takes the number first and gives
+          back the thing that will take your function. That is the third layer.
+        </p>
+        <p class="then-precise">
+          <code>@repeat(2)</code> evaluates <code>repeat(2)</code> immediately — before any
+          decorating happens — and the result is what gets applied to your function.
+          <code>repeat</code> is therefore a <strong>decorator factory</strong>, not a decorator.
+          Two calls happen at import time; your function body still runs zero times.
+        </p>
+
+        <div class="lookup-path" aria-label="Order of calls for a decorator factory">
+          <div class="lookup-path__step is-hit">
+            <span class="lookup-path__where">Call 1</span>
+            <span><code>repeat(2)</code> runs. Returns <code>decorator</code>, which remembers <code>times = 2</code>.</span>
+            <span class="lookup-path__result">decorator</span>
+          </div>
+          <div class="lookup-path__step is-hit">
+            <span class="lookup-path__where">Call 2</span>
+            <span><code>decorator(ping)</code> runs. Returns <code>wrapper</code>, which remembers <code>func</code> and <code>times</code>.</span>
+            <span class="lookup-path__result">wrapper</span>
+          </div>
+          <div class="lookup-path__step is-hit">
+            <span class="lookup-path__where">Bind</span>
+            <span>The name <code>ping</code> is pointed at <code>wrapper</code>.</span>
+            <span class="lookup-path__result">ping</span>
+          </div>
+        </div>
+
+        <div class="callout callout--info">
+          <div class="callout__icon">Tell</div>
+          <div>
+            <div class="callout__title">Parentheses tell you which one you have</div>
+            <div class="callout__body">
+              <code>@deco</code> means <code>deco</code> receives your function.
+              <code>@deco()</code> means <code>deco()</code> is called first and <em>its result</em>
+              receives your function. Mixing these up is the single most common decorator bug —
+              and the error message is usually a baffling <code>TypeError</code> about the wrong
+              number of arguments.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="stacking">
+        <div class="section-divider"><div class="section-divider__label">Stacking</div></div>
+        <h2>Two decorators, two different orders</h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Think of wrapping a parcel. The layer you put on first ends up innermost;
+          the last layer you add is the one someone opens first. Decorators are applied
+          from the bottom up and entered from the top down, for exactly that reason.
+        </p>
+        <p class="then-precise">
+          <code>@bold</code> above <code>@italic</code> above <code>def text</code> compiles to
+          <code>text = bold(italic(text))</code>. The inner call happens first, so
+          <code>italic</code> is applied first and ends up nested inside <code>bold</code>'s
+          wrapper. Calling <code>text()</code> then enters <code>bold</code>'s wrapper first.
+        </p>
+
+        <div class="diagram-grid">
+          <div class="diagram-card">
+            <h3>Applied bottom-up</h3>
+            <p>
+              <code>italic(text)</code> runs, then <code>bold(...)</code> runs on its result.
+              The decorator nearest the <code>def</code> gets your real function.
+            </p>
+          </div>
+          <div class="diagram-card">
+            <h3>Executed top-down</h3>
+            <p>
+              <code>text()</code> enters bold's wrapper, which calls italic's wrapper,
+              which calls your function. Result: <code>&lt;b&gt;&lt;i&gt;hi&lt;/i&gt;&lt;/b&gt;</code>.
+            </p>
+          </div>
+        </div>
+
+        <div class="recap-box">
+          <div class="recap-box__label">What you should be able to draw</div>
+          <p>
+            A name, an outermost wrapper, a closure cell inside it holding the next wrapper,
+            and your original function at the bottom of the chain. If you can draw that,
+            you can predict what any stack of decorators does — and where to look when one
+            of them breaks.
+          </p>
+        </div>
+      </div>
+
+      <div id="mistakes">
+        <div class="section-divider"><div class="section-divider__label">Common mistakes</div></div>
+        <h2>Four ways this goes wrong</h2>
+
+        <div class="mistake-list">
+          <div class="mistake-item">
+            <h3>Forgetting to return the wrapper</h3>
+            <p>
+              A decorator that defines <code>wrapper</code> but never returns it returns
+              <code>None</code>. Your name is then bound to <code>None</code>, and the first
+              call gives <code>TypeError: 'NoneType' object is not callable</code>. If you see
+              that error right after adding a decorator, check its last line.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>A wrapper that only accepts the arguments you tested with</h3>
+            <p>
+              <code>def wrapper(text)</code> works until someone decorates a two-argument
+              function. Write <code>def wrapper(*args, **kwargs)</code> and pass them through
+              with <code>func(*args, **kwargs)</code> unless you have a reason not to.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Leaving out <code>functools.wraps</code></h3>
+            <p>
+              Behaviour is fine; everything that reads a function's labels is not.
+              Tracebacks, <code>help()</code>, API docs and log lines all start reporting
+              <code>wrapper</code>. One line fixes it permanently.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Writing <code>@deco()</code> when the decorator takes no arguments</h3>
+            <p>
+              That calls <code>deco</code> with nothing, then applies whatever it returned
+              to your function. If <code>deco</code> expected a function, you get a
+              <code>TypeError</code> at import time — before any of your code runs.
+              The reverse, <code>@repeat</code> without <code>(2)</code>, silently binds your
+              function to the wrong layer.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout callout--success">
+          <div class="callout__icon">Check</div>
+          <div>
+            <div class="callout__title">One question answers most decorator bugs</div>
+            <div class="callout__body">
+              &ldquo;After this line runs, what object does the name point at?&rdquo;
+              If the answer is <code>None</code>, you forgot a <code>return</code>. If it is
+              your original function, the decorator did not wrap. If it is a wrapper with the
+              wrong signature, the <code>*args</code> are missing.
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <section class="quiz" id="quiz" data-session="06-decorators">
+      <div class="section-divider"><div class="section-divider__label">Check your understanding</div></div>
+      <h2>Can you predict the memory?</h2>
+      <p class="quiz__lede">Every question is the same question: after this runs, what does the name point at?</p>
+
+      <div class="quiz-card" data-answer="1">
+        <div class="quiz-card__q">1. What does <code>@shout</code> above <code>def greet</code> compile to?</div>
+        <button class="quiz-option" data-choice="0">It edits the body of <code>greet</code> in place</button>
+        <button class="quiz-option" data-choice="1"><code>greet = shout(greet)</code> — the name is rebound to whatever <code>shout</code> returns</button>
+        <button class="quiz-option" data-choice="2">It registers <code>greet</code> so <code>shout</code> runs before every call, without changing any name</button>
+        <div class="quiz-explain">
+          A decorator never modifies your function. It calls something with it and rebinds the name to the result.
+          If that result is not callable, the next call fails.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="2">
+        <div class="quiz-card__q">2. After decorating, what keeps the original undecorated function alive in memory?</div>
+        <button class="quiz-option" data-choice="0">Nothing — it is garbage collected, and the wrapper holds a copy of its code</button>
+        <button class="quiz-option" data-choice="1">The module keeps a hidden second name for it</button>
+        <button class="quiz-option" data-choice="2">The wrapper's closure cell holds a reference to it</button>
+        <div class="quiz-explain">
+          No name points at it any more, but its reference count is not zero: the wrapper's closure cell
+          still refers to it. That is the only reason calling the wrapper still works.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="0">
+        <div class="quiz-card__q">3. A decorated function reports <code>__name__ == 'wrapper'</code>. What fixes it?</div>
+        <button class="quiz-option" data-choice="0">Apply <code>@functools.wraps(func)</code> to the wrapper</button>
+        <button class="quiz-option" data-choice="1">Return the original function instead of the wrapper</button>
+        <button class="quiz-option" data-choice="2">Rename the inner function to match the decorated one</button>
+        <div class="quiz-explain">
+          <code>wraps</code> copies <code>__name__</code>, <code>__doc__</code> and friends onto the wrapper and sets
+          <code>__wrapped__</code>. Renaming the inner <code>def</code> would only work for one function; <code>wraps</code> works for all of them.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="1">
+        <div class="quiz-card__q">4. In <code>@repeat(2)</code>, when does <code>repeat(2)</code> actually run?</div>
+        <button class="quiz-option" data-choice="0">Every time the decorated function is called</button>
+        <button class="quiz-option" data-choice="1">Once, while the file is being read — before the function is decorated</button>
+        <button class="quiz-option" data-choice="2">Never; <code>@</code> passes the <code>2</code> straight through to the wrapper</button>
+        <div class="quiz-explain">
+          <code>repeat(2)</code> is evaluated first and must return a decorator. That decorator is then
+          called with your function. Two calls at import time, and your function body runs in neither.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="2">
+        <div class="quiz-card__q">5. With <code>@bold</code> written above <code>@italic</code>, which decorator receives your original function?</div>
+        <button class="quiz-option" data-choice="0"><code>bold</code>, because it is written first</button>
+        <button class="quiz-option" data-choice="1">Both receive it, and the results are combined</button>
+        <button class="quiz-option" data-choice="2"><code>italic</code>, because it is closest to the <code>def</code></button>
+        <div class="quiz-explain">
+          It compiles to <code>text = bold(italic(text))</code>. The inner call runs first, so <code>italic</code>
+          gets your function and <code>bold</code> only ever sees italic's wrapper.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="0">
+        <div class="quiz-card__q">6. A decorator defines <code>wrapper</code> but its last line is missing. What happens?</div>
+        <button class="quiz-option" data-choice="0">The name is bound to <code>None</code>, so the next call raises <code>TypeError: 'NoneType' object is not callable</code></button>
+        <button class="quiz-option" data-choice="1">Python falls back to the undecorated function</button>
+        <button class="quiz-option" data-choice="2">A <code>SyntaxError</code> at the <code>@</code> line</button>
+        <div class="quiz-explain">
+          A function with no <code>return</code> returns <code>None</code>, and <code>f = deco(f)</code> binds <code>f</code> to that.
+          The failure shows up at the first call, not at the decorator.
+        </div>
+      </div>
+    </section>
+
+    <div class="session-footer">
+      <a href="../05-iterators/" class="btn btn--secondary">← Session 05: Iterators</a>
+      <div style="text-align:center;font-size:var(--fs-xs);color:var(--clr-text-3)" data-role="session-count">Session 06 of 06</div>
+      <a href="../../index.html" class="btn btn--primary">Back to course</a>
+    </div>
+  </main>
+</div>
+
+<script src="../../assets/js/core.js"></script>
+<script src="../../assets/js/syntax.js"></script>
+<script src="../../assets/js/memory-viz.js"></script>
+<script src="../../assets/js/animator.js"></script>
+<script src="session.js"></script>
+</body>
+</html>

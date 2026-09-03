@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Session 02: Functions & Scope - Py Internals</title>
+  <title>Session 02: Functions, Scope &amp; the Call Stack — Py Internals</title>
   <meta name="description" content="Understand Python functions, call frames, local scope, argument passing, returns, and closures through interactive memory diagrams." />
 
   <link rel="icon" type="image/png" href="../../assets/images/Python-logo.png" />
@@ -15,391 +15,83 @@
   <link rel="stylesheet" href="../../assets/css/memory-viz.css" />
   <link rel="stylesheet" href="../../assets/css/animations.css" />
   <link rel="stylesheet" href="../../assets/css/session.css" />
-
-  <style>
-    .code-panel-body {
-      padding: var(--sp-4);
-      overflow: auto;
-      flex: 1;
-      font-family: var(--font-mono);
-      font-size: 13.5px;
-      line-height: 1.7;
-      color: #CDD6F4;
-    }
-
-    .mem-panel-body {
-      padding: var(--sp-4);
-      overflow: auto;
-      flex: 1;
-      font-size: var(--fs-xs);
-    }
-
-    .learning-overview {
-      display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
-      gap: var(--sp-5);
-      padding: var(--sp-6) var(--sp-12);
-      background: var(--clr-surface);
-      border-bottom: 1px solid var(--clr-border);
-    }
-
-    .learning-card,
-    .flow-card,
-    .rule-card {
-      border: 1px solid var(--clr-border);
-      border-radius: var(--radius-xl);
-      background: var(--clr-surface);
-      padding: var(--sp-5);
-    }
-
-    .learning-card {
-      background: linear-gradient(180deg, var(--clr-surface), var(--clr-bg));
-    }
-
-    .section-label,
-    .learning-card__label,
-    .stage-intro__label,
-    .rule-card__label {
-      font-size: var(--fs-xs);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--clr-text-3);
-      margin-bottom: var(--sp-3);
-    }
-
-    .learning-card__title {
-      font-family: var(--font-display);
-      font-size: var(--fs-xl);
-      line-height: var(--lh-tight);
-      margin-bottom: var(--sp-3);
-    }
-
-    .learning-card__body,
-    .flow-card p,
-    .rule-card p {
-      color: var(--clr-text-2);
-      font-size: var(--fs-sm);
-      line-height: var(--lh-loose);
-    }
-
-    .learning-path {
-      display: grid;
-      gap: var(--sp-3);
-    }
-
-    .learning-path__step {
-      display: grid;
-      grid-template-columns: 28px 1fr;
-      gap: var(--sp-3);
-      align-items: start;
-      color: var(--clr-text-2);
-      font-size: var(--fs-sm);
-      line-height: var(--lh-snug);
-    }
-
-    .learning-path__num {
-      width: 28px;
-      height: 28px;
-      border-radius: var(--radius-full);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--clr-accent-lt);
-      color: var(--clr-accent);
-      border: 1px solid rgba(26,107,92,0.18);
-      font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    .concept-chip-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--sp-2);
-      margin-top: var(--sp-4);
-    }
-
-    .stage-intro {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: var(--sp-5);
-      align-items: center;
-      padding: var(--sp-6) var(--sp-12);
-      background: var(--clr-bg);
-      border-bottom: 1px solid var(--clr-border);
-    }
-
-    .stage-intro h2 {
-      font-size: var(--fs-2xl);
-      margin-bottom: var(--sp-2);
-    }
-
-    .stage-intro p {
-      color: var(--clr-text-2);
-      line-height: var(--lh-loose);
-      max-width: 720px;
-    }
-
-    .stage-intro__hint {
-      border: 1px solid var(--clr-border);
-      border-radius: var(--radius-lg);
-      padding: var(--sp-4);
-      background: var(--clr-surface);
-      color: var(--clr-text-3);
-      font-size: var(--fs-xs);
-      line-height: var(--lh-loose);
-      max-width: 310px;
-    }
-
-    .demo-guide,
-    .demo-selector {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: var(--sp-3);
-      padding: var(--sp-4) var(--sp-12);
-      background: var(--clr-surface);
-      border-bottom: 1px solid var(--clr-border);
-    }
-
-    .demo-guide {
-      padding-top: var(--sp-3);
-      padding-bottom: var(--sp-3);
-    }
-
-    .demo-guide__step {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--sp-2);
-      font-size: var(--fs-xs);
-      color: var(--clr-text-3);
-    }
-
-    .demo-guide__badge {
-      width: 18px;
-      height: 18px;
-      border-radius: var(--radius-full);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--clr-accent-lt);
-      color: var(--clr-accent);
-      border: 1px solid rgba(26,107,92,0.25);
-      font-family: var(--font-mono);
-      font-size: 9px;
-      font-weight: 700;
-    }
-
-    .demo-guide__arrow { color: var(--clr-border); }
-
-    .demo-pill {
-      padding: var(--sp-2) var(--sp-4);
-      border-radius: var(--radius-full);
-      font-size: var(--fs-xs);
-      font-weight: 600;
-      background: var(--clr-surface-2);
-      border: 1.5px solid var(--clr-border);
-      color: var(--clr-text-2);
-      cursor: pointer;
-      transition: all var(--dur-fast) var(--ease-out);
-    }
-
-    .demo-pill:hover { border-color: var(--clr-text-3); color: var(--clr-text); }
-    .demo-pill.active {
-      background: var(--clr-accent);
-      border-color: var(--clr-accent);
-      color: white;
-    }
-
-    .explanation-strip {
-      padding: var(--sp-7) var(--sp-12);
-      min-height: 150px;
-      border-bottom: 2px solid var(--clr-border);
-      margin: var(--sp-5) 0;
-    }
-
-    .step-track {
-      padding: var(--sp-3) var(--sp-5) var(--sp-4);
-    }
-
-    .explanation-text {
-      transition: opacity 0.25s var(--ease-out), transform 0.25s var(--ease-out);
-    }
-
-    .explanation-text--animate {
-      animation: explanationChange 0.3s var(--ease-out) both;
-    }
-
-    @keyframes explanationChange {
-      from { opacity: 0; transform: translateY(4px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .narrative-lede {
-      font-size: var(--fs-lg);
-      line-height: var(--lh-loose);
-      color: var(--clr-text-2);
-      margin-bottom: var(--sp-5);
-    }
-
-    .flow-grid,
-    .rule-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: var(--sp-4);
-      margin: var(--sp-6) 0 var(--sp-8);
-    }
-
-    .rule-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-
-    .flow-card h3,
-    .rule-card h3 {
-      margin: 0 0 var(--sp-2);
-      font-size: var(--fs-md);
-      color: var(--clr-text);
-    }
-
-    .narrative .callout__icon {
-      min-width: 40px;
-      height: 24px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: var(--radius-full);
-      background: rgba(26,107,92,0.08);
-      color: var(--clr-accent);
-      border: 1px solid rgba(26,107,92,0.16);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      margin-top: 1px;
-    }
-
-    .comparison-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: var(--fs-sm);
-      margin: var(--sp-5) 0;
-    }
-
-    .comparison-table th {
-      text-align: left;
-      padding: var(--sp-3) var(--sp-4);
-      background: var(--clr-surface-2);
-      font-weight: 600;
-      font-size: var(--fs-xs);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--clr-text-3);
-      border-bottom: 2px solid var(--clr-border);
-    }
-
-    .comparison-table td {
-      padding: var(--sp-3) var(--sp-4);
-      border-bottom: 1px solid var(--clr-border);
-      vertical-align: top;
-      color: var(--clr-text-2);
-    }
-
-    .comparison-table tr:last-child td { border-bottom: none; }
-    .comparison-table tr:hover td { background: var(--clr-surface-2); }
-
-    @media (max-width: 980px) {
-      .learning-overview,
-      .stage-intro,
-      .flow-grid,
-      .rule-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .stage-intro__hint { max-width: none; }
-    }
-
-    @media (max-width: 860px) {
-      .stage { grid-template-columns: 1fr; }
-      .stage__code-panel { min-height: 360px; }
-      .stage__memory-panel { min-height: 420px; }
-    }
-
-    @media (max-width: 768px) {
-      .learning-overview,
-      .stage-intro,
-      .demo-guide,
-      .demo-selector {
-        padding-left: var(--sp-5);
-        padding-right: var(--sp-5);
-      }
-
-      .demo-guide__arrow { display: none; }
-    }
-  </style>
 </head>
 <body>
 
+<a class="skip-link" href="#demo-basic">Skip to the interactive lab</a>
+
 <header class="topbar">
   <div class="topbar__logo">
-    <button class="menu-toggle" aria-label="Toggle menu" onclick="PJ.Core.toggleSidebar()">
+    <button class="menu-toggle" aria-label="Toggle menu">
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
         <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
     </button>
-    <a href="../../index.html" style="display:flex;align-items:center;gap:10px;text-decoration:none">
+    <a href="../../index.html" class="topbar__home" aria-label="Py Internals home">
       <div class="topbar__logo-mark">Py</div>
       <span class="topbar__brand">Py<span>Internals</span></span>
     </a>
   </div>
   <div class="topbar__actions">
     <a href="../../glossary.html" class="btn btn--ghost btn--sm">Glossary</a>
-    <span style="font-size:var(--fs-xs);color:var(--clr-text-3);font-weight:500" data-role="session-count">Session 02 of 05</span>
+    <span class="session-count" data-role="session-count">Session 02 of 06</span>
   </div>
 </header>
 
-<div class="sidebar-overlay" onclick="PJ.Core.closeSidebar()"></div>
+<div class="sidebar-overlay"></div>
 
 <div class="app-shell" style="grid-template-rows:unset">
-  <aside class="sidebar">
+  <aside class="sidebar" aria-label="Session sections">
     <div class="sidebar__section">
       <div class="sidebar__label">Session 02</div>
-      <a href="#intro" class="sidebar__item active" onclick="scrollTo('#intro')">
+      <a href="#intro" class="sidebar__item active">
         <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="9" cy="9" r="7"/><path d="M9 6v4l2 2"/>
         </svg>
         Introduction
       </a>
-      <a href="#demo-basic" class="sidebar__item" onclick="scrollTo('#demo-basic')">
+      <a href="#demo-basic" class="sidebar__item">
         <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M2 9h14M9 2v14"/>
         </svg>
         Interactive Lab
       </a>
-      <a href="#call-stack" class="sidebar__item" onclick="scrollTo('#call-stack')">
+      <a href="#call-stack" class="sidebar__item">
         <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M4 4h10M4 9h10M4 14h10"/>
         </svg>
         Call Stack
       </a>
-      <a href="#scope" class="sidebar__item" onclick="scrollTo('#scope')">
+      <a href="#scope" class="sidebar__item">
         <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <rect x="3" y="3" width="12" height="12" rx="2"/><path d="M6 7h6M6 11h4"/>
         </svg>
         Scope
       </a>
-      <a href="#arguments" class="sidebar__item" onclick="scrollTo('#arguments')">
+      <a href="#arguments" class="sidebar__item">
         <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M3 9h10M10 6l3 3-3 3"/><circle cx="4" cy="9" r="2"/>
         </svg>
         Arguments
       </a>
-      <a href="#closures" class="sidebar__item" onclick="scrollTo('#closures')">
+      <a href="#closures" class="sidebar__item">
         <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M6 8V6a3 3 0 016 0v2"/><rect x="4" y="8" width="10" height="7" rx="2"/>
         </svg>
         Closures
       </a>
-      <a href="#defaults" class="sidebar__item" onclick="scrollTo('#defaults')">Defaults</a>
-      <a href="#quiz" class="sidebar__item" onclick="scrollTo('#quiz')">Check yourself</a>
+      <a href="#defaults" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="6" width="12" height="8" rx="2"/><path d="M6 6V4h6v2"/>
+        </svg>
+        Defaults
+      </a>
+      <a href="#quiz" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="9" cy="9" r="7"/><path d="M7 7a2 2 0 113 1.7V10"/><path d="M9 13h.01"/>
+        </svg>
+        Check yourself
+      </a>
     </div>
     <div class="sidebar__section">
       <div class="sidebar__label">Course</div>
@@ -409,8 +101,18 @@
         </svg>
         Previous Session
       </a>
-      <a href="../03-lists-dicts/" class="sidebar__item">Next Session</a>
-      <a href="../../glossary.html" class="sidebar__item">Glossary</a>
+      <a href="../03-lists-dicts/" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M7 5l4 4-4 4"/>
+        </svg>
+        Next Session
+      </a>
+      <a href="../../glossary.html" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M4 3h8a2 2 0 012 2v10H6a2 2 0 01-2-2z"/><path d="M4 13h10"/>
+        </svg>
+        Glossary
+      </a>
       <a href="../../index.html" class="sidebar__item">
         <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M3 9L9 3l6 6M5 7v8h8V7"/>
@@ -462,7 +164,7 @@
       <div class="learning-card">
         <div class="learning-card__label">Learning goal</div>
         <h2 class="learning-card__title" id="learning-overview-title">
-          A call opens a temporary workspace, then closes it.
+          A call opens a temporary desk, then clears it away.
         </h2>
         <p class="learning-card__body">
           That is the everyday picture. The technical steps are: create a function object,
@@ -532,11 +234,11 @@
       </div>
 
       <div class="demo-selector">
-        <button class="demo-pill active" data-demo="call" onclick="switchDemo('call')">1 · Call and return</button>
-        <button class="demo-pill" data-demo="scope" onclick="switchDemo('scope')">2 · Local scope</button>
-        <button class="demo-pill" data-demo="mutableArgs" onclick="switchDemo('mutableArgs')">3 · Mutable arguments</button>
-        <button class="demo-pill" data-demo="closure" onclick="switchDemo('closure')">4 · Closures</button>
-        <button class="demo-pill" data-demo="defaultArgs" onclick="switchDemo('defaultArgs')">5 · Mutable defaults</button>
+        <button class="demo-pill active" data-demo="call">1 · Call and return</button>
+        <button class="demo-pill" data-demo="scope">2 · Local scope</button>
+        <button class="demo-pill" data-demo="mutableArgs">3 · Mutable arguments</button>
+        <button class="demo-pill" data-demo="closure">4 · Closures</button>
+        <button class="demo-pill" data-demo="defaultArgs">5 · Mutable defaults</button>
       </div>
 
       <div class="demo-watch" id="demoWatch"></div>
@@ -555,26 +257,27 @@
           <div class="step-track" data-role="step-track" id="stepTrack"></div>
           <div class="playback-controls" id="controls">
             <div class="playback-controls__left">
-              <button class="step-btn" data-action="prev" title="Previous step" disabled>
+              <button class="step-btn" data-action="prev" title="Previous step" aria-label="Previous step" disabled>
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M8 2L4 6l4 4"/></svg>
               </button>
-              <button class="play-btn" data-action="play" title="Play / Pause">
+              <button class="play-btn" data-action="play" title="Play / Pause" aria-label="Play the walkthrough">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M3 2.5l8 4.5-8 4.5z"/></svg>
               </button>
-              <button class="step-btn" data-action="next" title="Next step">
+              <button class="step-btn" data-action="next" title="Next step" aria-label="Next step">
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M4 2l4 4-4 4"/></svg>
               </button>
-              <button class="btn btn--ghost btn--sm" data-action="reset" title="Reset">
+              <button class="btn btn--ghost btn--sm" data-action="reset" title="Reset" aria-label="Reset to the first step">
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
                   <path d="M10 6A4 4 0 112 6" stroke-linecap="round"/>
                   <path d="M2 3v3h3" fill="currentColor" stroke="none"/>
                 </svg>
+                Reset
               </button>
             </div>
             <div class="playback-controls__right">
               <div class="speed-control">
-                Speed:
-                <select class="speed-select" data-action="speed">
+                <label for="speedSelect">Speed:</label>
+                <select class="speed-select" id="speedSelect" data-action="speed">
                   <option value="1600">0.5×</option>
                   <option value="900" selected>1×</option>
                   <option value="600">1.5×</option>
@@ -603,7 +306,7 @@
       <div class="explanation-strip" aria-live="polite">
         <div class="explanation-strip__step-num" id="stepNum">1</div>
         <div class="explanation-strip__content">
-          <h3 id="stepTitle" class="explanation-text">Initial state - only the global frame exists</h3>
+          <h3 id="stepTitle" class="explanation-text">Initial state — only the global frame exists</h3>
           <p id="stepDesc" class="explanation-text">
             Before code runs, there is one namespace: global. Press Play or use Next to step through the call.
           </p>
@@ -616,13 +319,13 @@
       <p class="in-plain">
         <span class="in-plain__label">In plain words</span>
         You write <code>add(2, 3)</code> and expect an answer. Behind the scenes Python
-        opens a short-lived workspace, does the math there, hands the answer back,
-        and throws the workspace away. Locals live on that desk — not forever.
+        pulls up a short-lived desk, does the math there, hands the answer back,
+        and clears the desk. Local names live on that desk — not forever.
       </p>
       <p class="narrative-lede then-precise">
-        That workspace is a <strong>frame</strong>. Python creates it on the call,
-        runs the body inside it, then removes it on return — unless a closure
-        must keep part of it alive.
+        That desk is a <strong>frame</strong>. Python creates it on the call,
+        runs the body inside it, then removes it on return. Every time, with no exceptions —
+        the objects that were on it can outlive it, but the frame itself never does.
       </p>
 
       <div class="flow-grid">
@@ -646,8 +349,9 @@
           <div class="section-label">Step 3</div>
           <h3>Return path</h3>
           <p>
-            <code>return</code> hands an object back to the caller. The local frame is removed unless
-            something, such as a closure, must keep part of it alive.
+            <code>return</code> hands an object back to the caller, then the frame is removed —
+            always. If an inner function captured a name, that one name lives on in a separate
+            little box the inner function carries; the desk is still cleared.
           </p>
         </div>
       </div>
@@ -655,11 +359,12 @@
       <div class="callout callout--info">
         <div class="callout__icon">Model</div>
         <div>
-          <div class="callout__title">A frame is Python's runtime workspace for one call</div>
+          <div class="callout__title">A frame is Python's desk for one call</div>
           <div class="callout__body">
-            You can think of a frame as the place where Python tracks local names, the current line being
-            executed, and the path back to the caller. The exact low-level representation belongs to the
-            Python runtime, but the mental model is stable: each active function call has its own frame.
+            A frame is where Python tracks the local names of one call, the line it is currently on,
+            and the way back to the caller. The exact low-level layout belongs to the runtime, but the
+            mental model is stable: each active call has its own frame, and calls stack up — the top
+            frame is the one running right now.
           </div>
         </div>
       </div>
@@ -674,9 +379,69 @@
           <code>message</code>, stuck on two different desks.
         </p>
         <p class="then-precise">
-          A <strong>scope</strong> is where Python looks up a name. Reading searches outward:
-          local, enclosing functions, global, then built-ins — <strong>LEGB</strong>.
-          Assignment creates a local name unless you declare <code>global</code> or <code>nonlocal</code>.
+          A <strong>scope</strong> is where Python looks up a name. Reading works outward
+          through four rings, and the first one that has the name wins:
+          <strong>L</strong>ocal, <strong>E</strong>nclosing functions, <strong>G</strong>lobal,
+          <strong>B</strong>uilt-ins — <strong>LEGB</strong>. Assignment is the opposite: it always
+          writes to the innermost ring unless you declare <code>global</code> or <code>nonlocal</code>.
+        </p>
+
+        <p>
+          Here are all four rings in one program. Nothing about <code>len</code> is special —
+          it is just a name, and Python has to walk out to the last ring to find it:
+        </p>
+
+        <div class="code-block">
+          <div class="code-block__header">
+            <div class="code-block__dots">
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+            </div>
+            <span class="code-block__lang">python</span>
+          </div>
+          <div class="code-block__body">
+<span class="tok-var">TAX</span> <span class="tok-op">=</span> <span class="tok-num">0.2</span>                  <span class="tok-cmt"># G — global</span>
+
+<span class="tok-kw">def</span> <span class="tok-fn">outer</span>():
+    <span class="tok-var">rate</span> <span class="tok-op">=</span> <span class="tok-num">0.1</span>             <span class="tok-cmt"># E — enclosing, as seen from inner</span>
+
+    <span class="tok-kw">def</span> <span class="tok-fn">inner</span>():
+        <span class="tok-var">total</span> <span class="tok-op">=</span> <span class="tok-num">100</span>        <span class="tok-cmt"># L — local to inner</span>
+        <span class="tok-kw">return</span> <span class="tok-fn">len</span>(<span class="tok-fn">str</span>(<span class="tok-var">total</span>)) <span class="tok-op">*</span> <span class="tok-var">rate</span> <span class="tok-op">*</span> <span class="tok-var">TAX</span>
+    <span class="tok-kw">return</span> <span class="tok-var">inner</span>
+          </div>
+        </div>
+
+        <div class="lookup-path" aria-label="How Python resolves the name len inside inner">
+          <div class="lookup-path__step is-miss">
+            <span class="lookup-path__where">L · inner</span>
+            <span>its own locals — only <code>total</code> is here</span>
+            <span class="lookup-path__result">miss</span>
+          </div>
+          <div class="lookup-path__step is-miss">
+            <span class="lookup-path__where">E · outer</span>
+            <span>the enclosing function — holds <code>rate</code>, which <em>is</em> found this way</span>
+            <span class="lookup-path__result">miss</span>
+          </div>
+          <div class="lookup-path__step is-miss">
+            <span class="lookup-path__where">G · module</span>
+            <span>the global frame — holds <code>TAX</code> and <code>outer</code></span>
+            <span class="lookup-path__result">miss</span>
+          </div>
+          <div class="lookup-path__step is-hit">
+            <span class="lookup-path__where">B · builtins</span>
+            <span>the last ring, always there — <code>len</code>, <code>print</code>, <code>range</code>, <code>str</code></span>
+            <span class="lookup-path__result">hit</span>
+          </div>
+        </div>
+
+        <p>
+          <code>rate</code> stops at ring E; <code>TAX</code> stops at ring G. That E ring is not a
+          footnote — it is exactly the machinery behind closures, which demo 4 takes apart. And
+          because the last ring is a real namespace you can shadow, writing
+          <code>list = [1, 2]</code> at the top of a file quietly hides the built-in <code>list</code>
+          for the rest of that module.
         </p>
 
         <div class="rule-grid">
@@ -754,6 +519,77 @@
             </tbody>
           </table>
         </div>
+
+        <h3>How Python decides which name gets which object</h3>
+        <p>
+          The binding above is the same whatever the call looks like — but which parameter name
+          each object lands on depends on how you wrote the call. Python fills the desk in a fixed
+          order: positional arguments first, left to right; then anything passed by keyword; then
+          defaults for whatever is still unfilled. A <code>*name</code> parameter sweeps up the
+          leftover positionals into a tuple, and <code>**name</code> sweeps up the leftover keywords
+          into a dict.
+        </p>
+
+        <div class="code-block">
+          <div class="code-block__header">
+            <div class="code-block__dots">
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+            </div>
+            <span class="code-block__lang">python</span>
+          </div>
+          <div class="code-block__body">
+<span class="tok-kw">def</span> <span class="tok-fn">order</span>(<span class="tok-var">item</span>, <span class="tok-var">qty</span><span class="tok-op">=</span><span class="tok-num">1</span>, <span class="tok-op">*</span><span class="tok-var">extras</span>, <span class="tok-var">note</span><span class="tok-op">=</span><span class="tok-bool">None</span>, <span class="tok-op">**</span><span class="tok-var">tags</span>):
+    ...
+          </div>
+        </div>
+
+        <div style="overflow-x:auto">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>The call</th>
+                <th>What lands on the desk</th>
+                <th>Why</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>order("tea")</code></td>
+                <td><code>item</code> → <code>"tea"</code>, <code>qty</code> → <code>1</code>, <code>note</code> → <code>None</code>, <code>extras</code> → <code>()</code>, <code>tags</code> → <code>{}</code></td>
+                <td>One positional fills <code>item</code>; the rest fall back to defaults, and the two sweepers come up empty.</td>
+              </tr>
+              <tr>
+                <td><code>order("tea", 2)</code></td>
+                <td><code>item</code> → <code>"tea"</code>, <code>qty</code> → <code>2</code></td>
+                <td>Positionals are matched strictly left to right, so the second one goes to the second parameter.</td>
+              </tr>
+              <tr>
+                <td><code>order(qty=2, item="tea")</code></td>
+                <td>Identical to the row above</td>
+                <td>Keywords are matched by name, so their order does not matter. Written the other way round, <code>order(qty=2, "tea")</code>, it is a syntax error — positionals may never follow keywords.</td>
+              </tr>
+              <tr>
+                <td><code>order("tea", 2, "hot", "large", note="rush", size="L")</code></td>
+                <td><code>extras</code> → <code>("hot", "large")</code>, <code>note</code> → <code>"rush"</code>, <code>tags</code> → <code>{"size": "L"}</code></td>
+                <td>Leftover positionals collect into the <code>*extras</code> tuple; <code>note</code> is named so it binds directly, and the unrecognised <code>size</code> collects into the <code>**tags</code> dict.</td>
+              </tr>
+              <tr>
+                <td><code>order(*pair, **opts)</code></td>
+                <td>Same as spelling the items out by hand</td>
+                <td>At the call site the stars mean "unpack": <code>*</code> spreads a sequence into positionals, <code>**</code> spreads a dict into keywords. Same two stars, opposite direction from the <code>def</code>.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          Nothing here changes the model. However an object arrives, the result is the same:
+          a local name on the call's desk, pointing at an object the caller already had.
+          <code>*extras</code> and <code>**tags</code> are the only exception worth noting — those two
+          objects, a fresh tuple and a fresh dict, really are built for that one call.
+        </p>
       </div>
 
       <div id="closures">
@@ -761,24 +597,48 @@
         <h2>Closures let a function remember an outer name</h2>
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
-          Usually, when a function finishes, its notes are thrown away.
-          A closure is the exception: an inner function keeps a note from the outer room
-          after that room has closed.
+          Usually, when a function finishes, the desk is cleared and its notes go with it.
+          A closure is the exception: before the outer desk is cleared, one note is
+          taken along by the inner function, which keeps it in its pocket.
         </p>
         <p class="then-precise">
-          When an inner function uses a name from an outer function, Python keeps that
-          remembered name alive. <code>nonlocal</code> updates that remembered name
-          instead of creating a new local.
+          That pocket is real and it has a name. When Python compiles an outer function
+          and sees that an inner one uses one of its names, it does not store that name on
+          the desk at all — it puts it in a <strong>cell</strong>: a one-slot box that the inner
+          function object holds a reference to. You can look at them:
+          <code>inc.__closure__</code> is a tuple of cells, one per captured name, and
+          <code>inc.__closure__[0].cell_contents</code> is the value in the first one.
+          The frame is still removed on return; only the cells survive.
         </p>
 
         <div class="callout callout--insight">
           <div class="callout__icon">Key</div>
           <div>
-            <div class="callout__title"><code>nonlocal</code> means "use the remembered outer name"</div>
+            <div class="callout__title"><code>nonlocal</code> means "write through to the cell"</div>
             <div class="callout__body">
-              Without <code>nonlocal count</code>, assigning to <code>count</code> inside <code>inc()</code>
-              would create a local name in <code>inc</code>. With <code>nonlocal</code>, Python updates the
-              remembered <code>count</code> from the enclosing <code>make_counter</code> call.
+              Reading an outer name needs no declaration — that is the <strong>E</strong> in LEGB,
+              the enclosing ring. <code>nonlocal count</code> is only needed to <em>assign</em>:
+              without it, <code>count = count + 1</code> would make a brand-new local name inside
+              <code>inc</code> (and fail, because it would be read before assignment). With it,
+              both the read and the write go straight to the shared cell. Step demo 4 and watch
+              <code>inc()</code>'s desk: it stays empty, because <code>inc</code> has no locals at all.
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout--warn">
+          <div class="callout__icon">Care</div>
+          <div>
+            <div class="callout__title">Closures capture the cell, not the value — the loop trap</div>
+            <div class="callout__body">
+              <code>fs = [lambda: i for i in range(3)]</code> then <code>[f() for f in fs]</code>
+              gives <code>[2, 2, 2]</code>, not <code>[0, 1, 2]</code>. All three functions share
+              <em>one</em> cell for <code>i</code>, and by the time you call them the loop has
+              finished and that cell holds <code>2</code>. This is the closure bug people actually
+              hit — callbacks registered in a loop all firing with the last value. The fix is to
+              copy the value at definition time with a default argument,
+              <code>lambda i=i: i</code>, or with <code>functools.partial(lambda i: i, i)</code>.
+              Both give <code>[0, 1, 2]</code>.
             </div>
           </div>
         </div>
@@ -799,7 +659,7 @@
               </tr>
               <tr>
                 <td><strong>Frame</strong></td>
-                <td>A temporary namespace/workspace for one active function call.</td>
+                <td>The temporary desk — one namespace — belonging to one active call.</td>
               </tr>
               <tr>
                 <td><strong>Local scope</strong></td>
@@ -811,7 +671,7 @@
               </tr>
               <tr>
                 <td><strong>Closure</strong></td>
-                <td>An inner function plus remembered outer names it needs after the outer call returns.</td>
+                <td>An inner function object plus the <strong>cells</strong> holding the outer names it captured. Reachable at <code>fn.__closure__</code>.</td>
               </tr>
             </tbody>
           </table>
@@ -848,7 +708,7 @@
           <p>
             Define <code>def add_item(item, bag=[]): bag.append(item); return bag</code>,
             then call it twice with <code>"a"</code> and <code>"b"</code>. Print both results.
-            Then inspect <code>add_item.__defaults__</code> — that is the shared list.
+            Then inspect <code>add_item.__defaults__[0]</code> — that is the shared list. (<code>__defaults__</code> itself is a <em>tuple</em> of every default value, so you will see <code>(['a', 'b'],)</code> with a trailing comma — that is a one-item tuple, not an error.) Then do the same with the <code>bag=None</code> version and check <code>one is two</code>.
           </p>
         </div>
 
@@ -857,7 +717,7 @@
           <p>
             A function object on the heap, a call frame that appears and disappears,
             parameters as extra names for the caller's objects, and — for closures —
-            remembered outer names that outlive the outer frame.
+            the cells that outlive the outer frame and hold the names it captured.
           </p>
         </div>
       </div>
@@ -895,13 +755,13 @@
 
     <div class="session-footer">
       <a href="../01-variables/" class="btn btn--secondary">
-        ← Session 01: Variables
+        ← Session 01: Variables &amp; Mutability
       </a>
       <div style="text-align:center;font-size:var(--fs-xs);color:var(--clr-text-3)" data-role="session-count">
-        Session 02 of 05
+        Session 02 of 06
       </div>
       <a href="../03-lists-dicts/" class="btn btn--primary">
-        Session 03: Lists & References →
+        Session 03: Lists, Dicts &amp; References →
       </a>
     </div>
   </main>

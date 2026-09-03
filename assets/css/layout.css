@@ -64,6 +64,22 @@
   display: flex;
   align-items: center;
   gap: var(--sp-3);
+  min-width: 0;
+}
+
+.topbar__home {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.session-count {
+  font-size: var(--fs-xs);
+  color: var(--clr-text-3);
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 /* ── Sidebar ──────────────────────────────────────────────── */
@@ -389,6 +405,21 @@
   .session-hero { padding: var(--sp-8) var(--sp-8); }
 }
 
+/* Small phones: the topbar is the one strip that cannot wrap, so the
+   secondary labels step aside before anything spills off-screen. */
+@media (max-width: 520px) {
+  .topbar { padding: var(--sp-3) var(--sp-4); }
+  .topbar__brand { font-size: var(--fs-base); }
+  .session-count { display: none; }
+  .topbar__actions { gap: var(--sp-2); }
+}
+
+@media (max-width: 400px) {
+  /* Hiding only the "Internals" half left "Py Py" next to the logo mark, which
+     already says Py. Drop the wordmark and keep the mark. */
+  .topbar__brand { display: none; }
+}
+
 @media (max-width: 768px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -428,7 +459,7 @@
 
   .stage {
     grid-template-columns: 1fr;
-    grid-template-rows: 360px 360px;
+    grid-template-rows: auto auto;
   }
 
   .stage__code-panel {
@@ -439,6 +470,11 @@
   .session-hero { padding: var(--sp-6) var(--sp-5); }
   .session-hero__title { font-size: var(--fs-2xl); }
   .narrative { padding: var(--sp-8) var(--sp-5); }
-  .explanation-strip { padding: var(--sp-5) var(--sp-5); }
+  .explanation-strip {
+    padding: var(--sp-5);
+    gap: var(--sp-4);
+  }
+  .explanation-strip__step-num { width: 30px; height: 30px; font-size: var(--fs-xs); }
+  .explanation-strip__content h3 { font-size: var(--fs-md); }
   .session-footer { padding: var(--sp-5) var(--sp-5); }
 }

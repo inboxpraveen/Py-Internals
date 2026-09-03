@@ -255,7 +255,7 @@ PJ.MemoryViz = class {
 
     // Value / items. Class, instance, method, and generator objects
     // may show a type link, a short label, and optional key/value pairs.
-    const pairTypes = ['dict', 'class', 'instance', 'method', 'generator', 'iterator'];
+    const pairTypes = ['dict', 'class', 'instance', 'method', 'generator', 'iterator', 'function'];
     if (obj.type === 'list' || obj.type === 'tuple' || obj.type === 'set') {
       el.appendChild(this._renderCollectionItems(obj));
     } else {
@@ -300,6 +300,7 @@ PJ.MemoryViz = class {
     if (type === 'instance') return 'instance __dict__';
     if (type === 'method') return 'bound method';
     if (type === 'generator' || type === 'iterator') return 'internal state';
+    if (type === 'function') return 'function attributes';
     return '';
   }
 
@@ -311,7 +312,7 @@ PJ.MemoryViz = class {
     row.innerHTML = `
       <span class="mem-obj__link-key">${key}</span>
       <span class="mem-obj__link-arrow">→</span>
-      <span class="mem-obj__link-val">${name}${pyId ? ' @ ' + pyId : ''}</span>
+      <span class="mem-obj__link-val">${this._esc(name)}${pyId ? ' @ ' + this._esc(pyId) : ''}</span>
     `;
     return row;
   }
@@ -345,7 +346,7 @@ PJ.MemoryViz = class {
       const row = document.createElement('div');
       row.className = 'mem-obj__dict-row';
       row.innerHTML = `
-        <span class="dict-key">'${pair.key}'</span>
+        <span class="dict-key">'${this._esc(pair.key)}'</span>
         <span class="dict-colon">:</span>
         <span class="dict-val">${this._renderValueHTML(pair.value, pair.type)}</span>
       `;
@@ -355,7 +356,15 @@ PJ.MemoryViz = class {
   }
 
   // ── Helper: render a value as colored HTML ────────────────
-  _renderValueHTML(value, type) {
+  _esc(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  _renderValueHTML(rawValue, type) {
+    const value = typeof rawValue === 'boolean' ? rawValue : this._esc(rawValue);
     if (type === 'str')   return `<span style="color:var(--clr-type-str)">'${value}'</span>`;
     if (type === 'int')   return `<span style="color:var(--clr-type-int)">${value}</span>`;
     if (type === 'float') return `<span style="color:var(--clr-type-float)">${value}</span>`;

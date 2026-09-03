@@ -1,6 +1,7 @@
 /* ============================================================
-   SESSION 02 - Functions, Scope & the Call Stack
-   Demos: function calls, local scope, mutable arguments, closures
+   SESSION 02 — Functions, Scope & the Call Stack
+   Demos: call and return, local scope, mutable arguments, closures,
+          mutable default arguments (and the None cure)
    ============================================================ */
 
 'use strict';
@@ -17,19 +18,22 @@ const ADDRS = {
 
   addItemFn:    '0x7f2102c0',
   bagList:      '0x7f330010',
-  strNotebook:  '0x7f220220',
 
   makeCounterFn:'0x7f2103d0',
   incFn:        '0x7f2104e0',
-  closureDict:  '0x7f440010',
-  int0:         '0x7f110000',
+  cellCount:    '0x7f440010',
   int1:         '0x7f110010',
 
   addItemDef:   '0x7f2105f0',
   defaultBag:   '0x7f3300aa',
-  strA:         '0x7f220301',
-  strB:         '0x7f220302',
+  safeAddFn:    '0x7f210700',
+  freshBag1:    '0x7f3300bb',
+  freshBag2:    '0x7f3300cc',
 };
+
+/* Cached small ints (-5..256) are pre-created by CPython and never freed.
+   They are drawn with an infinite refcount, exactly as Session 01 draws them. */
+const CACHED_INT_NOTE = 'cached small int — CPython pre-creates −5 to 256 and never frees them';
 
 const EMPTY_MEMORY = {
   frames: [{ name: 'global', vars: [] }],
@@ -47,7 +51,7 @@ const DEMOS = {
 answer = add(2, 3)`,
     steps: [
       {
-        title: 'Initial state - only the global frame exists',
+        title: 'Initial state — only the global frame exists',
         desc: 'Before this code runs, there is one namespace: <strong>global</strong>. No function object exists yet, and no call frame has been created.',
         lines: [],
         memory: EMPTY_MEMORY,
@@ -70,7 +74,7 @@ answer = add(2, 3)`,
       },
       {
         title: '<code>add(2, 3)</code> creates a new call frame',
-        desc: 'Calling the function creates a fresh frame for that call. The parameters <code>a</code> and <code>b</code> are local names inside the <code>add</code> frame, bound to the argument objects <code>2</code> and <code>3</code>.',
+        desc: 'Calling the function creates a fresh desk for that call. The parameters <code>a</code> and <code>b</code> are local names on it, bound to the objects <code>2</code> and <code>3</code>. Those two objects are not built here — CPython already made them at startup, along with every int from −5 to 256.',
         lines: [5],
         memory: {
           frames: [
@@ -84,15 +88,15 @@ answer = add(2, 3)`,
           ],
           heap: [
             { id: 'addFn', pyId: ADDRS.addFn, type: 'function', value: 'add(a, b)', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'int2', pyId: ADDRS.int2, type: 'int', value: 2, refcount: 1, mutable: false, state: 'new' },
-            { id: 'int3', pyId: ADDRS.int3, type: 'int', value: 3, refcount: 1, mutable: false, state: 'new' },
+            { id: 'int2', pyId: ADDRS.int2, type: 'int', value: 2, refcount: '∞', mutable: false, state: 'new', note: CACHED_INT_NOTE },
+            { id: 'int3', pyId: ADDRS.int3, type: 'int', value: 3, refcount: '∞', mutable: false, state: 'new', note: CACHED_INT_NOTE },
           ],
           highlight: ['int2', 'int3'],
         },
       },
       {
         title: '<code>total = a + b</code> creates a local name',
-        desc: 'Python evaluates <code>a + b</code>, creates the integer object <code>5</code>, then binds the local name <code>total</code> to it. This name exists only in the active function frame.',
+        desc: 'Python evaluates <code>a + b</code> and gets back the <strong>same cached <code>5</code></strong> the rest of your program uses — nothing new is built. It then binds the local name <code>total</code> to that object. The name lives only on this desk; the object does not.',
         lines: [2],
         memory: {
           frames: [
@@ -107,9 +111,9 @@ answer = add(2, 3)`,
           ],
           heap: [
             { id: 'addFn', pyId: ADDRS.addFn, type: 'function', value: 'add(a, b)', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'int2', pyId: ADDRS.int2, type: 'int', value: 2, refcount: 1, mutable: false, state: 'normal' },
-            { id: 'int3', pyId: ADDRS.int3, type: 'int', value: 3, refcount: 1, mutable: false, state: 'normal' },
-            { id: 'int5', pyId: ADDRS.int5, type: 'int', value: 5, refcount: 1, mutable: false, state: 'new' },
+            { id: 'int2', pyId: ADDRS.int2, type: 'int', value: 2, refcount: '∞', mutable: false, state: 'normal' },
+            { id: 'int3', pyId: ADDRS.int3, type: 'int', value: 3, refcount: '∞', mutable: false, state: 'normal' },
+            { id: 'int5', pyId: ADDRS.int5, type: 'int', value: 5, refcount: '∞', mutable: false, state: 'new', note: CACHED_INT_NOTE },
           ],
           highlight: ['int5'],
         },
@@ -131,16 +135,16 @@ answer = add(2, 3)`,
           ],
           heap: [
             { id: 'addFn', pyId: ADDRS.addFn, type: 'function', value: 'add(a, b)', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'int2', pyId: ADDRS.int2, type: 'int', value: 2, refcount: 1, mutable: false, state: 'normal' },
-            { id: 'int3', pyId: ADDRS.int3, type: 'int', value: 3, refcount: 1, mutable: false, state: 'normal' },
-            { id: 'int5', pyId: ADDRS.int5, type: 'int', value: 5, refcount: 1, mutable: false, state: 'normal' },
+            { id: 'int2', pyId: ADDRS.int2, type: 'int', value: 2, refcount: '∞', mutable: false, state: 'normal' },
+            { id: 'int3', pyId: ADDRS.int3, type: 'int', value: 3, refcount: '∞', mutable: false, state: 'normal' },
+            { id: 'int5', pyId: ADDRS.int5, type: 'int', value: 5, refcount: '∞', mutable: false, state: 'normal' },
           ],
           highlight: ['int5'],
         },
       },
       {
-        title: 'The call frame disappears; <code>answer</code> receives the result',
-        desc: 'After the function returns, its local frame is removed. The local names <code>a</code>, <code>b</code>, and <code>total</code> disappear. The returned object survives because global name <code>answer</code> now points to it.',
+        title: 'Summary — the desk is cleared, the objects on it are not',
+        desc: 'The frame is gone, so the <em>names</em> <code>a</code>, <code>b</code> and <code>total</code> are gone with it. Every object they pointed at is still exactly where it was: <code>2</code>, <code>3</code> and <code>5</code> are cached ints that outlive any call. All that changed in global is one new name, <code>answer</code>, pointing at the object the function handed back.',
         lines: [5],
         memory: {
           frames: [
@@ -151,7 +155,9 @@ answer = add(2, 3)`,
           ],
           heap: [
             { id: 'addFn', pyId: ADDRS.addFn, type: 'function', value: 'add(a, b)', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'int5', pyId: ADDRS.int5, type: 'int', value: 5, refcount: 1, mutable: false, state: 'normal' },
+            { id: 'int2', pyId: ADDRS.int2, type: 'int', value: 2, refcount: '∞', mutable: false, state: 'normal', note: 'no name points here any more — and it is still not freed' },
+            { id: 'int3', pyId: ADDRS.int3, type: 'int', value: 3, refcount: '∞', mutable: false, state: 'normal' },
+            { id: 'int5', pyId: ADDRS.int5, type: 'int', value: 5, refcount: '∞', mutable: false, state: 'normal' },
           ],
           highlight: ['int5'],
         },
@@ -171,7 +177,7 @@ result = show()
 print(message)`,
     steps: [
       {
-        title: 'Initial state - no names yet',
+        title: 'Initial state — no names yet',
         desc: 'This demo shows that assigning to a name inside a function creates a <strong>local</strong> binding unless you explicitly say otherwise.',
         lines: [],
         memory: EMPTY_MEMORY,
@@ -251,8 +257,8 @@ print(message)`,
         },
       },
       {
-        title: '<code>result</code> is local value; global <code>message</code> remains',
-        desc: 'After the frame disappears, <code>result</code> points to <code>"local"</code>. The global name <code>message</code> still points to <code>"global"</code>, so <code>print(message)</code> prints <code>global</code>.',
+        title: 'Summary — two names, two frames, two objects',
+        desc: 'The desk is cleared, so the local <code>message</code> is gone as a name — but the object it pointed at survives, because <code>result</code> now points at it too. The global <code>message</code> was never touched, so <code>print(message)</code> prints <code>global</code>. Same spelling, different frames, different names.',
         lines: [7, 8],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -284,7 +290,7 @@ print(bag)
 print(bag is same_bag)`,
     steps: [
       {
-        title: 'Initial state - preparing to pass a list',
+        title: 'Initial state — preparing to pass a list',
         desc: 'Arguments are passed by object reference. That means the parameter name receives a reference to the same object the caller passed.',
         lines: [],
         memory: EMPTY_MEMORY,
@@ -356,10 +362,9 @@ print(bag is same_bag)`,
           ],
           heap: [
             { id: 'addItemFn', pyId: ADDRS.addItemFn, type: 'function', value: 'add_item(items)', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'strNotebook', pyId: ADDRS.strNotebook, type: 'str', value: 'notebook', refcount: 1, mutable: false, state: 'new' },
             { id: 'bagList', pyId: ADDRS.bagList, type: 'list', refcount: 2, mutable: true, state: 'mutated', items: [
               { value: 'notebook', type: 'str' },
-            ] },
+            ], note: 'same object, same address — one item longer' },
           ],
           highlight: ['bagList'],
         },
@@ -410,7 +415,7 @@ print(bag is same_bag)`,
   },
 
   closure: {
-    watch: 'The inner function still sees <code>count</code> after the outer call returns. That remembered name is the closure.',
+    watch: 'Look at <code>inc()</code>\'s desk: it has no locals at all. The remembered <code>count</code> lives in a <strong>cell</strong> that the function object carries.',
     code: `def make_counter():
     count = 0
 
@@ -425,15 +430,15 @@ counter = make_counter()
 value = counter()`,
     steps: [
       {
-        title: 'Initial state - closures keep outer state alive',
-        desc: 'A closure happens when an inner function remembers a name from an outer function after the outer call has returned.',
+        title: 'Initial state — nothing defined yet',
+        desc: 'A <strong>closure</strong> is what happens when an inner function still needs a name from an outer function after that outer call has finished. Nothing exists yet — just the global frame.',
         lines: [],
         memory: EMPTY_MEMORY,
       },
       {
-        title: '<code>def make_counter()</code> creates the outer function',
-        desc: 'The global name <code>make_counter</code> points to a function object. Its body will run only when we call it.',
-        lines: [1, 2, 4, 9],
+        title: '<code>def make_counter()</code> stores the whole body for later',
+        desc: 'Running the <code>def</code> builds one function object and binds <code>make_counter</code> to it. Everything indented under it — including the inner <code>def inc()</code> — is stored, not run. No <code>count</code> exists yet.',
+        lines: [1, 2, 4, 5, 6, 7, 9],
         memory: {
           frames: [{ name: 'global', vars: [
             { name: 'make_counter', ref: 'makeCounterFn', pyId: ADDRS.makeCounterFn, type: 'function', state: 'new' },
@@ -445,28 +450,28 @@ value = counter()`,
         },
       },
       {
-        title: '<code>make_counter()</code> creates an outer call frame',
-        desc: 'The call creates a frame for <code>make_counter</code>. Inside it, <code>count = 0</code> creates a local name. Because an inner function will use this name, Python keeps it in a closure cell.',
+        title: '<code>make_counter()</code> puts <code>count</code> in a cell, not on the desk',
+        desc: 'The call opens a desk for <code>make_counter</code>. But Python already read the body at compile time and saw that <code>inc</code> uses <code>count</code>, so <code>count</code> is never stored on the desk. <code>count = 0</code> writes into a <strong>cell</strong>: a one-slot box that can outlive the desk. That is why <code>make_counter</code>\'s desk looks empty here.',
         lines: [11, 2],
         memory: {
           frames: [
             { name: 'global', vars: [
               { name: 'make_counter', ref: 'makeCounterFn', pyId: ADDRS.makeCounterFn, type: 'function', state: 'normal' },
             ]},
-            { name: 'make_counter()', vars: [
-              { name: 'count', ref: 'int0', pyId: ADDRS.int0, type: 'int', state: 'new' },
-            ]},
+            { name: 'make_counter()', vars: [] },
           ],
           heap: [
             { id: 'makeCounterFn', pyId: ADDRS.makeCounterFn, type: 'function', value: 'make_counter()', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'int0', pyId: ADDRS.int0, type: 'int', value: 0, refcount: 1, mutable: false, state: 'new' },
+            { id: 'cellCount', pyId: ADDRS.cellCount, type: 'dict', dictLabel: 'cell — one slot, holding count', refcount: 1, mutable: true, state: 'new', pairs: [
+              { key: 'count', value: 0, type: 'int' },
+            ], note: 'drawn as a box with one named slot; in CPython this is a cell object' },
           ],
-          highlight: ['int0'],
+          highlight: ['cellCount'],
         },
       },
       {
-        title: '<code>def inc()</code> creates an inner function with memory',
-        desc: 'The inner function object is created during the outer call. Because <code>inc</code> uses <code>count</code>, it carries a closure: a small hidden storage area that remembers the outer name.',
+        title: '<code>def inc()</code> creates a function that carries the cell',
+        desc: 'The inner function object is built during the outer call. Because its body mentions <code>count</code>, Python hands it a reference to the very same cell — not a copy of the value. From here on, one box has two users.',
         lines: [4, 5, 6, 7],
         memory: {
           frames: [
@@ -474,24 +479,23 @@ value = counter()`,
               { name: 'make_counter', ref: 'makeCounterFn', pyId: ADDRS.makeCounterFn, type: 'function', state: 'normal' },
             ]},
             { name: 'make_counter()', vars: [
-              { name: 'count', ref: 'int0', pyId: ADDRS.int0, type: 'int', state: 'normal' },
               { name: 'inc', ref: 'incFn', pyId: ADDRS.incFn, type: 'function', state: 'new' },
             ]},
           ],
           heap: [
             { id: 'makeCounterFn', pyId: ADDRS.makeCounterFn, type: 'function', value: 'make_counter()', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'int0', pyId: ADDRS.int0, type: 'int', value: 0, refcount: 1, mutable: false, state: 'normal' },
-            { id: 'closureDict', pyId: ADDRS.closureDict, type: 'dict', refcount: 1, mutable: true, state: 'new', pairs: [
+            { id: 'cellCount', pyId: ADDRS.cellCount, type: 'dict', dictLabel: 'cell — one slot, holding count', refcount: 2, mutable: true, state: 'normal', pairs: [
               { key: 'count', value: 0, type: 'int' },
-            ] },
-            { id: 'incFn', pyId: ADDRS.incFn, type: 'function', value: 'inc() + closure', refcount: 1, mutable: false, state: 'new' },
+            ], note: 'refs went 1 → 2: the running call holds it, and now inc holds it too' },
+            { id: 'incFn', pyId: ADDRS.incFn, type: 'function', value: 'inc()', refcount: 1, mutable: false, state: 'new',
+              note: '__closure__ → the cell at ' + ADDRS.cellCount },
           ],
-          highlight: ['incFn', 'closureDict'],
+          highlight: ['incFn', 'cellCount'],
         },
       },
       {
-        title: '<code>return inc</code> returns the function object',
-        desc: 'The outer function returns the inner function itself. The <code>make_counter</code> frame will disappear, but the closure keeps <code>count</code> alive for later calls.',
+        title: '<code>return inc</code> hands back the function object',
+        desc: 'The outer function returns the inner function itself — the object, not a call to it. Nothing is copied: the same <code>inc</code> object on the heap is handed to the caller, cell and all.',
         lines: [9],
         memory: {
           frames: [
@@ -499,23 +503,23 @@ value = counter()`,
               { name: 'make_counter', ref: 'makeCounterFn', pyId: ADDRS.makeCounterFn, type: 'function', state: 'normal' },
             ]},
             { name: 'make_counter()', vars: [
-              { name: 'count', ref: 'int0', pyId: ADDRS.int0, type: 'int', state: 'normal' },
               { name: 'inc', ref: 'incFn', pyId: ADDRS.incFn, type: 'function', state: 'normal' },
             ]},
           ],
           heap: [
             { id: 'makeCounterFn', pyId: ADDRS.makeCounterFn, type: 'function', value: 'make_counter()', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'closureDict', pyId: ADDRS.closureDict, type: 'dict', refcount: 1, mutable: true, state: 'normal', pairs: [
+            { id: 'cellCount', pyId: ADDRS.cellCount, type: 'dict', dictLabel: 'cell — one slot, holding count', refcount: 2, mutable: true, state: 'normal', pairs: [
               { key: 'count', value: 0, type: 'int' },
             ] },
-            { id: 'incFn', pyId: ADDRS.incFn, type: 'function', value: 'inc() + closure', refcount: 1, mutable: false, state: 'normal' },
+            { id: 'incFn', pyId: ADDRS.incFn, type: 'function', value: 'inc()', refcount: 2, mutable: false, state: 'normal',
+              note: '__closure__ → the cell at ' + ADDRS.cellCount },
           ],
-          highlight: ['incFn', 'closureDict'],
+          highlight: ['incFn'],
         },
       },
       {
-        title: '<code>counter</code> now points to <code>inc</code>',
-        desc: 'The outer call has finished. Local names from <code>make_counter</code> are gone, but the returned function is still alive because global name <code>counter</code> points to it. Its closure still remembers <code>count</code>.',
+        title: 'The desk is cleared — the cell is not',
+        desc: 'The outer call is over, so <code>make_counter</code>\'s frame is removed completely. Nothing about it is kept alive. What survives is a separate object: the cell, held by the <code>inc</code> function object, which global name <code>counter</code> now points at.',
         lines: [11],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -524,17 +528,18 @@ value = counter()`,
           ]}],
           heap: [
             { id: 'makeCounterFn', pyId: ADDRS.makeCounterFn, type: 'function', value: 'make_counter()', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'closureDict', pyId: ADDRS.closureDict, type: 'dict', refcount: 1, mutable: true, state: 'normal', pairs: [
+            { id: 'cellCount', pyId: ADDRS.cellCount, type: 'dict', dictLabel: 'cell — one slot, holding count', refcount: 1, mutable: true, state: 'normal', pairs: [
               { key: 'count', value: 0, type: 'int' },
-            ] },
-            { id: 'incFn', pyId: ADDRS.incFn, type: 'function', value: 'inc() + closure', refcount: 1, mutable: false, state: 'normal' },
+            ], note: 'the desk is gone; only inc still holds this box, so refs dropped back to 1' },
+            { id: 'incFn', pyId: ADDRS.incFn, type: 'function', value: 'inc()', refcount: 1, mutable: false, state: 'normal',
+              note: '__closure__ → the cell at ' + ADDRS.cellCount },
           ],
-          highlight: ['incFn', 'closureDict'],
+          highlight: ['cellCount', 'incFn'],
         },
       },
       {
-        title: '<code>counter()</code> reopens the closure state',
-        desc: 'Calling <code>counter</code> runs the inner function <code>inc</code>. The line <code>nonlocal count</code> means assignment should update the remembered outer <code>count</code>, not create a new local <code>count</code>.',
+        title: '<code>counter()</code> writes through to the cell',
+        desc: 'Look at <code>inc()</code>\'s desk: it is empty. <code>inc</code> has no local <code>count</code> — that is exactly what <code>nonlocal count</code> buys you. Reading and writing <code>count</code> both go straight through to the cell, so <code>count + 1</code> repoints the cell\'s one slot at <code>1</code>.',
         lines: [12, 5, 6],
         memory: {
           frames: [
@@ -542,24 +547,22 @@ value = counter()`,
               { name: 'make_counter', ref: 'makeCounterFn', pyId: ADDRS.makeCounterFn, type: 'function', state: 'normal' },
               { name: 'counter', ref: 'incFn', pyId: ADDRS.incFn, type: 'function', state: 'normal' },
             ]},
-            { name: 'inc()', vars: [
-              { name: 'count', ref: 'int1', pyId: ADDRS.int1, type: 'int', state: 'rebound' },
-            ]},
+            { name: 'inc()', vars: [] },
           ],
           heap: [
             { id: 'makeCounterFn', pyId: ADDRS.makeCounterFn, type: 'function', value: 'make_counter()', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'closureDict', pyId: ADDRS.closureDict, type: 'dict', refcount: 1, mutable: true, state: 'mutated', pairs: [
+            { id: 'cellCount', pyId: ADDRS.cellCount, type: 'dict', dictLabel: 'cell — one slot, holding count', refcount: 1, mutable: true, state: 'mutated', pairs: [
               { key: 'count', value: 1, type: 'int' },
-            ] },
-            { id: 'incFn', pyId: ADDRS.incFn, type: 'function', value: 'inc() + closure', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'int1', pyId: ADDRS.int1, type: 'int', value: 1, refcount: 1, mutable: false, state: 'new' },
+            ], note: 'same box, same address — its one slot now points at 1' },
+            { id: 'incFn', pyId: ADDRS.incFn, type: 'function', value: 'inc()', refcount: 1, mutable: false, state: 'normal' },
+            { id: 'int1', pyId: ADDRS.int1, type: 'int', value: 1, refcount: '∞', mutable: false, state: 'new', note: CACHED_INT_NOTE },
           ],
-          highlight: ['closureDict', 'int1'],
+          highlight: ['cellCount', 'int1'],
         },
       },
       {
-        title: '<code>value</code> receives the updated count',
-        desc: 'The inner frame returns <code>1</code> and disappears. The important idea: a closure lets a function carry remembered state without using a global variable.',
+        title: 'Summary — the state lives in the cell, not in a frame',
+        desc: 'The inner desk is cleared too, and <code>value</code> is bound to the object <code>inc</code> returned. Every frame this demo opened has been removed; the counter still works because its memory was never in a frame. That is a closure: a function object plus the cells it carries.',
         lines: [7, 12],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -569,30 +572,46 @@ value = counter()`,
           ]}],
           heap: [
             { id: 'makeCounterFn', pyId: ADDRS.makeCounterFn, type: 'function', value: 'make_counter()', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'closureDict', pyId: ADDRS.closureDict, type: 'dict', refcount: 1, mutable: true, state: 'normal', pairs: [
+            { id: 'cellCount', pyId: ADDRS.cellCount, type: 'dict', dictLabel: 'cell — one slot, holding count', refcount: 1, mutable: true, state: 'normal', pairs: [
               { key: 'count', value: 1, type: 'int' },
-            ] },
-            { id: 'incFn', pyId: ADDRS.incFn, type: 'function', value: 'inc() + closure', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'int1', pyId: ADDRS.int1, type: 'int', value: 1, refcount: 1, mutable: false, state: 'normal' },
+            ], note: 'call counter() again and this same box goes to 2' },
+            { id: 'incFn', pyId: ADDRS.incFn, type: 'function', value: 'inc()', refcount: 1, mutable: false, state: 'normal',
+              note: '__closure__ → the cell at ' + ADDRS.cellCount },
+            { id: 'int1', pyId: ADDRS.int1, type: 'int', value: 1, refcount: '∞', mutable: false, state: 'normal' },
           ],
-          highlight: ['closureDict', 'int1'],
+          highlight: ['cellCount', 'incFn'],
         },
       },
     ],
   },
 
   defaultArgs: {
-    watch: 'The empty list lives on the function object. Each call that omits <code>bag</code> mutates that same list.',
+    watch: 'One shared list for <code>bag=[]</code>. Then watch <code>bag=None</code> build a brand-new list on every call.',
     code: `def add_item(item, bag=[]):
     bag.append(item)
     return bag
 
-first = add_item("a")
-second = add_item("b")`,
+first  = add_item("a")
+second = add_item("b")
+
+def safe_add(item, bag=None):
+    if bag is None:
+        bag = []
+    bag.append(item)
+    return bag
+
+one = safe_add("x")
+two = safe_add("y")`,
     steps: [
       {
-        title: 'The default list is created once, at <code>def</code> time',
-        desc: 'Python evaluates <code>bag=[]</code> when the function is defined, not on each call. That empty list is stored on the function object and reused.',
+        title: 'Initial state — nothing defined yet',
+        desc: 'Two versions of the same function are coming up. The first one has the classic bug; the second one is the habit to keep. Watch how many list objects each version creates.',
+        lines: [],
+        memory: EMPTY_MEMORY,
+      },
+      {
+        title: 'The default list is built once, at <code>def</code> time',
+        desc: 'Python evaluates <code>bag=[]</code> while it is building the function object — not on each call. That one empty list is stored on the function and handed out again and again.',
         lines: [1, 2, 3],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -600,38 +619,38 @@ second = add_item("b")`,
           ]}],
           heap: [
             { id: 'addItemDef', pyId: ADDRS.addItemDef, type: 'function', value: 'add_item(item, bag=[])', refcount: 1, mutable: false, state: 'new' },
-            { id: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', refcount: 1, mutable: true, state: 'new', items: [] },
+            { id: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', refcount: 1, mutable: true, state: 'new', items: [],
+              note: 'held by the function object — this is add_item.__defaults__[0]' },
           ],
           highlight: ['defaultBag', 'addItemDef'],
         },
       },
       {
-        title: 'First call uses the shared default list',
-        desc: '<code>add_item("a")</code> does not create a new list. The local name <code>bag</code> is bound to the default list already sitting on the function. Then <code>append</code> mutates it.',
-        lines: [5],
+        title: 'First call binds <code>bag</code> to that same list',
+        desc: '<code>add_item("a")</code> does not build a new list. The local name <code>bag</code> is bound to the list already sitting on the function, and <code>append</code> mutates it in place. Note the address — it is the one from the previous step.',
+        lines: [5, 2],
         memory: {
           frames: [
             { name: 'global', vars: [
               { name: 'add_item', ref: 'addItemDef', pyId: ADDRS.addItemDef, type: 'function', state: 'normal' },
             ]},
             { name: 'add_item(item, bag)', vars: [
-              { name: 'item', ref: 'strA', pyId: ADDRS.strA, type: 'str', state: 'new' },
+              { name: 'item', inline: true, value: 'a', type: 'str' },
               { name: 'bag', ref: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', state: 'new' },
             ]},
           ],
           heap: [
             { id: 'addItemDef', pyId: ADDRS.addItemDef, type: 'function', value: 'add_item(item, bag=[])', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'strA', pyId: ADDRS.strA, type: 'str', value: 'a', refcount: 1, mutable: false, state: 'new' },
             { id: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', refcount: 2, mutable: true, state: 'mutated', items: [
               { value: 'a', type: 'str' },
-            ] },
+            ], note: 'refs 2: the function still holds it, and so does the local name bag' },
           ],
           highlight: ['defaultBag'],
         },
       },
       {
-        title: '<code>first</code> and the default are the same list',
-        desc: 'The function returns the default list. <code>first</code> is another name for it. The list is no longer empty.',
+        title: '<code>first</code> is another name for the default list',
+        desc: 'The desk is cleared, but the function returned the default list itself, so <code>first</code> now points at it. The list the function will reach for next time is no longer empty.',
         lines: [5],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -648,9 +667,9 @@ second = add_item("b")`,
         },
       },
       {
-        title: 'Second call appends to the <em>same</em> default list',
-        desc: '<code>add_item("b")</code> does not start from <code>[]</code>. It mutates the list that already holds <code>"a"</code>. That is why <code>second</code> is <code>["a", "b"]</code> — and so is <code>first</code>.',
-        lines: [6],
+        title: 'Second call appends to the <em>same</em> list',
+        desc: '<code>add_item("b")</code> does not start from <code>[]</code>. It reaches for the same stored list, which already holds <code>"a"</code>. That is why <code>second</code> is <code>["a", "b"]</code> — and why <code>first</code> is too. There is only one list here, wearing three names.',
+        lines: [6, 2],
         memory: {
           frames: [{ name: 'global', vars: [
             { name: 'add_item', ref: 'addItemDef', pyId: ADDRS.addItemDef, type: 'function', state: 'normal' },
@@ -662,111 +681,106 @@ second = add_item("b")`,
             { id: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', refcount: 3, mutable: true, state: 'mutated', items: [
               { value: 'a', type: 'str' },
               { value: 'b', type: 'str' },
-            ] },
+            ], note: 'first, second and add_item.__defaults__[0] are all this one address' },
           ],
           highlight: ['defaultBag'],
+        },
+      },
+      {
+        title: 'The cure: <code>def safe_add(item, bag=None)</code>',
+        desc: 'Same idea, one change. The default is now <code>None</code> — a single immutable object with nothing to mutate. Nothing gets stored on this function that a later call could grow.',
+        lines: [8, 9, 10, 11, 12],
+        memory: {
+          frames: [{ name: 'global', vars: [
+            { name: 'add_item', ref: 'addItemDef', pyId: ADDRS.addItemDef, type: 'function', state: 'normal' },
+            { name: 'first', ref: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', state: 'normal' },
+            { name: 'second', ref: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', state: 'normal' },
+            { name: 'safe_add', ref: 'safeAddFn', pyId: ADDRS.safeAddFn, type: 'function', state: 'new' },
+          ]}],
+          heap: [
+            { id: 'addItemDef', pyId: ADDRS.addItemDef, type: 'function', value: 'add_item(item, bag=[])', refcount: 1, mutable: false, state: 'normal' },
+            { id: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', refcount: 3, mutable: true, state: 'normal', items: [
+              { value: 'a', type: 'str' },
+              { value: 'b', type: 'str' },
+            ] },
+            { id: 'safeAddFn', pyId: ADDRS.safeAddFn, type: 'function', value: 'safe_add(item, bag=None)', refcount: 1, mutable: false, state: 'new',
+              note: 'safe_add.__defaults__ is (None,) — no list attached' },
+          ],
+          highlight: ['safeAddFn'],
+        },
+      },
+      {
+        title: '<code>safe_add("x")</code> builds a list inside the call',
+        desc: 'Here is the difference, on screen. <code>bag</code> arrives as <code>None</code>, the <code>if</code> is true, and line 10 runs <code>bag = []</code> — a brand-new list object at a brand-new address, belonging to this call alone.',
+        lines: [14, 9, 10, 11],
+        memory: {
+          frames: [
+            { name: 'global', vars: [
+              { name: 'add_item', ref: 'addItemDef', pyId: ADDRS.addItemDef, type: 'function', state: 'normal' },
+              { name: 'first', ref: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', state: 'normal' },
+              { name: 'second', ref: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', state: 'normal' },
+              { name: 'safe_add', ref: 'safeAddFn', pyId: ADDRS.safeAddFn, type: 'function', state: 'normal' },
+            ]},
+            { name: 'safe_add(item, bag)', vars: [
+              { name: 'item', inline: true, value: 'x', type: 'str' },
+              { name: 'bag', ref: 'freshBag1', pyId: ADDRS.freshBag1, type: 'list', state: 'rebound' },
+            ]},
+          ],
+          heap: [
+            { id: 'addItemDef', pyId: ADDRS.addItemDef, type: 'function', value: 'add_item(item, bag=[])', refcount: 1, mutable: false, state: 'normal' },
+            { id: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', refcount: 3, mutable: true, state: 'normal', items: [
+              { value: 'a', type: 'str' },
+              { value: 'b', type: 'str' },
+            ] },
+            { id: 'safeAddFn', pyId: ADDRS.safeAddFn, type: 'function', value: 'safe_add(item, bag=None)', refcount: 1, mutable: false, state: 'normal' },
+            { id: 'freshBag1', pyId: ADDRS.freshBag1, type: 'list', refcount: 1, mutable: true, state: 'new', items: [
+              { value: 'x', type: 'str' },
+            ], note: 'created by line 10, on this call — nothing on the function points here' },
+          ],
+          highlight: ['freshBag1'],
+        },
+      },
+      {
+        title: 'Summary — one shared list, versus a fresh one per call',
+        desc: '<code>safe_add("y")</code> runs line 10 again and gets a <em>second</em>, different list. Count the addresses: <code>first</code> and <code>second</code> are one object that keeps growing, while <code>one</code> and <code>two</code> are two separate objects. The rule behind both halves is the same — <code>def</code> runs its defaults once, so never let a mutable object be one.',
+        lines: [15, 10],
+        memory: {
+          frames: [{ name: 'global', vars: [
+            { name: 'add_item', ref: 'addItemDef', pyId: ADDRS.addItemDef, type: 'function', state: 'normal' },
+            { name: 'first', ref: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', state: 'normal' },
+            { name: 'second', ref: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', state: 'normal' },
+            { name: 'safe_add', ref: 'safeAddFn', pyId: ADDRS.safeAddFn, type: 'function', state: 'normal' },
+            { name: 'one', ref: 'freshBag1', pyId: ADDRS.freshBag1, type: 'list', state: 'new' },
+            { name: 'two', ref: 'freshBag2', pyId: ADDRS.freshBag2, type: 'list', state: 'new' },
+          ]}],
+          heap: [
+            { id: 'addItemDef', pyId: ADDRS.addItemDef, type: 'function', value: 'add_item(item, bag=[])', refcount: 1, mutable: false, state: 'normal' },
+            { id: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', refcount: 3, mutable: true, state: 'normal', items: [
+              { value: 'a', type: 'str' },
+              { value: 'b', type: 'str' },
+            ], note: 'one object — first, second and the stored default' },
+            { id: 'safeAddFn', pyId: ADDRS.safeAddFn, type: 'function', value: 'safe_add(item, bag=None)', refcount: 1, mutable: false, state: 'normal' },
+            { id: 'freshBag1', pyId: ADDRS.freshBag1, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
+              { value: 'x', type: 'str' },
+            ] },
+            { id: 'freshBag2', pyId: ADDRS.freshBag2, type: 'list', refcount: 1, mutable: true, state: 'new', items: [
+              { value: 'y', type: 'str' },
+            ], note: 'a different address from the previous call' },
+          ],
+          highlight: ['defaultBag', 'freshBag1', 'freshBag2'],
         },
       },
     ],
   },
 };
 
-let currentAnimator = null;
-let memViz = null;
 
-function scrollTo(selector) {
-  const el = document.querySelector(selector);
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function switchDemo(demoKey) {
-  document.querySelectorAll('.demo-pill').forEach(p => {
-    p.classList.toggle('active', p.dataset.demo === demoKey);
-  });
-
-  const demo = DEMOS[demoKey];
-  if (!demo) return;
-
-  if (PJ.Session && PJ.Session.setWatch) PJ.Session.setWatch(demo.watch);
-
-  const codePanel = document.getElementById('codePanel');
-  PJ.Syntax.render(demo.code, codePanel);
-
-  if (currentAnimator) {
-    currentAnimator.pause();
-    if (currentAnimator.unmount) currentAnimator.unmount();
-  }
-
-  currentAnimator = new PJ.Animator({
-    steps: demo.steps,
-    containerId: 'stage',
+/* ── Boot ─────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  PJ.Session.mount({
+    sessionId: '02-functions',
+    demos: DEMOS,
+    defaultDemo: 'call',
     defaultSpeed: 900,
-
-    onStep(step, index) {
-      PJ.Syntax.highlightLines(codePanel, step.lines || []);
-      if (step.memory) memViz.render(step.memory);
-
-      const numEl = document.getElementById('stepNum');
-      const titleEl = document.getElementById('stepTitle');
-      const descEl = document.getElementById('stepDesc');
-
-      if (numEl) numEl.textContent = index + 1;
-      if (titleEl) {
-        titleEl.innerHTML = step.title || '';
-        titleEl.classList.remove('explanation-text--animate');
-        void titleEl.offsetWidth;
-        titleEl.classList.add('explanation-text--animate');
-      }
-      if (descEl) descEl.innerHTML = step.desc || '';
-    },
-
-    onComplete() {
-      PJ.Core.markSessionComplete('02-functions');
-    },
-
-    onReset() {
-      PJ.Syntax.highlightLines(codePanel, []);
-    },
   });
-
-  currentAnimator.mount();
-}
-
-function initStage() {
-  memViz = new PJ.MemoryViz('memPanel');
-  switchDemo('call');
-
-  const bar = document.getElementById('readProgress');
-  if (bar) {
-    const updateBar = () => {
-      const scrolled = window.scrollY;
-      const total = document.body.scrollHeight - window.innerHeight;
-      bar.style.width = total > 0 ? (scrolled / total * 100) + '%' : '0%';
-    };
-    window.addEventListener('scroll', updateBar, { passive: true });
-    updateBar();
-  }
-
-  const sidebarAnchors = [...document.querySelectorAll('.sidebar__item[href^="#"]')]
-    .map(link => ({ link, el: document.getElementById(link.getAttribute('href').slice(1)) }))
-    .filter(item => item.el);
-
-  function updateSidebarActive() {
-    const scrollY = window.scrollY + 110;
-    let current = sidebarAnchors[0];
-
-    for (const item of sidebarAnchors) {
-      if (item.el.offsetTop <= scrollY) current = item;
-    }
-
-    sidebarAnchors.forEach(item => item.link.classList.remove('active'));
-    if (current) current.link.classList.add('active');
-  }
-
-  if (sidebarAnchors.length) {
-    window.addEventListener('scroll', PJ.Core.debounce(updateSidebarActive, 40), { passive: true });
-    updateSidebarActive();
-  }
-}
-
-document.addEventListener('DOMContentLoaded', initStage);
+});

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Session 01: Variables & Mutability — Py Internals</title>
+  <title>Session 01: Variables &amp; Mutability — Py Internals</title>
   <meta name="description" content="Understand what Python variables really are, how memory works, and why some objects are mutable while others aren't." />
 
   <link rel="icon" type="image/png" href="../../assets/images/Python-logo.png" />
@@ -15,640 +15,98 @@
   <link rel="stylesheet" href="../../assets/css/memory-viz.css" />
   <link rel="stylesheet" href="../../assets/css/animations.css" />
   <link rel="stylesheet" href="../../assets/css/session.css" />
-
-  <style>
-    /* ── Stage specific tweaks ────────────────────────────── */
-    .code-panel-body {
-      padding: var(--sp-4);
-      overflow: auto;
-      flex: 1;
-      font-family: var(--font-mono);
-      font-size: 13.5px;
-      line-height: 1.7;
-      color: #CDD6F4; /* ensure plain identifiers are readable on dark bg */
-    }
-
-    .mem-panel-body {
-      padding: var(--sp-4);
-      overflow: auto;
-      flex: 1;
-      font-size: var(--fs-xs);
-    }
-
-    /* ── Explanation strip: more breathing room ───────────── */
-    .explanation-strip {
-      padding: var(--sp-7) var(--sp-12);
-      min-height: 150px;
-      border-bottom: 2px solid var(--clr-border);
-      margin: var(--sp-5) 0;
-    }
-
-    /* Wider gap under the step-track dots */
-    .step-track {
-      padding: var(--sp-3) var(--sp-5) var(--sp-4);
-    }
-
-    .explanation-text {
-      transition: opacity 0.25s var(--ease-out), transform 0.25s var(--ease-out);
-    }
-
-    .explanation-text--animate {
-      animation: explanationChange 0.3s var(--ease-out) both;
-    }
-
-    @keyframes explanationChange {
-      from { opacity: 0; transform: translateY(4px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ── Learning overview ────────────────────────────────── */
-    .learning-overview {
-      display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
-      gap: var(--sp-5);
-      padding: var(--sp-6) var(--sp-12);
-      background: var(--clr-surface);
-      border-bottom: 1px solid var(--clr-border);
-    }
-
-    .learning-card {
-      border: 1px solid var(--clr-border);
-      border-radius: var(--radius-xl);
-      padding: var(--sp-5);
-      background: linear-gradient(180deg, var(--clr-surface), var(--clr-bg));
-    }
-
-    .learning-card__label,
-    .stage-intro__label {
-      font-size: var(--fs-xs);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--clr-text-3);
-      margin-bottom: var(--sp-3);
-    }
-
-    .learning-card__title {
-      font-family: var(--font-display);
-      font-size: var(--fs-xl);
-      line-height: var(--lh-tight);
-      margin-bottom: var(--sp-3);
-    }
-
-    .learning-card__body {
-      color: var(--clr-text-2);
-      font-size: var(--fs-sm);
-      line-height: var(--lh-loose);
-      margin-bottom: var(--sp-4);
-    }
-
-    .learning-outcomes {
-      display: grid;
-      gap: var(--sp-3);
-    }
-
-    .learning-outcome {
-      display: grid;
-      grid-template-columns: 28px 1fr;
-      gap: var(--sp-3);
-      align-items: start;
-      color: var(--clr-text-2);
-      font-size: var(--fs-sm);
-      line-height: var(--lh-snug);
-    }
-
-    .learning-outcome__num {
-      width: 28px;
-      height: 28px;
-      border-radius: var(--radius-full);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--clr-accent-lt);
-      color: var(--clr-accent);
-      border: 1px solid rgba(26,107,92,0.18);
-      font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    .concept-chip-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--sp-2);
-    }
-
-    .stage-intro {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: var(--sp-5);
-      align-items: center;
-      padding: var(--sp-6) var(--sp-12);
-      background: var(--clr-bg);
-      border-bottom: 1px solid var(--clr-border);
-    }
-
-    .stage-intro h2 {
-      font-size: var(--fs-2xl);
-      margin-bottom: var(--sp-2);
-    }
-
-    .stage-intro p {
-      color: var(--clr-text-2);
-      line-height: var(--lh-loose);
-      max-width: 720px;
-    }
-
-    .stage-intro__hint {
-      border: 1px solid var(--clr-border);
-      border-radius: var(--radius-lg);
-      padding: var(--sp-4);
-      background: var(--clr-surface);
-      color: var(--clr-text-3);
-      font-size: var(--fs-xs);
-      line-height: var(--lh-loose);
-      max-width: 300px;
-    }
-
-    /* ── How-to guide strip ───────────────────────────────── */
-    .demo-guide {
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      gap: var(--sp-4);
-      padding: var(--sp-3) var(--sp-12);
-      background: var(--clr-surface);
-      border-bottom: 1px solid var(--clr-border);
-      flex-wrap: wrap;
-    }
-
-    .demo-guide__step {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--sp-2);
-      font-size: var(--fs-xs);
-      color: var(--clr-text-3);
-    }
-
-    .demo-guide__badge {
-      width: 18px;
-      height: 18px;
-      background: var(--clr-accent-lt);
-      border: 1px solid rgba(26,107,92,0.25);
-      border-radius: var(--radius-full);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-mono);
-      font-size: 9px;
-      font-weight: 700;
-      color: var(--clr-accent);
-      flex-shrink: 0;
-    }
-
-    .demo-guide__arrow {
-      color: var(--clr-border);
-      font-size: var(--fs-sm);
-    }
-
-    /* ── Demo selector with category groups ───────────────── */
-    .demo-selector {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-2);
-      flex-wrap: wrap;
-      padding: var(--sp-4) var(--sp-12);
-      background: var(--clr-surface);
-      border-bottom: 1px solid var(--clr-border);
-      margin-bottom: 0;
-    }
-
-    .demo-group {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-2);
-    }
-
-    .demo-group__label {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      padding: 2px 8px;
-      border-radius: var(--radius-full);
-      flex-shrink: 0;
-      white-space: nowrap;
-    }
-
-    .demo-group__label--immutable {
-      background: var(--clr-surface-2);
-      color: var(--clr-text-3);
-      border: 1px solid var(--clr-border);
-    }
-
-    .demo-group__label--mutable {
-      background: var(--clr-accent-lt);
-      color: var(--clr-accent);
-      border: 1px solid rgba(26,107,92,0.2);
-    }
-
-    .demo-group-divider {
-      width: 1px;
-      height: 22px;
-      background: var(--clr-border);
-      margin: 0 var(--sp-1);
-      flex-shrink: 0;
-    }
-
-    /* ── Type explorer grid ───────────────────────────────── */
-    .type-explorer {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: var(--sp-4);
-      margin: var(--sp-6) 0;
-    }
-
-    .type-card {
-      background: var(--clr-surface);
-      border: 1.5px solid var(--clr-border);
-      border-radius: var(--radius-xl);
-      overflow: hidden;
-      transition: all var(--dur-base) var(--ease-out);
-    }
-
-    .type-card:hover {
-      box-shadow: var(--shadow-md);
-      transform: translateY(-2px);
-    }
-
-    .type-card__header {
-      padding: var(--sp-3) var(--sp-4);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid var(--clr-border);
-    }
-
-    .type-card__body {
-      padding: var(--sp-4);
-    }
-
-    .type-card__example {
-      font-family: var(--font-mono);
-      font-size: var(--fs-sm);
-      color: var(--clr-text);
-      margin-bottom: var(--sp-2);
-    }
-
-    .type-card__note {
-      font-size: var(--fs-xs);
-      color: var(--clr-text-3);
-      line-height: var(--lh-snug);
-    }
-
-    .type-card__mutability {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 2px 7px;
-      border-radius: var(--radius-full);
-    }
-
-    .type-card.mutable-card   { border-left: 3px solid var(--clr-accent); }
-    .type-card.immutable-card { border-left: 3px solid var(--clr-text-3); }
-
-    .mutability-immutable { background: var(--clr-surface-2); color: var(--clr-text-3); }
-    .mutability-mutable   { background: var(--clr-accent-lt); color: var(--clr-accent); }
-
-    /* ── Demo selector ────────────────────────────────────── */
-    .demo-selector {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-2);
-      flex-wrap: wrap;
-      margin-bottom: 0;
-      padding: var(--sp-4) var(--sp-12);
-      background: var(--clr-surface);
-      border-bottom: 1px solid var(--clr-border);
-    }
-
-    .demo-pill {
-      padding: var(--sp-2) var(--sp-4);
-      border-radius: var(--radius-full);
-      font-size: var(--fs-xs);
-      font-weight: 600;
-      background: var(--clr-surface-2);
-      border: 1.5px solid var(--clr-border);
-      color: var(--clr-text-2);
-      cursor: pointer;
-      transition: all var(--dur-fast) var(--ease-out);
-    }
-
-    .demo-pill:hover { border-color: var(--clr-text-3); color: var(--clr-text); }
-
-    .demo-pill.active {
-      background: var(--clr-accent);
-      border-color: var(--clr-accent);
-      color: white;
-    }
-
-    .narrative-lede {
-      font-size: var(--fs-lg);
-      line-height: var(--lh-loose);
-      color: var(--clr-text-2);
-      margin-bottom: var(--sp-5);
-    }
-
-    .mental-model {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: var(--sp-4);
-      margin: var(--sp-6) 0 var(--sp-8);
-    }
-
-    .mental-model__card {
-      background: var(--clr-surface);
-      border: 1px solid var(--clr-border);
-      border-radius: var(--radius-xl);
-      padding: var(--sp-5);
-    }
-
-    .mental-model__card h3 {
-      margin: 0 0 var(--sp-2);
-      font-size: var(--fs-md);
-      color: var(--clr-text);
-    }
-
-    .mental-model__card p {
-      font-size: var(--fs-sm);
-      line-height: var(--lh-loose);
-      margin: 0;
-    }
-
-    /* ── Insight banner ───────────────────────────────────── */
-    .insight-banner {
-      background: linear-gradient(135deg, #F5F3FF, #EEF2FF);
-      border: 1px solid #C7D2FE;
-      border-radius: var(--radius-lg);
-      padding: var(--sp-5) var(--sp-6);
-      display: flex;
-      gap: var(--sp-4);
-      align-items: flex-start;
-    }
-
-    .insight-banner__icon { font-size: 24px; flex-shrink: 0; }
-
-    .insight-banner h4 {
-      font-family: var(--font-display);
-      font-size: var(--fs-md);
-      margin-bottom: var(--sp-2);
-      color: #3730A3;
-    }
-
-    .insight-banner p {
-      font-size: var(--fs-sm);
-      color: #4338CA;
-      line-height: var(--lh-loose);
-      margin: 0;
-    }
-
-    .narrative .callout__icon {
-      min-width: 40px;
-      height: 24px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: var(--radius-full);
-      background: rgba(26,107,92,0.08);
-      color: var(--clr-accent);
-      border: 1px solid rgba(26,107,92,0.16);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      margin-top: 1px;
-    }
-
-    /* ── Comparison table ─────────────────────────────────── */
-    .comparison-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: var(--fs-sm);
-      margin: var(--sp-5) 0;
-    }
-
-    .comparison-table th {
-      text-align: left;
-      padding: var(--sp-3) var(--sp-4);
-      background: var(--clr-surface-2);
-      font-weight: 600;
-      font-size: var(--fs-xs);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--clr-text-3);
-      border-bottom: 2px solid var(--clr-border);
-    }
-
-    .comparison-table td {
-      padding: var(--sp-3) var(--sp-4);
-      border-bottom: 1px solid var(--clr-border);
-      vertical-align: middle;
-      color: var(--clr-text-2);
-    }
-
-    .comparison-table tr:last-child td { border-bottom: none; }
-    .comparison-table tr:hover td { background: var(--clr-surface-2); }
-
-    /* ── Key idea pill ────────────────────────────────────── */
-    .key-idea {
-      display: flex;
-      align-items: flex-start;
-      gap: var(--sp-3);
-      padding: var(--sp-4) var(--sp-5);
-      background: var(--clr-accent-lt);
-      border-radius: var(--radius-lg);
-      border: 1px solid rgba(26,107,92,0.15);
-      margin: var(--sp-5) 0;
-    }
-
-    .key-idea__icon {
-      width: 24px;
-      height: 24px;
-      border-radius: var(--radius-full);
-      background: var(--clr-accent);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
-
-    .key-idea p {
-      font-size: var(--fs-sm);
-      color: var(--clr-accent);
-      font-weight: 500;
-      margin: 0;
-      line-height: var(--lh-snug);
-    }
-
-    .rule-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: var(--sp-4);
-      margin: var(--sp-5) 0 var(--sp-6);
-    }
-
-    .rule-card {
-      background: var(--clr-surface);
-      border: 1px solid var(--clr-border);
-      border-radius: var(--radius-xl);
-      padding: var(--sp-5);
-      border-top: 3px solid var(--clr-accent);
-    }
-
-    .rule-card--rebind { border-top-color: var(--clr-text-3); }
-    .rule-card--mutate { border-top-color: var(--clr-accent); }
-
-    .rule-card__label {
-      font-size: var(--fs-xs);
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--clr-text-3);
-      margin-bottom: var(--sp-2);
-    }
-
-    .rule-card p {
-      font-size: var(--fs-sm);
-      margin-bottom: var(--sp-3);
-    }
-
-    .rule-card code {
-      display: inline-block;
-      margin-top: var(--sp-1);
-    }
-
-    /* Responsive stage */
-    @media (max-width: 980px) {
-      .learning-overview,
-      .stage-intro,
-      .mental-model,
-      .rule-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .stage-intro__hint {
-        max-width: none;
-      }
-    }
-
-    @media (max-width: 860px) {
-      .stage { grid-template-columns: 1fr; }
-      .stage__code-panel { min-height: 320px; }
-      .stage__memory-panel { min-height: 320px; }
-    }
-
-    @media (max-width: 768px) {
-      .learning-overview,
-      .stage-intro,
-      .demo-guide,
-      .demo-selector {
-        padding-left: var(--sp-5);
-        padding-right: var(--sp-5);
-      }
-
-      .demo-group {
-        width: 100%;
-        flex-wrap: wrap;
-      }
-
-      .demo-group-divider,
-      .demo-guide__arrow {
-        display: none;
-      }
-    }
-  </style>
 </head>
 <body>
+
+<a class="skip-link" href="#demo-basic">Skip to the interactive lab</a>
 
 <!-- ── Top Bar ─────────────────────────────────────────────── -->
 <header class="topbar">
   <div class="topbar__logo">
-    <button class="menu-toggle" aria-label="Toggle menu" onclick="PJ.Core.toggleSidebar()">
+    <button class="menu-toggle" aria-label="Toggle menu">
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
         <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
     </button>
-    <a href="../../index.html" style="display:flex;align-items:center;gap:10px;text-decoration:none">
+    <a href="../../index.html" class="topbar__home" aria-label="Py Internals home">
       <div class="topbar__logo-mark">Py</div>
       <span class="topbar__brand">Py<span>Internals</span></span>
     </a>
   </div>
   <div class="topbar__actions">
     <a href="../../glossary.html" class="btn btn--ghost btn--sm">Glossary</a>
-    <span style="font-size:var(--fs-xs);color:var(--clr-text-3);font-weight:500" data-role="session-count">Session 01 of 05</span>
-    <a href="../02-functions/" class="btn btn--secondary btn--sm" id="nextSessionBtn" style="display:none">
-      Next Session →
-    </a>
+    <span class="session-count" data-role="session-count">Session 01 of 06</span>
   </div>
 </header>
 
 <!-- ── Sidebar overlay (mobile) ──────────────────────────── -->
-<div class="sidebar-overlay" onclick="PJ.Core.closeSidebar()"></div>
+<div class="sidebar-overlay"></div>
 
 <!-- ── App Shell ──────────────────────────────────────────── -->
 <div class="app-shell" style="grid-template-rows:unset">
 
   <!-- Sidebar -->
-  <aside class="sidebar">
+  <aside class="sidebar" aria-label="Session sections">
     <div class="sidebar__section">
       <div class="sidebar__label">Session 01</div>
-      <a href="#intro"        class="sidebar__item active" onclick="scrollTo('#intro')">
+      <a href="#intro"        class="sidebar__item active">
         <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="9" cy="9" r="7"/><path d="M9 6v4l2 2"/>
         </svg>
         Introduction
       </a>
-      <a href="#demo-basic"   class="sidebar__item" onclick="scrollTo('#demo-basic')">
+      <a href="#demo-basic"   class="sidebar__item">
         <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M2 9h14M9 2v14"/>
         </svg>
         Interactive Lab
       </a>
-      <a href="#demo-mutability" class="sidebar__item" onclick="scrollTo('#demo-mutability')">
+      <a href="#demo-mutability" class="sidebar__item">
         <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <rect x="2" y="5" width="14" height="9" rx="2"/>
           <path d="M6 5V4a3 3 0 016 0v1"/>
         </svg>
         Mutability
       </a>
-      <a href="#refcount" class="sidebar__item" onclick="scrollTo('#refcount')">
+      <a href="#refcount" class="sidebar__item">
         <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="9" cy="9" r="5"/><path d="M9 6v3l2 2"/>
         </svg>
         Ref Counting
       </a>
-      <a href="#demo-rebind" class="sidebar__item" onclick="scrollTo('#demo-rebind')">
+      <a href="#demo-rebind" class="sidebar__item">
         <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M4 9l3 3 7-7" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         Rebinding
       </a>
-      <a href="#types" class="sidebar__item" onclick="scrollTo('#types')">
+      <a href="#types" class="sidebar__item">
         <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M3 5h12M3 9h8M3 13h5"/>
         </svg>
         All Types
       </a>
-      <a href="#quiz" class="sidebar__item" onclick="scrollTo('#quiz')">Check yourself</a>
+      <a href="#quiz" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="9" cy="9" r="7"/><path d="M6.8 6.8a2.2 2.2 0 113 2v1.4" stroke-linecap="round"/><path d="M9.8 13h.01" stroke-linecap="round"/>
+        </svg>
+        Check yourself
+      </a>
     </div>
     <div class="sidebar__section">
       <div class="sidebar__label">Course</div>
-      <a href="../02-functions/" class="sidebar__item">Next Session</a>
-      <a href="../../glossary.html" class="sidebar__item">Glossary</a>
+      <a href="../02-functions/" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M7 5l4 4-4 4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Next Session
+      </a>
+      <a href="../../glossary.html" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M4 3h8a2 2 0 012 2v10H6a2 2 0 01-2-2z"/><path d="M4 13h10"/>
+        </svg>
+        Glossary
+      </a>
       <a href="../../index.html" class="sidebar__item">
         <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M3 9L9 3l6 6M5 7v8h8V7"/>
@@ -752,14 +210,14 @@
           <div class="stage-intro__label">Interactive lab</div>
           <h2 id="stage-title">Follow one idea at a time</h2>
           <p>
-            Choose a demo, then move line by line. Left: the Python you wrote.
-            Right: the nametags and the objects they stick to. Same address means
+            Choose a demo, then move line by line. One panel holds the Python you wrote;
+            the other holds the nametags and the objects they stick to. Same address means
             the same thing — two notes, one object.
           </p>
         </div>
         <div class="stage-intro__hint">
           Tip: if a concept feels unclear, pause on that step and compare the highlighted code line
-          with the memory object highlighted on the right.
+          with the memory object highlighted alongside it.
         </div>
       </section>
 
@@ -796,14 +254,14 @@
       <div class="demo-selector">
         <div class="demo-group">
           <span class="demo-group__label demo-group__label--immutable">Immutable</span>
-          <button class="demo-pill active" data-demo="basic"  onclick="switchDemo('basic')">1 · Assigning a variable</button>
-          <button class="demo-pill"        data-demo="rebind" onclick="switchDemo('rebind')">2 · Rebinding</button>
+          <button class="demo-pill active" data-demo="basic" >1 · Assigning a variable</button>
+          <button class="demo-pill"        data-demo="rebind">2 · Rebinding</button>
         </div>
         <div class="demo-group-divider"></div>
         <div class="demo-group">
           <span class="demo-group__label demo-group__label--mutable">Mutable</span>
-          <button class="demo-pill" data-demo="aliasing" onclick="switchDemo('aliasing')">3 · Aliasing</button>
-          <button class="demo-pill" data-demo="mutation" onclick="switchDemo('mutation')">4 · Mutation vs Rebinding</button>
+          <button class="demo-pill" data-demo="aliasing">3 · Aliasing</button>
+          <button class="demo-pill" data-demo="mutation">4 · Mutation vs Rebinding</button>
         </div>
       </div>
 
@@ -830,32 +288,33 @@
           <!-- Playback controls -->
           <div class="playback-controls" id="controls">
             <div class="playback-controls__left">
-              <button class="step-btn" data-action="prev" title="Previous step" disabled>
+              <button class="step-btn" data-action="prev" title="Previous step" aria-label="Previous step" disabled>
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
                   <path d="M8 2L4 6l4 4"/>
                 </svg>
               </button>
-              <button class="play-btn" data-action="play" title="Play / Pause">
+              <button class="play-btn" data-action="play" title="Play / Pause" aria-label="Play the walkthrough">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
                   <path d="M3 2.5l8 4.5-8 4.5z"/>
                 </svg>
               </button>
-              <button class="step-btn" data-action="next" title="Next step">
+              <button class="step-btn" data-action="next" title="Next step" aria-label="Next step">
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
                   <path d="M4 2l4 4-4 4"/>
                 </svg>
               </button>
-              <button class="btn btn--ghost btn--sm" data-action="reset" title="Reset">
+              <button class="btn btn--ghost btn--sm" data-action="reset" title="Reset" aria-label="Reset to the first step">
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
                   <path d="M10 6A4 4 0 112 6" stroke-linecap="round"/>
                   <path d="M2 3v3h3" fill="currentColor" stroke="none"/>
                 </svg>
+                Reset
               </button>
             </div>
             <div class="playback-controls__right">
               <div class="speed-control">
-                Speed:
-                <select class="speed-select" data-action="speed">
+                <label for="speedSelect">Speed:</label>
+                <select class="speed-select" id="speedSelect" data-action="speed">
                   <option value="1400">0.5×</option>
                   <option value="800" selected>1×</option>
                   <option value="500">1.5×</option>
@@ -886,11 +345,11 @@
       <div class="explanation-strip" aria-live="polite">
         <div class="explanation-strip__step-num" id="stepNum">1</div>
         <div class="explanation-strip__content">
-          <h3 id="stepTitle" class="explanation-text">Initial state — empty namespace</h3>
+          <h3 id="stepTitle" class="explanation-text">Nothing has run yet</h3>
           <p  id="stepDesc"  class="explanation-text">
-            Before any code runs, the global namespace is empty — no names, no objects.
+            No names, no objects — the namespace is empty and so is the heap.
             Press <strong>Play</strong> to autoplay, or use <strong>Next</strong> to step through manually.
-            Watch the <strong>Memory panel</strong> on the right as objects appear on the heap.
+            Watch the <strong>Memory panel</strong> as objects appear on the heap.
           </p>
         </div>
       </div>
@@ -1069,6 +528,14 @@
           — unless it is stuck in a cycle, which needs a separate collector.
         </p>
 
+        <p>
+          Try this on a list, not on a number. A few values — small integers, <code>True</code>,
+          <code>False</code>, <code>None</code> — are <strong>immortal</strong> in CPython 3.12 and
+          later: their count is pinned and they are never freed, so
+          <code>sys.getrefcount(42)</code> returns a huge fixed number rather than a count you can
+          watch move. There is more on that further down.
+        </p>
+
         <div class="key-idea">
           <div class="key-idea__icon">↑</div>
           <p>
@@ -1191,7 +658,7 @@
 
         <p>
           Immutable types (<code>int</code>, <code>str</code>, <code>float</code>, <code>tuple</code>) can
-          <em>only</em> be rebounded — you can never change the object itself.
+          <em>only</em> be rebound — you can never change the object itself.
           Mutable types (<code>list</code>, <code>dict</code>, <code>set</code>) can be both mutated
           and rebound.
         </p>
@@ -1267,10 +734,10 @@
         <div class="type-explorer">
 
           <!-- int -->
-          <div class="type-card immutable-card">
+          <div class="type-card type-card--immutable">
             <div class="type-card__header">
               <span class="type-chip type-chip--int">int</span>
-              <span class="type-card__mutability mutability-immutable">immutable</span>
+              <span class="type-card__mutability type-card__mutability--immutable">immutable</span>
             </div>
             <div class="type-card__body">
               <div class="type-card__example">x = 42<br>x = -7<br>x = 0</div>
@@ -1279,10 +746,10 @@
           </div>
 
           <!-- float -->
-          <div class="type-card immutable-card">
+          <div class="type-card type-card--immutable">
             <div class="type-card__header">
               <span class="type-chip type-chip--float">float</span>
-              <span class="type-card__mutability mutability-immutable">immutable</span>
+              <span class="type-card__mutability type-card__mutability--immutable">immutable</span>
             </div>
             <div class="type-card__body">
               <div class="type-card__example">x = 3.14<br>x = 2.0<br>x = -0.5</div>
@@ -1291,10 +758,10 @@
           </div>
 
           <!-- str -->
-          <div class="type-card immutable-card">
+          <div class="type-card type-card--immutable">
             <div class="type-card__header">
               <span class="type-chip type-chip--str">str</span>
-              <span class="type-card__mutability mutability-immutable">immutable</span>
+              <span class="type-card__mutability type-card__mutability--immutable">immutable</span>
             </div>
             <div class="type-card__body">
               <div class="type-card__example">s = "hello"<br>s = 'world'<br>s = """multi<br>line"""</div>
@@ -1303,10 +770,10 @@
           </div>
 
           <!-- bool -->
-          <div class="type-card immutable-card">
+          <div class="type-card type-card--immutable">
             <div class="type-card__header">
               <span class="type-chip type-chip--bool">bool</span>
-              <span class="type-card__mutability mutability-immutable">immutable</span>
+              <span class="type-card__mutability type-card__mutability--immutable">immutable</span>
             </div>
             <div class="type-card__body">
               <div class="type-card__example">done = True<br>active = False</div>
@@ -1315,10 +782,10 @@
           </div>
 
           <!-- None -->
-          <div class="type-card immutable-card">
+          <div class="type-card type-card--immutable">
             <div class="type-card__header">
               <span class="type-chip type-chip--none">NoneType</span>
-              <span class="type-card__mutability mutability-immutable">immutable</span>
+              <span class="type-card__mutability type-card__mutability--immutable">immutable</span>
             </div>
             <div class="type-card__body">
               <div class="type-card__example">result = None</div>
@@ -1327,10 +794,10 @@
           </div>
 
           <!-- tuple -->
-          <div class="type-card immutable-card">
+          <div class="type-card type-card--immutable">
             <div class="type-card__header">
               <span class="type-chip type-chip--tuple">tuple</span>
-              <span class="type-card__mutability mutability-immutable">immutable</span>
+              <span class="type-card__mutability type-card__mutability--immutable">immutable</span>
             </div>
             <div class="type-card__body">
               <div class="type-card__example">t = (1, 2, 3)<br>t = ("a", True)</div>
@@ -1339,10 +806,10 @@
           </div>
 
           <!-- list -->
-          <div class="type-card mutable-card">
+          <div class="type-card type-card--mutable">
             <div class="type-card__header">
               <span class="type-chip type-chip--list">list</span>
-              <span class="type-card__mutability mutability-mutable">mutable</span>
+              <span class="type-card__mutability type-card__mutability--mutable">mutable</span>
             </div>
             <div class="type-card__body">
               <div class="type-card__example">nums = [1, 2, 3]<br>nums.append(4)<br>nums[0] = 99</div>
@@ -1351,10 +818,10 @@
           </div>
 
           <!-- dict -->
-          <div class="type-card mutable-card">
+          <div class="type-card type-card--mutable">
             <div class="type-card__header">
               <span class="type-chip type-chip--dict">dict</span>
-              <span class="type-card__mutability mutability-mutable">mutable</span>
+              <span class="type-card__mutability type-card__mutability--mutable">mutable</span>
             </div>
             <div class="type-card__body">
               <div class="type-card__example">d = {"a": 1}<br>d["b"] = 2<br>del d["a"]</div>
@@ -1363,10 +830,10 @@
           </div>
 
           <!-- set -->
-          <div class="type-card mutable-card">
+          <div class="type-card type-card--mutable">
             <div class="type-card__header">
               <span class="type-chip type-chip--set">set</span>
-              <span class="type-card__mutability mutability-mutable">mutable</span>
+              <span class="type-card__mutability type-card__mutability--mutable">mutable</span>
             </div>
             <div class="type-card__body">
               <div class="type-card__example">s = {1, 2, 3}<br>s.add(4)<br>s.discard(1)</div>
@@ -1435,7 +902,7 @@
                 <td><span class="type-chip type-chip--dict">dict</span></td>
                 <td><code>{"k": v}</code></td>
                 <td>Yes</td>
-                <td>Passed by reference; mutations inside functions persist</td>
+                <td>A function gets a second name for the same dict — changes made inside it are visible to the caller</td>
               </tr>
               <tr>
                 <td><span class="type-chip type-chip--set">set</span></td>
@@ -1464,13 +931,30 @@
         <div class="callout callout--info">
           <div class="callout__icon">Note</div>
           <div>
-            <div class="callout__title">Integer interning</div>
+            <div class="callout__title">Some objects are shared, and a few live forever</div>
             <div class="callout__body">
-              CPython (the standard Python) pre-creates integer objects for small values
-              (typically -5 to 256). So <code>id(5) == id(5)</code> is always True,
-              and two variables both set to 5 will share the exact same object.
-              For large integers, each assignment creates a new object.
-              This is an optimization detail, not a language guarantee.
+              CPython builds the small integers once, at start-up, and hands out the same object
+              every time — typically <code>-5</code> through <code>256</code>. So
+              <code>a = 5; b = 5</code> gives <code>a is b</code> → <code>True</code>: one object,
+              two names. It does the same for short identifier-like strings, which is why
+              <code>s = "hello"; t = "hello"</code> also gives <code>s is t</code> → <code>True</code>.
+              <br><br>
+              Outside that cached range there is no promise either way. Two large numbers
+              <em>computed</em> separately are usually different objects —
+              <code>n = 999; c = n + 1; d = 1000; c is d</code> → <code>False</code> — but two
+              identical literals written in the same file often still share one object, because the
+              compiler stores the constant once. Don't test interning with
+              <code>id(5) == id(5)</code>: that is <code>True</code> for every number, interned or
+              not, since both halves are the same literal.
+              <br><br>
+              One more consequence: in CPython 3.12 and later these shared values (small ints,
+              <code>True</code>, <code>False</code>, <code>None</code>) are <strong>immortal</strong> —
+              they are never freed, and their reference count is pinned at a huge fixed number.
+              That is why <code>sys.getrefcount(42)</code> prints something like
+              <code>4294967295</code> instead of a small count, and why the memory panel shows
+              <code>∞</code> for <code>42</code> rather than a number that ticks up and down.
+              All of this is an implementation detail, not a language guarantee — never write code
+              whose correctness depends on it.
             </div>
           </div>
         </div>
@@ -1541,7 +1025,7 @@
         ← Back to Course
       </a>
       <div style="text-align:center;font-size:var(--fs-xs);color:var(--clr-text-3)" data-role="session-count">
-        Session 01 of 05
+        Session 01 of 06
       </div>
       <a href="../02-functions/" class="btn btn--primary">
         Session 02: Functions →

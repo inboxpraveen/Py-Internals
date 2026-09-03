@@ -9,8 +9,10 @@
 const ADDRS = {
   PointCls:  '0x7f7100a0',
   initFn:    '0x7f7101b0',
+  totalFn:   '0x7f7101c0',
   int3:      '0x7f110003',
   int4:      '0x7f110004',
+  int7:      '0x7f110007',
   pInst:     '0x7f720010',
 
   PlayerCls: '0x7f7300a0',
@@ -51,7 +53,10 @@ function pointClass(state, refcount) {
   return {
     id: 'PointCls', pyId: ADDRS.PointCls, type: 'class', value: 'class Point',
     refcount, mutable: true, state,
-    pairs: [{ key: '__init__', value: 'fn -> 0x7f7101b0', type: 'str' }],
+    pairs: [
+      { key: '__init__', value: 'fn -> 0x7f7101b0', type: 'function' },
+      { key: 'total', value: 'fn -> 0x7f7101c0', type: 'function' },
+    ],
   };
 }
 
@@ -67,13 +72,17 @@ function pointInst(state, pairs, refcount, note) {
 
 const DEMOS = {
   create: {
-    watch: 'Find <code>self</code> and <code>p</code>. Same address means the same instance. Methods stay on the class; <code>x</code> and <code>y</code> land in the instance <code>__dict__</code>.',
+    watch: 'Find <code>self</code> and <code>p</code>. Same address means the same instance. Both functions stay on the class; <code>x</code> and <code>y</code> land in the instance <code>__dict__</code> — and <code>total</code> reads them straight back out.',
     code: `class Point:
     def __init__(self, x, y):
         self.x = x
         self.y = y
 
-p = Point(3, 4)`,
+    def total(self):
+        return self.x + self.y
+
+p = Point(3, 4)
+t = p.total()`,
     steps: [
       {
         title: 'Initial state — only the global frame',
@@ -82,40 +91,25 @@ p = Point(3, 4)`,
         memory: EMPTY,
       },
       {
-        title: '<code>class Point</code> creates a class object',
-        desc: 'Python creates a <strong>class object</strong> and binds the name <code>Point</code> to it. The class is itself a heap object. It will hold methods and class-level attributes.',
-        lines: [1],
+        title: 'The class body runs, then <code>Point</code> gets its name',
+        desc: 'The order matters and it is the opposite of what most people guess. Python runs the indented body first — that creates the two <strong>function objects</strong> and collects them in a fresh namespace. Only when the body finishes does Python build the <strong>class object</strong> and bind the name <code>Point</code> to it. There is no moment where you can see a half-built <code>Point</code>.',
+        lines: [1, 2, 3, 4, 6, 7],
         memory: {
           frames: [{ name: 'global', vars: [
             { name: 'Point', ref: 'PointCls', pyId: ADDRS.PointCls, type: 'class', state: 'new' },
           ]}],
           heap: [
-            { id: 'PointCls', pyId: ADDRS.PointCls, type: 'class', value: 'class Point', refcount: 1, mutable: true, state: 'new', pairs: [] },
-          ],
-          highlight: ['PointCls'],
-        },
-      },
-      {
-        title: '<code>__init__</code> is stored on the class',
-        desc: 'The method is a function object. It lives on the <strong>class</strong>, not on any instance. Instances will find it later by walking <code>__class__</code>.',
-        lines: [2, 3, 4],
-        memory: {
-          frames: [{ name: 'global', vars: [
-            { name: 'Point', ref: 'PointCls', pyId: ADDRS.PointCls, type: 'class', state: 'normal' },
-          ]}],
-          heap: [
             { id: 'initFn', pyId: ADDRS.initFn, type: 'function', value: 'Point.__init__(self, x, y)', refcount: 1, mutable: false, state: 'new' },
-            { id: 'PointCls', pyId: ADDRS.PointCls, type: 'class', value: 'class Point', refcount: 1, mutable: true, state: 'mutated', pairs: [
-              { key: '__init__', value: 'fn -> 0x7f7101b0', type: 'str' },
-            ] },
+            { id: 'totalFn', pyId: ADDRS.totalFn, type: 'function', value: 'Point.total(self)', refcount: 1, mutable: false, state: 'new' },
+            pointClass('new', 1),
           ],
-          highlight: ['initFn', 'PointCls'],
+          highlight: ['PointCls', 'initFn', 'totalFn'],
         },
       },
       {
         title: '<code>Point(3, 4)</code> allocates an instance, then calls <code>__init__</code>',
         desc: 'Calling a class does two jobs: create a new instance (with <code>__class__</code> pointing at <code>Point</code>), then call <code>__init__</code> with that instance as <code>self</code>. The instance dict is still empty.',
-        lines: [6],
+        lines: [9],
         memory: {
           frames: [
             { name: 'global', vars: [
@@ -129,6 +123,7 @@ p = Point(3, 4)`,
           ],
           heap: [
             { id: 'initFn', pyId: ADDRS.initFn, type: 'function', value: 'Point.__init__(self, x, y)', refcount: 1, mutable: false, state: 'normal' },
+            { id: 'totalFn', pyId: ADDRS.totalFn, type: 'function', value: 'Point.total(self)', refcount: 1, mutable: false, state: 'normal' },
             pointClass('normal', 2),
             { id: 'int3', pyId: ADDRS.int3, type: 'int', value: 3, refcount: 1, mutable: false, state: 'new' },
             { id: 'int4', pyId: ADDRS.int4, type: 'int', value: 4, refcount: 1, mutable: false, state: 'new' },
@@ -154,6 +149,7 @@ p = Point(3, 4)`,
           ],
           heap: [
             { id: 'initFn', pyId: ADDRS.initFn, type: 'function', value: 'Point.__init__(self, x, y)', refcount: 1, mutable: false, state: 'normal' },
+            { id: 'totalFn', pyId: ADDRS.totalFn, type: 'function', value: 'Point.total(self)', refcount: 1, mutable: false, state: 'normal' },
             pointClass('normal', 2),
             { id: 'int3', pyId: ADDRS.int3, type: 'int', value: 3, refcount: 2, mutable: false, state: 'normal' },
             { id: 'int4', pyId: ADDRS.int4, type: 'int', value: 4, refcount: 1, mutable: false, state: 'normal' },
@@ -179,6 +175,7 @@ p = Point(3, 4)`,
           ],
           heap: [
             { id: 'initFn', pyId: ADDRS.initFn, type: 'function', value: 'Point.__init__(self, x, y)', refcount: 1, mutable: false, state: 'normal' },
+            { id: 'totalFn', pyId: ADDRS.totalFn, type: 'function', value: 'Point.total(self)', refcount: 1, mutable: false, state: 'normal' },
             pointClass('normal', 2),
             { id: 'int3', pyId: ADDRS.int3, type: 'int', value: 3, refcount: 2, mutable: false, state: 'normal' },
             { id: 'int4', pyId: ADDRS.int4, type: 'int', value: 4, refcount: 2, mutable: false, state: 'normal' },
@@ -193,7 +190,7 @@ p = Point(3, 4)`,
       {
         title: '<code>p</code> is bound to the finished instance',
         desc: '<code>__init__</code> returns <code>None</code> (implicitly). The call frame disappears. The global name <code>p</code> now references the instance. <code>self</code> was just another name for that same object.',
-        lines: [6],
+        lines: [9],
         memory: {
           frames: [{ name: 'global', vars: [
             { name: 'Point', ref: 'PointCls', pyId: ADDRS.PointCls, type: 'class', state: 'normal' },
@@ -201,6 +198,7 @@ p = Point(3, 4)`,
           ]}],
           heap: [
             { id: 'initFn', pyId: ADDRS.initFn, type: 'function', value: 'Point.__init__(self, x, y)', refcount: 1, mutable: false, state: 'normal' },
+            { id: 'totalFn', pyId: ADDRS.totalFn, type: 'function', value: 'Point.total(self)', refcount: 1, mutable: false, state: 'normal' },
             pointClass('normal', 2),
             { id: 'int3', pyId: ADDRS.int3, type: 'int', value: 3, refcount: 1, mutable: false, state: 'normal' },
             { id: 'int4', pyId: ADDRS.int4, type: 'int', value: 4, refcount: 1, mutable: false, state: 'normal' },
@@ -212,36 +210,93 @@ p = Point(3, 4)`,
           highlight: ['pInst'],
         },
       },
+      {
+        title: '<code>p.total()</code> — the method reads back out of the instance',
+        desc: 'This is the payoff for storing <code>x</code> and <code>y</code> on the instance. The function lives on <code>Point</code>, but its <code>self</code> is <em>this</em> point, so <code>self.x</code> and <code>self.y</code> reach into <em>this</em> instance dict and find <code>3</code> and <code>4</code>. Change the point and the same shared function returns a different answer.',
+        lines: [10, 7],
+        memory: {
+          frames: [
+            { name: 'global', vars: [
+              { name: 'Point', ref: 'PointCls', pyId: ADDRS.PointCls, type: 'class', state: 'normal' },
+              { name: 'p', ref: 'pInst', pyId: ADDRS.pInst, type: 'instance', state: 'normal' },
+            ]},
+            { name: 'Point.total(self)', vars: [
+              { name: 'self', ref: 'pInst', pyId: ADDRS.pInst, type: 'instance', state: 'new' },
+            ]},
+          ],
+          heap: [
+            { id: 'initFn', pyId: ADDRS.initFn, type: 'function', value: 'Point.__init__(self, x, y)', refcount: 1, mutable: false, state: 'normal' },
+            { id: 'totalFn', pyId: ADDRS.totalFn, type: 'function', value: 'Point.total(self)', refcount: 2, mutable: false, state: 'normal' },
+            pointClass('normal', 2),
+            { id: 'int3', pyId: ADDRS.int3, type: 'int', value: 3, refcount: 1, mutable: false, state: 'normal' },
+            { id: 'int4', pyId: ADDRS.int4, type: 'int', value: 4, refcount: 1, mutable: false, state: 'normal' },
+            pointInst('normal', [
+              { key: 'x', value: 3, type: 'int' },
+              { key: 'y', value: 4, type: 'int' },
+            ], 2, 'self.x and self.y are read from here'),
+          ],
+          highlight: ['pInst', 'int3', 'int4'],
+        },
+      },
+      {
+        title: 'Final state — data on the instance, functions on the class',
+        desc: 'The frame is gone and <code>t</code> holds <code>7</code>. Look at the finished picture: one class object holding two functions, one instance holding <code>x</code> and <code>y</code> plus a <code>__class__</code> link back. Make a thousand points and you still have exactly two function objects.',
+        lines: [10],
+        memory: {
+          frames: [{ name: 'global', vars: [
+            { name: 'Point', ref: 'PointCls', pyId: ADDRS.PointCls, type: 'class', state: 'normal' },
+            { name: 'p', ref: 'pInst', pyId: ADDRS.pInst, type: 'instance', state: 'normal' },
+            { name: 't', ref: 'int7', pyId: ADDRS.int7, type: 'int', state: 'new' },
+          ]}],
+          heap: [
+            { id: 'initFn', pyId: ADDRS.initFn, type: 'function', value: 'Point.__init__(self, x, y)', refcount: 1, mutable: false, state: 'normal' },
+            { id: 'totalFn', pyId: ADDRS.totalFn, type: 'function', value: 'Point.total(self)', refcount: 1, mutable: false, state: 'normal' },
+            pointClass('normal', 2),
+            { id: 'int3', pyId: ADDRS.int3, type: 'int', value: 3, refcount: 1, mutable: false, state: 'normal' },
+            { id: 'int4', pyId: ADDRS.int4, type: 'int', value: 4, refcount: 1, mutable: false, state: 'normal' },
+            { id: 'int7', pyId: ADDRS.int7, type: 'int', value: 7, refcount: 1, mutable: false, state: 'new' },
+            pointInst('normal', [
+              { key: 'x', value: 3, type: 'int' },
+              { key: 'y', value: 4, type: 'int' },
+            ], 1),
+          ],
+          highlight: ['int7', 'pInst'],
+        },
+      },
     ],
   },
 
   classAttr: {
-    watch: 'Empty instance dicts still read <code>lives</code> from the class. Assignment on <code>a</code> writes only into <code>a</code>.',
+    watch: 'Every <code>print</code> here is a lookup. Watch it miss on the instance and land on the class — until <code>a</code> gets a <code>lives</code> of its own.',
     code: `class Player:
     lives = 3
 
 a = Player()
 b = Player()
 a.score = 10
+print(a.lives, b.lives)
 Player.lives = 2
-a.lives = 1`,
+print(a.lives, b.lives)
+a.lives = 1
+print(a.lives, b.lives)`,
     steps: [
       {
         title: 'Initial state — no class yet',
-        desc: 'A class attribute is just a name stored on the class object. Watch where <code>lives</code> lives as instances appear.',
+        desc: 'A class attribute is just a name stored on the class object. Watch where <code>lives</code> lives as instances appear, and watch each <code>print</code> go looking for it.',
         lines: [],
         memory: EMPTY,
       },
       {
         title: 'Class attributes live on the class object',
-        desc: '<code>lives = 3</code> is stored on <code>Player</code>, not copied into each instance. Both <code>a</code> and <code>b</code> will look it up on the class unless they shadow it.',
+        desc: '<code>lives = 3</code> is stored on <code>Player</code>, not copied into each instance. The <code>3</code> is one of the pre-created small integers from Session 01 — shared by everything that needs a 3, and never freed.',
         lines: [1, 2],
         memory: {
           frames: [{ name: 'global', vars: [
             { name: 'Player', ref: 'PlayerCls', pyId: ADDRS.PlayerCls, type: 'class', state: 'new' },
           ]}],
           heap: [
-            { id: 'intLives3', pyId: ADDRS.intLives3, type: 'int', value: 3, refcount: 1, mutable: false, state: 'new' },
+            { id: 'intLives3', pyId: ADDRS.intLives3, type: 'int', value: 3, refcount: '∞', mutable: false, state: 'new',
+              note: 'small int — pre-created and immortal' },
             { id: 'PlayerCls', pyId: ADDRS.PlayerCls, type: 'class', value: 'class Player', refcount: 1, mutable: true, state: 'new', pairs: [
               { key: 'lives', value: 3, type: 'int' },
             ] },
@@ -250,52 +305,31 @@ a.lives = 1`,
         },
       },
       {
-        title: '<code>a = Player()</code> — empty instance dict',
-        desc: 'The new instance has no <code>lives</code> of its own. Reading <code>a.lives</code> walks instance → class via <code>__class__</code> and finds <code>3</code>.',
-        lines: [4],
+        title: 'Two instances, both with empty dicts',
+        desc: 'Neither <code>a</code> nor <code>b</code> has a <code>lives</code> of its own. Nothing was copied down from the class. Each instance carries only a <code>__class__</code> link back to <code>Player</code>.',
+        lines: [4, 5],
         memory: {
           frames: [{ name: 'global', vars: [
             { name: 'Player', ref: 'PlayerCls', pyId: ADDRS.PlayerCls, type: 'class', state: 'normal' },
             { name: 'a', ref: 'aInst', pyId: ADDRS.aInst, type: 'instance', state: 'new' },
-          ]}],
-          heap: [
-            { id: 'intLives3', pyId: ADDRS.intLives3, type: 'int', value: 3, refcount: 1, mutable: false, state: 'normal' },
-            { id: 'PlayerCls', pyId: ADDRS.PlayerCls, type: 'class', value: 'class Player', refcount: 2, mutable: true, state: 'normal', pairs: [
-              { key: 'lives', value: 3, type: 'int' },
-            ] },
-            { id: 'aInst', pyId: ADDRS.aInst, type: 'instance', value: 'Player()', refcount: 1, mutable: true, state: 'new',
-              classRef: { name: 'Player', pyId: ADDRS.PlayerCls }, pairs: [],
-              note: 'lookup miss here → walk to Player' },
-          ],
-          highlight: ['aInst'],
-        },
-      },
-      {
-        title: '<code>b = Player()</code> — a second empty instance',
-        desc: 'Two instances, one class attribute. <code>a.lives</code> and <code>b.lives</code> are the same lookup: instance dict (miss) → class dict (hit). They are not copies of <code>3</code>.',
-        lines: [5],
-        memory: {
-          frames: [{ name: 'global', vars: [
-            { name: 'Player', ref: 'PlayerCls', pyId: ADDRS.PlayerCls, type: 'class', state: 'normal' },
-            { name: 'a', ref: 'aInst', pyId: ADDRS.aInst, type: 'instance', state: 'normal' },
             { name: 'b', ref: 'bInst', pyId: ADDRS.bInst, type: 'instance', state: 'new' },
           ]}],
           heap: [
-            { id: 'intLives3', pyId: ADDRS.intLives3, type: 'int', value: 3, refcount: 1, mutable: false, state: 'normal' },
+            { id: 'intLives3', pyId: ADDRS.intLives3, type: 'int', value: 3, refcount: '∞', mutable: false, state: 'normal' },
             { id: 'PlayerCls', pyId: ADDRS.PlayerCls, type: 'class', value: 'class Player', refcount: 3, mutable: true, state: 'normal', pairs: [
               { key: 'lives', value: 3, type: 'int' },
             ] },
-            { id: 'aInst', pyId: ADDRS.aInst, type: 'instance', value: 'Player()', refcount: 1, mutable: true, state: 'normal',
+            { id: 'aInst', pyId: ADDRS.aInst, type: 'instance', value: 'Player()', refcount: 1, mutable: true, state: 'new',
               classRef: { name: 'Player', pyId: ADDRS.PlayerCls }, pairs: [] },
             { id: 'bInst', pyId: ADDRS.bInst, type: 'instance', value: 'Player()', refcount: 1, mutable: true, state: 'new',
               classRef: { name: 'Player', pyId: ADDRS.PlayerCls }, pairs: [] },
           ],
-          highlight: ['bInst', 'PlayerCls'],
+          highlight: ['aInst', 'bInst'],
         },
       },
       {
         title: '<code>a.score = 10</code> writes only on <code>a</code>',
-        desc: 'Assignment on an instance writes into <em>that</em> instance\'s <code>__dict__</code>. <code>b</code> has no <code>score</code>. Class attributes are unchanged.',
+        desc: 'Assignment on an instance does not go looking anywhere. It writes straight into <em>that</em> instance\'s <code>__dict__</code>. <code>b</code> has no <code>score</code>, and neither does the class.',
         lines: [6],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -304,8 +338,8 @@ a.lives = 1`,
             { name: 'b', ref: 'bInst', pyId: ADDRS.bInst, type: 'instance', state: 'normal' },
           ]}],
           heap: [
-            { id: 'intLives3', pyId: ADDRS.intLives3, type: 'int', value: 3, refcount: 1, mutable: false, state: 'normal' },
-            { id: 'intScore', pyId: ADDRS.intScore, type: 'int', value: 10, refcount: 1, mutable: false, state: 'new' },
+            { id: 'intLives3', pyId: ADDRS.intLives3, type: 'int', value: 3, refcount: '∞', mutable: false, state: 'normal' },
+            { id: 'intScore', pyId: ADDRS.intScore, type: 'int', value: 10, refcount: '∞', mutable: false, state: 'new' },
             { id: 'PlayerCls', pyId: ADDRS.PlayerCls, type: 'class', value: 'class Player', refcount: 3, mutable: true, state: 'normal', pairs: [
               { key: 'lives', value: 3, type: 'int' },
             ] },
@@ -319,8 +353,8 @@ a.lives = 1`,
         },
       },
       {
-        title: '<code>Player.lives = 2</code> updates the shared class attribute',
-        desc: 'Both instances still have no <code>lives</code> of their own, so both now see <code>2</code>. Changing a class attribute is visible to every instance that has not shadowed that name.',
+        title: 'The first <code>print</code> — both reads miss, then hit the class',
+        desc: 'This is the lookup the demo exists for. <code>a.lives</code> checks <code>a</code>\'s own dict (only <code>score</code> is there — miss), follows <code>__class__</code> to <code>Player</code>, and hits. <code>b.lives</code> takes the same walk. Output: <code>3 3</code>. Both arrive at the one <code>3</code> object, not at a copy each.',
         lines: [7],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -329,9 +363,38 @@ a.lives = 1`,
             { name: 'b', ref: 'bInst', pyId: ADDRS.bInst, type: 'instance', state: 'normal' },
           ]}],
           heap: [
-            { id: 'intLives3', pyId: ADDRS.intLives3, type: 'int', value: 3, refcount: 0, mutable: false, state: 'gc' },
-            { id: 'intLives2', pyId: ADDRS.intLives2, type: 'int', value: 2, refcount: 1, mutable: false, state: 'new' },
-            { id: 'intScore', pyId: ADDRS.intScore, type: 'int', value: 10, refcount: 1, mutable: false, state: 'normal' },
+            { id: 'intLives3', pyId: ADDRS.intLives3, type: 'int', value: 3, refcount: '∞', mutable: false, state: 'normal',
+              note: 'both reads end here' },
+            { id: 'intScore', pyId: ADDRS.intScore, type: 'int', value: 10, refcount: '∞', mutable: false, state: 'normal' },
+            { id: 'PlayerCls', pyId: ADDRS.PlayerCls, type: 'class', value: 'class Player', refcount: 3, mutable: true, state: 'normal', pairs: [
+              { key: 'lives', value: 3, type: 'int' },
+            ], note: 'hit — the walk stops here' },
+            { id: 'aInst', pyId: ADDRS.aInst, type: 'instance', value: 'Player()', refcount: 1, mutable: true, state: 'normal',
+              classRef: { name: 'Player', pyId: ADDRS.PlayerCls },
+              pairs: [{ key: 'score', value: 10, type: 'int' }],
+              note: 'miss — walk to Player' },
+            { id: 'bInst', pyId: ADDRS.bInst, type: 'instance', value: 'Player()', refcount: 1, mutable: true, state: 'normal',
+              classRef: { name: 'Player', pyId: ADDRS.PlayerCls }, pairs: [],
+              note: 'miss — walk to Player' },
+          ],
+          highlight: ['aInst', 'bInst', 'PlayerCls'],
+        },
+      },
+      {
+        title: '<code>Player.lives = 2</code> repoints the shared class attribute',
+        desc: 'The class dict now references the <code>2</code> object instead of the <code>3</code>. Notice what does <em>not</em> happen: the <code>3</code> is not destroyed. CPython pre-creates every small integer from −5 to 256 and keeps them alive for the whole run — nothing points at this one right now, and it stays anyway.',
+        lines: [8],
+        memory: {
+          frames: [{ name: 'global', vars: [
+            { name: 'Player', ref: 'PlayerCls', pyId: ADDRS.PlayerCls, type: 'class', state: 'normal' },
+            { name: 'a', ref: 'aInst', pyId: ADDRS.aInst, type: 'instance', state: 'normal' },
+            { name: 'b', ref: 'bInst', pyId: ADDRS.bInst, type: 'instance', state: 'normal' },
+          ]}],
+          heap: [
+            { id: 'intLives3', pyId: ADDRS.intLives3, type: 'int', value: 3, refcount: '∞', mutable: false, state: 'normal',
+              note: 'still here — small ints are never freed' },
+            { id: 'intLives2', pyId: ADDRS.intLives2, type: 'int', value: 2, refcount: '∞', mutable: false, state: 'new' },
+            { id: 'intScore', pyId: ADDRS.intScore, type: 'int', value: 10, refcount: '∞', mutable: false, state: 'normal' },
             { id: 'PlayerCls', pyId: ADDRS.PlayerCls, type: 'class', value: 'class Player', refcount: 3, mutable: true, state: 'mutated', pairs: [
               { key: 'lives', value: 2, type: 'int' },
             ] },
@@ -341,13 +404,13 @@ a.lives = 1`,
             { id: 'bInst', pyId: ADDRS.bInst, type: 'instance', value: 'Player()', refcount: 1, mutable: true, state: 'normal',
               classRef: { name: 'Player', pyId: ADDRS.PlayerCls }, pairs: [] },
           ],
-          highlight: ['PlayerCls', 'intLives2'],
+          highlight: ['PlayerCls', 'intLives2', 'intLives3'],
         },
       },
       {
-        title: '<code>a.lives = 1</code> shadows the class name on <code>a</code> only',
-        desc: 'Now <code>a.lives</code> hits the instance dict and stops. <code>b.lives</code> still walks to the class and sees <code>2</code>. Assignment does not edit the class attribute — it hides it for one instance.',
-        lines: [8],
+        title: 'The second <code>print</code> — one edit, both instances see it',
+        desc: 'Same walk as before: miss on the instance, hit on the class. But the class now points at <code>2</code>, so the output is <code>2 2</code>. Neither instance was touched. That is what "shared" really means — they were never holding a value, only a route to one.',
+        lines: [9],
         memory: {
           frames: [{ name: 'global', vars: [
             { name: 'Player', ref: 'PlayerCls', pyId: ADDRS.PlayerCls, type: 'class', state: 'normal' },
@@ -355,9 +418,38 @@ a.lives = 1`,
             { name: 'b', ref: 'bInst', pyId: ADDRS.bInst, type: 'instance', state: 'normal' },
           ]}],
           heap: [
-            { id: 'intLives2', pyId: ADDRS.intLives2, type: 'int', value: 2, refcount: 1, mutable: false, state: 'normal' },
-            { id: 'intLives1', pyId: ADDRS.intLives1, type: 'int', value: 1, refcount: 1, mutable: false, state: 'new' },
-            { id: 'intScore', pyId: ADDRS.intScore, type: 'int', value: 10, refcount: 1, mutable: false, state: 'normal' },
+            { id: 'intLives3', pyId: ADDRS.intLives3, type: 'int', value: 3, refcount: '∞', mutable: false, state: 'normal' },
+            { id: 'intLives2', pyId: ADDRS.intLives2, type: 'int', value: 2, refcount: '∞', mutable: false, state: 'normal' },
+            { id: 'intScore', pyId: ADDRS.intScore, type: 'int', value: 10, refcount: '∞', mutable: false, state: 'normal' },
+            { id: 'PlayerCls', pyId: ADDRS.PlayerCls, type: 'class', value: 'class Player', refcount: 3, mutable: true, state: 'normal', pairs: [
+              { key: 'lives', value: 2, type: 'int' },
+            ], note: 'both reads hit here' },
+            { id: 'aInst', pyId: ADDRS.aInst, type: 'instance', value: 'Player()', refcount: 1, mutable: true, state: 'normal',
+              classRef: { name: 'Player', pyId: ADDRS.PlayerCls },
+              pairs: [{ key: 'score', value: 10, type: 'int' }],
+              note: 'miss — walk to Player' },
+            { id: 'bInst', pyId: ADDRS.bInst, type: 'instance', value: 'Player()', refcount: 1, mutable: true, state: 'normal',
+              classRef: { name: 'Player', pyId: ADDRS.PlayerCls }, pairs: [],
+              note: 'miss — walk to Player' },
+          ],
+          highlight: ['aInst', 'bInst', 'PlayerCls'],
+        },
+      },
+      {
+        title: 'Final state — <code>a</code> shadows the name, <code>b</code> still walks',
+        desc: '<code>a.lives = 1</code> wrote into <code>a</code>\'s own dict, so the last <code>print</code> gives <code>1 2</code>: <code>a</code> hits on itself and stops, <code>b</code> walks to the class as it always did. That is the rule in one picture — reading walks outward, writing stays home, and an instance assignment hides a class attribute instead of changing it.',
+        lines: [10, 11],
+        memory: {
+          frames: [{ name: 'global', vars: [
+            { name: 'Player', ref: 'PlayerCls', pyId: ADDRS.PlayerCls, type: 'class', state: 'normal' },
+            { name: 'a', ref: 'aInst', pyId: ADDRS.aInst, type: 'instance', state: 'normal' },
+            { name: 'b', ref: 'bInst', pyId: ADDRS.bInst, type: 'instance', state: 'normal' },
+          ]}],
+          heap: [
+            { id: 'intLives3', pyId: ADDRS.intLives3, type: 'int', value: 3, refcount: '∞', mutable: false, state: 'normal' },
+            { id: 'intLives2', pyId: ADDRS.intLives2, type: 'int', value: 2, refcount: '∞', mutable: false, state: 'normal' },
+            { id: 'intLives1', pyId: ADDRS.intLives1, type: 'int', value: 1, refcount: '∞', mutable: false, state: 'new' },
+            { id: 'intScore', pyId: ADDRS.intScore, type: 'int', value: 10, refcount: '∞', mutable: false, state: 'normal' },
             { id: 'PlayerCls', pyId: ADDRS.PlayerCls, type: 'class', value: 'class Player', refcount: 3, mutable: true, state: 'normal', pairs: [
               { key: 'lives', value: 2, type: 'int' },
             ] },
@@ -367,10 +459,10 @@ a.lives = 1`,
                 { key: 'score', value: 10, type: 'int' },
                 { key: 'lives', value: 1, type: 'int' },
               ],
-              note: 'a.lives hits here and stops' },
+              note: 'a.lives hits here and stops — prints 1' },
             { id: 'bInst', pyId: ADDRS.bInst, type: 'instance', value: 'Player()', refcount: 1, mutable: true, state: 'normal',
               classRef: { name: 'Player', pyId: ADDRS.PlayerCls }, pairs: [],
-              note: 'b.lives still walks to Player.lives' },
+              note: 'b.lives still walks to Player.lives — prints 2' },
           ],
           highlight: ['aInst', 'intLives1'],
         },
@@ -405,7 +497,7 @@ msg = fn("Ada")`,
           heap: [
             { id: 'helloFn', pyId: ADDRS.helloFn, type: 'function', value: 'Greeter.hello(self, name)', refcount: 1, mutable: false, state: 'new' },
             { id: 'GreeterCls', pyId: ADDRS.GreeterCls, type: 'class', value: 'class Greeter', refcount: 1, mutable: true, state: 'new', pairs: [
-              { key: 'hello', value: 'fn -> 0x7f7501b0', type: 'str' },
+              { key: 'hello', value: 'fn -> 0x7f7501b0', type: 'function' },
             ] },
           ],
           highlight: ['helloFn', 'GreeterCls'],
@@ -423,7 +515,7 @@ msg = fn("Ada")`,
           heap: [
             { id: 'helloFn', pyId: ADDRS.helloFn, type: 'function', value: 'Greeter.hello(self, name)', refcount: 1, mutable: false, state: 'normal' },
             { id: 'GreeterCls', pyId: ADDRS.GreeterCls, type: 'class', value: 'class Greeter', refcount: 2, mutable: true, state: 'normal', pairs: [
-              { key: 'hello', value: 'fn -> 0x7f7501b0', type: 'str' },
+              { key: 'hello', value: 'fn -> 0x7f7501b0', type: 'function' },
             ] },
             { id: 'gInst', pyId: ADDRS.gInst, type: 'instance', value: 'Greeter()', refcount: 1, mutable: true, state: 'new',
               classRef: { name: 'Greeter', pyId: ADDRS.GreeterCls }, pairs: [] },
@@ -444,13 +536,13 @@ msg = fn("Ada")`,
           heap: [
             { id: 'helloFn', pyId: ADDRS.helloFn, type: 'function', value: 'Greeter.hello(self, name)', refcount: 2, mutable: false, state: 'normal' },
             { id: 'GreeterCls', pyId: ADDRS.GreeterCls, type: 'class', value: 'class Greeter', refcount: 2, mutable: true, state: 'normal', pairs: [
-              { key: 'hello', value: 'fn -> 0x7f7501b0', type: 'str' },
+              { key: 'hello', value: 'fn -> 0x7f7501b0', type: 'function' },
             ] },
             { id: 'gInst', pyId: ADDRS.gInst, type: 'instance', value: 'Greeter()', refcount: 2, mutable: true, state: 'normal',
               classRef: { name: 'Greeter', pyId: ADDRS.GreeterCls }, pairs: [] },
             { id: 'boundHello', pyId: ADDRS.boundHello, type: 'method', value: 'bound hello', refcount: 1, mutable: false, state: 'new', pairs: [
-              { key: '__func__', value: 'hello -> 0x7f7501b0', type: 'str' },
-              { key: '__self__', value: 'g -> 0x7f760010', type: 'str' },
+              { key: '__func__', value: 'hello -> 0x7f7501b0', type: 'function' },
+              { key: '__self__', value: 'g -> 0x7f760010', type: 'instance' },
             ] },
           ],
           highlight: ['boundHello', 'gInst'],
@@ -467,7 +559,7 @@ msg = fn("Ada")`,
               { name: 'g', ref: 'gInst', pyId: ADDRS.gInst, type: 'instance', state: 'normal' },
               { name: 'fn', ref: 'boundHello', pyId: ADDRS.boundHello, type: 'method', state: 'normal' },
             ]},
-            { name: 'hello(self, name)', vars: [
+            { name: 'Greeter.hello(self, name)', vars: [
               { name: 'self', ref: 'gInst', pyId: ADDRS.gInst, type: 'instance', state: 'new' },
               { name: 'name', ref: 'strAda', pyId: ADDRS.strAda, type: 'str', state: 'new' },
             ]},
@@ -475,13 +567,13 @@ msg = fn("Ada")`,
           heap: [
             { id: 'helloFn', pyId: ADDRS.helloFn, type: 'function', value: 'Greeter.hello(self, name)', refcount: 2, mutable: false, state: 'normal' },
             { id: 'GreeterCls', pyId: ADDRS.GreeterCls, type: 'class', value: 'class Greeter', refcount: 2, mutable: true, state: 'normal', pairs: [
-              { key: 'hello', value: 'fn -> 0x7f7501b0', type: 'str' },
+              { key: 'hello', value: 'fn -> 0x7f7501b0', type: 'function' },
             ] },
             { id: 'gInst', pyId: ADDRS.gInst, type: 'instance', value: 'Greeter()', refcount: 3, mutable: true, state: 'normal',
               classRef: { name: 'Greeter', pyId: ADDRS.GreeterCls }, pairs: [] },
             { id: 'boundHello', pyId: ADDRS.boundHello, type: 'method', value: 'bound hello', refcount: 1, mutable: false, state: 'normal', pairs: [
-              { key: '__func__', value: 'hello -> 0x7f7501b0', type: 'str' },
-              { key: '__self__', value: 'g -> 0x7f760010', type: 'str' },
+              { key: '__func__', value: 'hello -> 0x7f7501b0', type: 'function' },
+              { key: '__self__', value: 'g -> 0x7f760010', type: 'instance' },
             ] },
             { id: 'strAda', pyId: ADDRS.strAda, type: 'str', value: 'Ada', refcount: 1, mutable: false, state: 'new' },
           ],
@@ -502,13 +594,13 @@ msg = fn("Ada")`,
           heap: [
             { id: 'helloFn', pyId: ADDRS.helloFn, type: 'function', value: 'Greeter.hello(self, name)', refcount: 2, mutable: false, state: 'normal' },
             { id: 'GreeterCls', pyId: ADDRS.GreeterCls, type: 'class', value: 'class Greeter', refcount: 2, mutable: true, state: 'normal', pairs: [
-              { key: 'hello', value: 'fn -> 0x7f7501b0', type: 'str' },
+              { key: 'hello', value: 'fn -> 0x7f7501b0', type: 'function' },
             ] },
             { id: 'gInst', pyId: ADDRS.gInst, type: 'instance', value: 'Greeter()', refcount: 2, mutable: true, state: 'normal',
               classRef: { name: 'Greeter', pyId: ADDRS.GreeterCls }, pairs: [] },
             { id: 'boundHello', pyId: ADDRS.boundHello, type: 'method', value: 'bound hello', refcount: 1, mutable: false, state: 'normal', pairs: [
-              { key: '__func__', value: 'hello -> 0x7f7501b0', type: 'str' },
-              { key: '__self__', value: 'g -> 0x7f760010', type: 'str' },
+              { key: '__func__', value: 'hello -> 0x7f7501b0', type: 'function' },
+              { key: '__self__', value: 'g -> 0x7f760010', type: 'instance' },
             ] },
             { id: 'strHi', pyId: ADDRS.strHi, type: 'str', value: 'hi Ada', refcount: 1, mutable: false, state: 'new' },
           ],
@@ -529,7 +621,7 @@ b = Box(data)
 b.items.append(2)`,
     steps: [
       {
-        title: 'Initial state — class already defined in this story',
+        title: 'Initial state — no class yet',
         desc: 'Same rule as Session 03: storing a list on <code>self</code> is still aliasing. We start from an empty global, then build the class.',
         lines: [],
         memory: EMPTY,
@@ -545,7 +637,7 @@ b.items.append(2)`,
           heap: [
             { id: 'boxInit', pyId: ADDRS.boxInit, type: 'function', value: 'Box.__init__(self, items)', refcount: 1, mutable: false, state: 'new' },
             { id: 'BoxCls', pyId: ADDRS.BoxCls, type: 'class', value: 'class Box', refcount: 1, mutable: true, state: 'new', pairs: [
-              { key: '__init__', value: 'fn -> 0x7f7701b0', type: 'str' },
+              { key: '__init__', value: 'fn -> 0x7f7701b0', type: 'function' },
             ] },
           ],
           highlight: ['BoxCls'],
@@ -563,7 +655,7 @@ b.items.append(2)`,
           heap: [
             { id: 'boxInit', pyId: ADDRS.boxInit, type: 'function', value: 'Box.__init__(self, items)', refcount: 1, mutable: false, state: 'normal' },
             { id: 'BoxCls', pyId: ADDRS.BoxCls, type: 'class', value: 'class Box', refcount: 1, mutable: true, state: 'normal', pairs: [
-              { key: '__init__', value: 'fn -> 0x7f7701b0', type: 'str' },
+              { key: '__init__', value: 'fn -> 0x7f7701b0', type: 'function' },
             ] },
             { id: 'dataList', pyId: ADDRS.dataList, type: 'list', refcount: 1, mutable: true, state: 'new', items: [
               { value: 1, type: 'int' },
@@ -574,7 +666,7 @@ b.items.append(2)`,
       },
       {
         title: '<code>Box(data)</code> — <code>self.items</code> aliases the same list',
-        desc: 'Inside <code>__init__</code>, <code>items</code> and <code>data</code> are already the same object. <code>self.items = items</code> stores that reference on the instance. Refcount becomes 2 after the frame returns — plus the instance attribute.',
+        desc: 'Inside <code>__init__</code>, <code>items</code> and <code>data</code> are already the same object. <code>self.items = items</code> stores that reference on the instance. Three names reach this one list right now: the global <code>data</code>, the local <code>items</code>, and <code>self.items</code>. When the frame returns the local goes away and the count drops to 2.',
         lines: [6, 3],
         memory: {
           frames: [
@@ -590,14 +682,14 @@ b.items.append(2)`,
           heap: [
             { id: 'boxInit', pyId: ADDRS.boxInit, type: 'function', value: 'Box.__init__(self, items)', refcount: 1, mutable: false, state: 'normal' },
             { id: 'BoxCls', pyId: ADDRS.BoxCls, type: 'class', value: 'class Box', refcount: 2, mutable: true, state: 'normal', pairs: [
-              { key: '__init__', value: 'fn -> 0x7f7701b0', type: 'str' },
+              { key: '__init__', value: 'fn -> 0x7f7701b0', type: 'function' },
             ] },
             { id: 'dataList', pyId: ADDRS.dataList, type: 'list', refcount: 3, mutable: true, state: 'normal', items: [
               { value: 1, type: 'int' },
             ] },
             { id: 'boxInst', pyId: ADDRS.boxInst, type: 'instance', value: 'Box()', refcount: 1, mutable: true, state: 'mutated',
               classRef: { name: 'Box', pyId: ADDRS.BoxCls },
-              pairs: [{ key: 'items', value: 'list -> 0x7f780010', type: 'str' }] },
+              pairs: [{ key: 'items', value: 'list -> 0x7f780010', type: 'list' }] },
           ],
           highlight: ['boxInst', 'dataList'],
         },
@@ -615,14 +707,14 @@ b.items.append(2)`,
           heap: [
             { id: 'boxInit', pyId: ADDRS.boxInit, type: 'function', value: 'Box.__init__(self, items)', refcount: 1, mutable: false, state: 'normal' },
             { id: 'BoxCls', pyId: ADDRS.BoxCls, type: 'class', value: 'class Box', refcount: 2, mutable: true, state: 'normal', pairs: [
-              { key: '__init__', value: 'fn -> 0x7f7701b0', type: 'str' },
+              { key: '__init__', value: 'fn -> 0x7f7701b0', type: 'function' },
             ] },
             { id: 'dataList', pyId: ADDRS.dataList, type: 'list', refcount: 2, mutable: true, state: 'normal', items: [
               { value: 1, type: 'int' },
             ] },
             { id: 'boxInst', pyId: ADDRS.boxInst, type: 'instance', value: 'Box()', refcount: 1, mutable: true, state: 'normal',
               classRef: { name: 'Box', pyId: ADDRS.BoxCls },
-              pairs: [{ key: 'items', value: 'list -> 0x7f780010', type: 'str' }] },
+              pairs: [{ key: 'items', value: 'list -> 0x7f780010', type: 'list' }] },
           ],
           highlight: ['boxInst', 'dataList'],
         },
@@ -640,7 +732,7 @@ b.items.append(2)`,
           heap: [
             { id: 'boxInit', pyId: ADDRS.boxInit, type: 'function', value: 'Box.__init__(self, items)', refcount: 1, mutable: false, state: 'normal' },
             { id: 'BoxCls', pyId: ADDRS.BoxCls, type: 'class', value: 'class Box', refcount: 2, mutable: true, state: 'normal', pairs: [
-              { key: '__init__', value: 'fn -> 0x7f7701b0', type: 'str' },
+              { key: '__init__', value: 'fn -> 0x7f7701b0', type: 'function' },
             ] },
             { id: 'dataList', pyId: ADDRS.dataList, type: 'list', refcount: 2, mutable: true, state: 'mutated', items: [
               { value: 1, type: 'int' },
@@ -648,9 +740,38 @@ b.items.append(2)`,
             ] },
             { id: 'boxInst', pyId: ADDRS.boxInst, type: 'instance', value: 'Box()', refcount: 1, mutable: true, state: 'normal',
               classRef: { name: 'Box', pyId: ADDRS.BoxCls },
-              pairs: [{ key: 'items', value: 'list -> 0x7f780010', type: 'str' }] },
+              pairs: [{ key: 'items', value: 'list -> 0x7f780010', type: 'list' }] },
           ],
           highlight: ['dataList'],
+        },
+      },
+      {
+        title: 'Final state — one list, reached by two different routes',
+        desc: 'Count the list objects on the heap: there is exactly one, with a refcount of 2. '
+            + '<code>data</code> reaches it by name; <code>b.items</code> reaches it through an attribute. '
+            + 'An attribute is not a container — it is another reference, so everything Session 03 '
+            + 'taught about aliasing applies unchanged here.',
+        lines: [3, 5, 7],
+        memory: {
+          frames: [{ name: 'global', vars: [
+            { name: 'Box', ref: 'BoxCls', pyId: ADDRS.BoxCls, type: 'class', state: 'normal' },
+            { name: 'data', ref: 'dataList', pyId: ADDRS.dataList, type: 'list', state: 'normal' },
+            { name: 'b', ref: 'boxInst', pyId: ADDRS.boxInst, type: 'instance', state: 'normal' },
+          ]}],
+          heap: [
+            { id: 'boxInit', pyId: ADDRS.boxInit, type: 'function', value: 'Box.__init__(self, items)', refcount: 1, mutable: false, state: 'normal' },
+            { id: 'BoxCls', pyId: ADDRS.BoxCls, type: 'class', value: 'class Box', refcount: 2, mutable: true, state: 'normal', pairs: [
+              { key: '__init__', value: 'fn -> 0x7f7701b0', type: 'function' },
+            ] },
+            { id: 'dataList', pyId: ADDRS.dataList, type: 'list', refcount: 2, mutable: true, state: 'normal', items: [
+              { value: 1, type: 'int' },
+              { value: 2, type: 'int' },
+            ], note: 'one object — data and b.items both point here' },
+            { id: 'boxInst', pyId: ADDRS.boxInst, type: 'instance', value: 'Box()', refcount: 1, mutable: true, state: 'normal',
+              classRef: { name: 'Box', pyId: ADDRS.BoxCls },
+              pairs: [{ key: 'items', value: 'list -> 0x7f780010', type: 'list' }] },
+          ],
+          highlight: [],
         },
       },
     ],
@@ -685,7 +806,7 @@ msg = d.speak()`,
           heap: [
             { id: 'speakFn', pyId: ADDRS.speakFn, type: 'function', value: 'Animal.speak(self)', refcount: 1, mutable: false, state: 'new' },
             { id: 'AnimalCls', pyId: ADDRS.AnimalCls, type: 'class', value: 'class Animal', refcount: 1, mutable: true, state: 'new', pairs: [
-              { key: 'speak', value: 'fn -> 0x7f7a01b0', type: 'str' },
+              { key: 'speak', value: 'fn -> 0x7f7a01b0', type: 'function' },
             ] },
           ],
           highlight: ['AnimalCls', 'speakFn'],
@@ -703,7 +824,7 @@ msg = d.speak()`,
           heap: [
             { id: 'speakFn', pyId: ADDRS.speakFn, type: 'function', value: 'Animal.speak(self)', refcount: 1, mutable: false, state: 'normal' },
             { id: 'AnimalCls', pyId: ADDRS.AnimalCls, type: 'class', value: 'class Animal', refcount: 2, mutable: true, state: 'normal', pairs: [
-              { key: 'speak', value: 'fn -> 0x7f7a01b0', type: 'str' },
+              { key: 'speak', value: 'fn -> 0x7f7a01b0', type: 'function' },
             ] },
             { id: 'DogCls', pyId: ADDRS.DogCls, type: 'class', value: 'class Dog', refcount: 1, mutable: true, state: 'new',
               bases: [{ name: 'Animal', pyId: ADDRS.AnimalCls }],
@@ -726,7 +847,7 @@ msg = d.speak()`,
           heap: [
             { id: 'speakFn', pyId: ADDRS.speakFn, type: 'function', value: 'Animal.speak(self)', refcount: 1, mutable: false, state: 'normal' },
             { id: 'AnimalCls', pyId: ADDRS.AnimalCls, type: 'class', value: 'class Animal', refcount: 2, mutable: true, state: 'normal', pairs: [
-              { key: 'speak', value: 'fn -> 0x7f7a01b0', type: 'str' },
+              { key: 'speak', value: 'fn -> 0x7f7a01b0', type: 'function' },
             ] },
             { id: 'DogCls', pyId: ADDRS.DogCls, type: 'class', value: 'class Dog', refcount: 2, mutable: true, state: 'normal',
               bases: [{ name: 'Animal', pyId: ADDRS.AnimalCls }], pairs: [] },
@@ -750,15 +871,15 @@ msg = d.speak()`,
           heap: [
             { id: 'speakFn', pyId: ADDRS.speakFn, type: 'function', value: 'Animal.speak(self)', refcount: 2, mutable: false, state: 'normal' },
             { id: 'AnimalCls', pyId: ADDRS.AnimalCls, type: 'class', value: 'class Animal', refcount: 2, mutable: true, state: 'normal', pairs: [
-              { key: 'speak', value: 'fn -> 0x7f7a01b0', type: 'str' },
+              { key: 'speak', value: 'fn -> 0x7f7a01b0', type: 'function' },
             ] },
             { id: 'DogCls', pyId: ADDRS.DogCls, type: 'class', value: 'class Dog', refcount: 2, mutable: true, state: 'normal',
               bases: [{ name: 'Animal', pyId: ADDRS.AnimalCls }], pairs: [] },
             { id: 'dInst', pyId: ADDRS.dInst, type: 'instance', value: 'Dog()', refcount: 2, mutable: true, state: 'normal',
               classRef: { name: 'Dog', pyId: ADDRS.DogCls }, pairs: [] },
             { id: 'boundSpeak', pyId: ADDRS.boundSpeak, type: 'method', value: 'bound speak', refcount: 1, mutable: false, state: 'new', pairs: [
-              { key: '__func__', value: 'speak -> 0x7f7a01b0', type: 'str' },
-              { key: '__self__', value: 'd -> 0x7f7c0010', type: 'str' },
+              { key: '__func__', value: 'speak -> 0x7f7a01b0', type: 'function' },
+              { key: '__self__', value: 'd -> 0x7f7c0010', type: 'instance' },
             ] },
           ],
           highlight: ['boundSpeak', 'AnimalCls', 'dInst'],
@@ -775,22 +896,22 @@ msg = d.speak()`,
               { name: 'Dog', ref: 'DogCls', pyId: ADDRS.DogCls, type: 'class', state: 'normal' },
               { name: 'd', ref: 'dInst', pyId: ADDRS.dInst, type: 'instance', state: 'normal' },
             ]},
-            { name: 'speak(self)', vars: [
+            { name: 'Animal.speak(self)', vars: [
               { name: 'self', ref: 'dInst', pyId: ADDRS.dInst, type: 'instance', state: 'new' },
             ]},
           ],
           heap: [
             { id: 'speakFn', pyId: ADDRS.speakFn, type: 'function', value: 'Animal.speak(self)', refcount: 2, mutable: false, state: 'normal' },
             { id: 'AnimalCls', pyId: ADDRS.AnimalCls, type: 'class', value: 'class Animal', refcount: 2, mutable: true, state: 'normal', pairs: [
-              { key: 'speak', value: 'fn -> 0x7f7a01b0', type: 'str' },
+              { key: 'speak', value: 'fn -> 0x7f7a01b0', type: 'function' },
             ] },
             { id: 'DogCls', pyId: ADDRS.DogCls, type: 'class', value: 'class Dog', refcount: 2, mutable: true, state: 'normal',
               bases: [{ name: 'Animal', pyId: ADDRS.AnimalCls }], pairs: [] },
             { id: 'dInst', pyId: ADDRS.dInst, type: 'instance', value: 'Dog()', refcount: 3, mutable: true, state: 'normal',
               classRef: { name: 'Dog', pyId: ADDRS.DogCls }, pairs: [] },
             { id: 'boundSpeak', pyId: ADDRS.boundSpeak, type: 'method', value: 'bound speak', refcount: 1, mutable: false, state: 'normal', pairs: [
-              { key: '__func__', value: 'speak -> 0x7f7a01b0', type: 'str' },
-              { key: '__self__', value: 'd -> 0x7f7c0010', type: 'str' },
+              { key: '__func__', value: 'speak -> 0x7f7a01b0', type: 'function' },
+              { key: '__self__', value: 'd -> 0x7f7c0010', type: 'instance' },
             ] },
           ],
           highlight: ['dInst'],
@@ -810,7 +931,7 @@ msg = d.speak()`,
           heap: [
             { id: 'speakFn', pyId: ADDRS.speakFn, type: 'function', value: 'Animal.speak(self)', refcount: 1, mutable: false, state: 'normal' },
             { id: 'AnimalCls', pyId: ADDRS.AnimalCls, type: 'class', value: 'class Animal', refcount: 2, mutable: true, state: 'normal', pairs: [
-              { key: 'speak', value: 'fn -> 0x7f7a01b0', type: 'str' },
+              { key: 'speak', value: 'fn -> 0x7f7a01b0', type: 'function' },
             ] },
             { id: 'DogCls', pyId: ADDRS.DogCls, type: 'class', value: 'class Dog', refcount: 2, mutable: true, state: 'normal',
               bases: [{ name: 'Animal', pyId: ADDRS.AnimalCls }], pairs: [] },

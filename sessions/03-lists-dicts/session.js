@@ -9,7 +9,7 @@ const ADDRS = {
   numsList:      '0x7f530010',
 
   originalList:  '0x7f531100',
-  copyList:      '0x7f5312a0',
+  shallowList:   '0x7f5312a0',
   rowOne:        '0x7f532010',
   rowTwo:        '0x7f5320c0',
   rowThree:      '0x7f532180',
@@ -22,7 +22,6 @@ const ADDRS = {
 
   profileDict:   '0x7f570010',
   skillsList:    '0x7f580010',
-  strAda:        '0x7f590010',
 
   deepOuter:     '0x7f5a0010',
   deepInner:     '0x7f5a1010',
@@ -153,13 +152,13 @@ print(nums is same)`,
   shallowCopy: {
     watch: 'The outer list is new. Nested objects keep the same address — that is what “shallow” means.',
     code: `original = [[1], [2]]
-copy = original.copy()
+shallow = original.copy()
 
-copy.append([3])
-copy[0].append(99)
+shallow.append([3])
+shallow[0].append(99)
 
 print(original)
-print(copy)`,
+print(shallow)`,
     steps: [
       {
         title: 'Initial state - shallow copy means one level only',
@@ -187,13 +186,13 @@ print(copy)`,
         },
       },
       {
-        title: '<code>copy = original.copy()</code> creates a new outer list',
-        desc: '<code>copy</code> points to a different outer list object. But the inner references are reused, so both outer lists still point to the same two inner lists.',
+        title: '<code>shallow = original.copy()</code> creates a new outer list',
+        desc: '<code>shallow</code> points to a different outer list object. But the inner references are reused, so both outer lists still point to the same two inner lists.',
         lines: [2],
         memory: {
           frames: [{ name: 'global', vars: [
             { name: 'original', ref: 'originalList', pyId: ADDRS.originalList, type: 'list', state: 'normal' },
-            { name: 'copy', ref: 'copyList', pyId: ADDRS.copyList, type: 'list', state: 'new' },
+            { name: 'shallow', ref: 'shallowList', pyId: ADDRS.shallowList, type: 'list', state: 'new' },
           ]}],
           heap: [
             { id: 'rowOne', pyId: ADDRS.rowOne, type: 'list', refcount: 2, mutable: true, state: 'normal', items: [{ value: 1, type: 'int' }] },
@@ -202,22 +201,22 @@ print(copy)`,
               { value: 'rowOne -> 0x7f532010', type: 'str' },
               { value: 'rowTwo -> 0x7f5320c0', type: 'str' },
             ]},
-            { id: 'copyList', pyId: ADDRS.copyList, type: 'list', refcount: 1, mutable: true, state: 'new', items: [
+            { id: 'shallowList', pyId: ADDRS.shallowList, type: 'list', refcount: 1, mutable: true, state:'new', items: [
               { value: 'rowOne -> 0x7f532010', type: 'str' },
               { value: 'rowTwo -> 0x7f5320c0', type: 'str' },
             ]},
           ],
-          highlight: ['copyList', 'rowOne', 'rowTwo'],
+          highlight: ['shallowList', 'rowOne', 'rowTwo'],
         },
       },
       {
-        title: '<code>copy.append([3])</code> changes only the copied outer list',
-        desc: 'Appending to <code>copy</code> mutates the new outer list. The original outer list is separate, so it does not grow a third slot.',
+        title: '<code>shallow.append([3])</code> changes only the copied outer list',
+        desc: 'Appending to <code>shallow</code> mutates the new outer list. The original outer list is separate, so it does not grow a third slot.',
         lines: [4],
         memory: {
           frames: [{ name: 'global', vars: [
             { name: 'original', ref: 'originalList', pyId: ADDRS.originalList, type: 'list', state: 'normal' },
-            { name: 'copy', ref: 'copyList', pyId: ADDRS.copyList, type: 'list', state: 'normal' },
+            { name: 'shallow', ref: 'shallowList', pyId: ADDRS.shallowList, type: 'list', state: 'normal' },
           ]}],
           heap: [
             { id: 'rowOne', pyId: ADDRS.rowOne, type: 'list', refcount: 2, mutable: true, state: 'normal', items: [{ value: 1, type: 'int' }] },
@@ -227,23 +226,23 @@ print(copy)`,
               { value: 'rowOne -> 0x7f532010', type: 'str' },
               { value: 'rowTwo -> 0x7f5320c0', type: 'str' },
             ]},
-            { id: 'copyList', pyId: ADDRS.copyList, type: 'list', refcount: 1, mutable: true, state: 'mutated', items: [
+            { id: 'shallowList', pyId: ADDRS.shallowList, type: 'list', refcount: 1, mutable: true, state:'mutated', items: [
               { value: 'rowOne -> 0x7f532010', type: 'str' },
               { value: 'rowTwo -> 0x7f5320c0', type: 'str' },
               { value: 'rowThree -> 0x7f532180', type: 'str' },
             ]},
           ],
-          highlight: ['copyList', 'rowThree'],
+          highlight: ['shallowList', 'rowThree'],
         },
       },
       {
-        title: '<code>copy[0].append(99)</code> changes a shared inner list',
-        desc: 'This time Python follows <code>copy[0]</code> to the inner list shared with <code>original[0]</code>. That inner object mutates, so both outer lists now show <code>[1, 99]</code> in their first slot.',
+        title: '<code>shallow[0].append(99)</code> changes a shared inner list',
+        desc: 'This time Python follows <code>shallow[0]</code> to the inner list shared with <code>original[0]</code>. That inner object mutates, so both outer lists now show <code>[1, 99]</code> in their first slot.',
         lines: [5],
         memory: {
           frames: [{ name: 'global', vars: [
             { name: 'original', ref: 'originalList', pyId: ADDRS.originalList, type: 'list', state: 'normal' },
-            { name: 'copy', ref: 'copyList', pyId: ADDRS.copyList, type: 'list', state: 'normal' },
+            { name: 'shallow', ref: 'shallowList', pyId: ADDRS.shallowList, type: 'list', state: 'normal' },
           ]}],
           heap: [
             { id: 'rowOne', pyId: ADDRS.rowOne, type: 'list', refcount: 2, mutable: true, state: 'mutated', items: [
@@ -256,23 +255,23 @@ print(copy)`,
               { value: 'rowOne -> 0x7f532010', type: 'str' },
               { value: 'rowTwo -> 0x7f5320c0', type: 'str' },
             ]},
-            { id: 'copyList', pyId: ADDRS.copyList, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
+            { id: 'shallowList', pyId: ADDRS.shallowList, type: 'list', refcount: 1, mutable: true, state:'normal', items: [
               { value: 'rowOne -> 0x7f532010', type: 'str' },
               { value: 'rowTwo -> 0x7f5320c0', type: 'str' },
               { value: 'rowThree -> 0x7f532180', type: 'str' },
             ]},
           ],
-          highlight: ['rowOne', 'originalList', 'copyList'],
+          highlight: ['rowOne', 'originalList', 'shallowList'],
         },
       },
       {
         title: 'Summary - shallow copies separate the container, not the contents',
-        desc: '<code>original</code> and <code>copy</code> are different outer lists. Their shared inner list is still one object. Use <code>copy.deepcopy()</code> only when you truly need recursively independent nested objects.',
+        desc: '<code>original</code> prints as <code>[[1, 99], [2]]</code> and <code>shallow</code> as <code>[[1, 99], [2], [3]]</code>. Two outer lists, one shared inner list. When you truly need independent nested objects, reach for the <code>copy</code> module: <code>copy.deepcopy(original)</code>. Demo 5 walks through it.',
         lines: [7, 8],
         memory: {
           frames: [{ name: 'global', vars: [
             { name: 'original', ref: 'originalList', pyId: ADDRS.originalList, type: 'list', state: 'normal' },
-            { name: 'copy', ref: 'copyList', pyId: ADDRS.copyList, type: 'list', state: 'normal' },
+            { name: 'shallow', ref: 'shallowList', pyId: ADDRS.shallowList, type: 'list', state: 'normal' },
           ]}],
           heap: [
             { id: 'rowOne', pyId: ADDRS.rowOne, type: 'list', refcount: 2, mutable: true, state: 'normal', items: [
@@ -285,7 +284,7 @@ print(copy)`,
               { value: 'rowOne -> 0x7f532010', type: 'str' },
               { value: 'rowTwo -> 0x7f5320c0', type: 'str' },
             ]},
-            { id: 'copyList', pyId: ADDRS.copyList, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
+            { id: 'shallowList', pyId: ADDRS.shallowList, type: 'list', refcount: 1, mutable: true, state:'normal', items: [
               { value: 'rowOne -> 0x7f532010', type: 'str' },
               { value: 'rowTwo -> 0x7f5320c0', type: 'str' },
               { value: 'rowThree -> 0x7f532180', type: 'str' },
@@ -426,14 +425,38 @@ print(new_book)`,
         },
       },
       {
-        title: '<code>return scores</code> returns the new dict',
-        desc: 'The returned object is whatever the local name <code>scores</code> points to at return time: the new empty dict. The earlier mutation to <code>book</code> remains.',
-        lines: [4, 7, 9, 10],
+        title: '<code>return scores</code> hands back the new dict',
+        desc: 'The frame is gone, so the local name <code>scores</code> is gone with it. What travelled out is the object it pointed to at return time: the new empty dict, now also named <code>new_book</code> in the caller.',
+        lines: [4],
         memory: {
           frames: [{ name: 'global', vars: [
             { name: 'add_score', ref: 'addScoreFn', pyId: ADDRS.addScoreFn, type: 'function', state: 'normal' },
             { name: 'book', ref: 'bookDict', pyId: ADDRS.bookDict, type: 'dict', state: 'normal' },
             { name: 'new_book', ref: 'newBookDict', pyId: ADDRS.newBookDict, type: 'dict', state: 'new' },
+          ]}],
+          heap: [
+            { id: 'addScoreFn', pyId: ADDRS.addScoreFn, type: 'function', value: 'add_score(scores)', refcount: 1, mutable: false, state: 'normal' },
+            { id: 'mathList', pyId: ADDRS.mathList, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [{ value: 95, type: 'int' }] },
+            { id: 'bookDict', pyId: ADDRS.bookDict, type: 'dict', refcount: 1, mutable: true, state: 'normal', pairs: [
+              { key: 'math', value: 'list -> 0x7f560010', type: 'str' },
+            ]},
+            { id: 'newMathList', pyId: ADDRS.newMathList, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [] },
+            { id: 'newBookDict', pyId: ADDRS.newBookDict, type: 'dict', refcount: 1, mutable: true, state: 'normal', pairs: [
+              { key: 'math', value: 'list -> 0x7f5601a0', type: 'str' },
+            ]},
+          ],
+          highlight: ['newBookDict'],
+        },
+      },
+      {
+        title: 'Summary - the mutation travelled, the rebinding did not',
+        desc: 'Two dicts, two outcomes. <code>print(book)</code> shows <code>{\'math\': [95]}</code> because the append changed the object the caller still holds. <code>print(new_book)</code> shows <code>{\'math\': []}</code> because <code>scores = {...}</code> only moved a local name onto a brand-new dict.',
+        lines: [9, 10],
+        memory: {
+          frames: [{ name: 'global', vars: [
+            { name: 'add_score', ref: 'addScoreFn', pyId: ADDRS.addScoreFn, type: 'function', state: 'normal' },
+            { name: 'book', ref: 'bookDict', pyId: ADDRS.bookDict, type: 'dict', state: 'normal' },
+            { name: 'new_book', ref: 'newBookDict', pyId: ADDRS.newBookDict, type: 'dict', state: 'normal' },
           ]}],
           heap: [
             { id: 'addScoreFn', pyId: ADDRS.addScoreFn, type: 'function', value: 'add_score(scores)', refcount: 1, mutable: false, state: 'normal' },
@@ -478,7 +501,6 @@ print(alias is profile)`,
             { name: 'profile', ref: 'profileDict', pyId: ADDRS.profileDict, type: 'dict', state: 'new' },
           ]}],
           heap: [
-            { id: 'strAda', pyId: ADDRS.strAda, type: 'str', value: 'Ada', refcount: 1, mutable: false, state: 'new' },
             { id: 'skillsList', pyId: ADDRS.skillsList, type: 'list', refcount: 1, mutable: true, state: 'new', items: [
               { value: 'Python', type: 'str' },
             ]},
@@ -500,7 +522,6 @@ print(alias is profile)`,
             { name: 'alias', ref: 'profileDict', pyId: ADDRS.profileDict, type: 'dict', state: 'new' },
           ]}],
           heap: [
-            { id: 'strAda', pyId: ADDRS.strAda, type: 'str', value: 'Ada', refcount: 1, mutable: false, state: 'normal' },
             { id: 'skillsList', pyId: ADDRS.skillsList, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
               { value: 'Python', type: 'str' },
             ]},
@@ -522,7 +543,6 @@ print(alias is profile)`,
             { name: 'alias', ref: 'profileDict', pyId: ADDRS.profileDict, type: 'dict', state: 'normal' },
           ]}],
           heap: [
-            { id: 'strAda', pyId: ADDRS.strAda, type: 'str', value: 'Ada', refcount: 1, mutable: false, state: 'normal' },
             { id: 'skillsList', pyId: ADDRS.skillsList, type: 'list', refcount: 1, mutable: true, state: 'mutated', items: [
               { value: 'Python', type: 'str' },
               { value: 'debugging', type: 'str' },
@@ -545,7 +565,6 @@ print(alias is profile)`,
             { name: 'alias', ref: 'profileDict', pyId: ADDRS.profileDict, type: 'dict', state: 'normal' },
           ]}],
           heap: [
-            { id: 'strAda', pyId: ADDRS.strAda, type: 'str', value: 'Ada', refcount: 1, mutable: false, state: 'normal' },
             { id: 'skillsList', pyId: ADDRS.skillsList, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
               { value: 'Python', type: 'str' },
               { value: 'debugging', type: 'str' },
@@ -569,7 +588,6 @@ print(alias is profile)`,
             { name: 'alias', ref: 'profileDict', pyId: ADDRS.profileDict, type: 'dict', state: 'normal' },
           ]}],
           heap: [
-            { id: 'strAda', pyId: ADDRS.strAda, type: 'str', value: 'Ada', refcount: 1, mutable: false, state: 'normal' },
             { id: 'skillsList', pyId: ADDRS.skillsList, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
               { value: 'Python', type: 'str' },
               { value: 'debugging', type: 'str' },
@@ -592,11 +610,19 @@ print(alias is profile)`,
 original = [[1]]
 shallow = original.copy()
 deep = copy.deepcopy(original)
-original[0].append(2)`,
+original[0].append(2)
+
+print(original, shallow, deep)`,
     steps: [
       {
-        title: '<code>original</code> is an outer list holding one inner list',
-        desc: 'Two container objects already. A shallow copy will clone only the outer one. A deep copy will clone both.',
+        title: 'Initial state - nothing allocated yet',
+        desc: 'One question drives this demo: which of the three names survives a change to the original? Nothing exists yet, so we start from an empty namespace and an empty heap.',
+        lines: [],
+        memory: EMPTY_MEMORY,
+      },
+      {
+        title: '<code>original = [[1]]</code> creates two list objects, not one',
+        desc: 'Line 1 pulls in the standard-library <code>copy</code> module for later. Line 2 builds the data: an outer list whose single slot points at an inner list. Two containers, two addresses - that is the whole reason copying has a depth at all.',
         lines: [1, 2],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -615,7 +641,7 @@ original[0].append(2)`,
       },
       {
         title: '<code>original.copy()</code> shares the inner list',
-        desc: 'A new outer list appears. Its slot still points at the same inner list. This is the shallow-copy rule from demo 2.',
+        desc: 'A new outer list appears. Its slot still points at the same inner list. This is the shallow-copy rule from demo 2, and the inner list refcount rising to 2 is the visible proof.',
         lines: [3],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -637,8 +663,8 @@ original[0].append(2)`,
         },
       },
       {
-        title: '<code>deepcopy</code> clones the inner list too',
-        desc: '<code>deep</code> is a new outer list whose slot points at a <em>new</em> inner list with the same values. Nested identity is no longer shared.',
+        title: '<code>copy.deepcopy</code> clones the inner list too',
+        desc: '<code>deep</code> is a new outer list whose slot points at a <em>new</em> inner list holding the same value. Deepcopy walked the whole tree instead of stopping at the first level, so no nested object is shared any more.',
         lines: [4],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -668,7 +694,7 @@ original[0].append(2)`,
       },
       {
         title: 'Mutating the original inner list leaves <code>deep</code> alone',
-        desc: '<code>original[0].append(2)</code> changes the shared inner list, so <code>shallow</code> sees <code>2</code> as well. <code>deep</code> still holds <code>[1]</code> because its inner list is a different object.',
+        desc: '<code>original[0].append(2)</code> changes the shared inner list at <code>' + ADDRS.deepInner + '</code>, so <code>shallow</code> sees the <code>2</code> as well - it was pointing there all along. <code>deep</code> still holds <code>[1]</code>, because its inner list is a different object at <code>' + ADDRS.deepCopyInner + '</code>.',
         lines: [5],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -697,106 +723,48 @@ original[0].append(2)`,
           highlight: ['deepInner', 'deepCopyInner'],
         },
       },
+      {
+        title: 'Summary - only the deep copy is independent',
+        desc: 'The print gives <code>[[1, 2]] [[1, 2]] [[1]]</code>. Three outer lists, but only two inner lists: <code>original</code> and <code>shallow</code> still share one, and <code>deep</code> owns its own. Depth of copy is a choice, and this line is where you find out which one you made.',
+        lines: [7],
+        memory: {
+          frames: [{ name: 'global', vars: [
+            { name: 'original', ref: 'deepOuter', pyId: ADDRS.deepOuter, type: 'list', state: 'normal' },
+            { name: 'shallow', ref: 'shallowOuter', pyId: ADDRS.shallowOuter, type: 'list', state: 'normal' },
+            { name: 'deep', ref: 'deepCopyOuter', pyId: ADDRS.deepCopyOuter, type: 'list', state: 'normal' },
+          ]}],
+          heap: [
+            { id: 'deepInner', pyId: ADDRS.deepInner, type: 'list', refcount: 2, mutable: true, state: 'normal', items: [
+              { value: 1, type: 'int' },
+              { value: 2, type: 'int' },
+            ] },
+            { id: 'deepCopyInner', pyId: ADDRS.deepCopyInner, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
+              { value: 1, type: 'int' },
+            ] },
+            { id: 'deepOuter', pyId: ADDRS.deepOuter, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
+              { value: 'inner -> 0x7f5a1010', type: 'str' },
+            ] },
+            { id: 'shallowOuter', pyId: ADDRS.shallowOuter, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
+              { value: 'inner -> 0x7f5a1010', type: 'str' },
+            ] },
+            { id: 'deepCopyOuter', pyId: ADDRS.deepCopyOuter, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
+              { value: 'inner -> 0x7f5a4010', type: 'str' },
+            ] },
+          ],
+          highlight: ['deepInner', 'deepCopyInner'],
+        },
+      },
     ],
   },
 };
 
-let currentAnimator = null;
-let memViz = null;
 
-function scrollTo(selector) {
-  const el = document.querySelector(selector);
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function switchDemo(demoKey) {
-  document.querySelectorAll('.demo-pill').forEach(p => {
-    p.classList.toggle('active', p.dataset.demo === demoKey);
-  });
-
-  const demo = DEMOS[demoKey];
-  if (!demo) return;
-
-  if (PJ.Session && PJ.Session.setWatch) PJ.Session.setWatch(demo.watch);
-
-  const codePanel = document.getElementById('codePanel');
-  PJ.Syntax.render(demo.code, codePanel);
-
-  if (currentAnimator) {
-    currentAnimator.pause();
-    if (currentAnimator.unmount) currentAnimator.unmount();
-  }
-
-  currentAnimator = new PJ.Animator({
-    steps: demo.steps,
-    containerId: 'stage',
+/* ── Boot ─────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  PJ.Session.mount({
+    sessionId: '03-lists-dicts',
+    demos: DEMOS,
+    defaultDemo: 'listAlias',
     defaultSpeed: 950,
-
-    onStep(step, index) {
-      PJ.Syntax.highlightLines(codePanel, step.lines || []);
-      if (step.memory) memViz.render(step.memory);
-
-      const numEl = document.getElementById('stepNum');
-      const titleEl = document.getElementById('stepTitle');
-      const descEl = document.getElementById('stepDesc');
-
-      if (numEl) numEl.textContent = index + 1;
-      if (titleEl) {
-        titleEl.innerHTML = step.title || '';
-        titleEl.classList.remove('explanation-text--animate');
-        void titleEl.offsetWidth;
-        titleEl.classList.add('explanation-text--animate');
-      }
-      if (descEl) descEl.innerHTML = step.desc || '';
-    },
-
-    onComplete() {
-      PJ.Core.markSessionComplete('03-lists-dicts');
-    },
-
-    onReset() {
-      PJ.Syntax.highlightLines(codePanel, []);
-    },
   });
-
-  currentAnimator.mount();
-}
-
-function initStage() {
-  memViz = new PJ.MemoryViz('memPanel');
-  switchDemo('listAlias');
-
-  const bar = document.getElementById('readProgress');
-  if (bar) {
-    const updateBar = () => {
-      const scrolled = window.scrollY;
-      const total = document.body.scrollHeight - window.innerHeight;
-      bar.style.width = total > 0 ? (scrolled / total * 100) + '%' : '0%';
-    };
-    window.addEventListener('scroll', updateBar, { passive: true });
-    updateBar();
-  }
-
-  const sidebarAnchors = [...document.querySelectorAll('.sidebar__item[href^="#"]')]
-    .map(link => ({ link, el: document.getElementById(link.getAttribute('href').slice(1)) }))
-    .filter(item => item.el);
-
-  function updateSidebarActive() {
-    const scrollY = window.scrollY + 110;
-    let current = sidebarAnchors[0];
-
-    for (const item of sidebarAnchors) {
-      if (item.el.offsetTop <= scrollY) current = item;
-    }
-
-    sidebarAnchors.forEach(item => item.link.classList.remove('active'));
-    if (current) current.link.classList.add('active');
-  }
-
-  if (sidebarAnchors.length) {
-    window.addEventListener('scroll', PJ.Core.debounce(updateSidebarActive, 40), { passive: true });
-    updateSidebarActive();
-  }
-}
-
-document.addEventListener('DOMContentLoaded', initStage);
+});

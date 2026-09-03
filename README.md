@@ -1,7 +1,7 @@
 <div align="center">
 
 <img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.10+"/>
-<img src="https://img.shields.io/badge/Licnse-PI_Community-1A6B5C?style=for-the-badge" alt="PI Community License"/>
+<img src="https://img.shields.io/badge/License-Py_Internals_Community-1A6B5C?style=for-the-badge" alt="Py Internals Community License"/>
 <img src="https://img.shields.io/badge/Deployed_on-GitHub_Pages-222222?style=for-the-badge&logo=github" alt="GitHub Pages"/>
 <img src="https://img.shields.io/badge/No_build_tools-Pure_HTML%2FCSS%2FJS-B85C1A?style=for-the-badge" alt="No build tools"/>
 
@@ -17,13 +17,14 @@
 [**Session 03: Lists & Dicts**](https://inboxpraveen.github.io/Py-Internals/sessions/03-lists-dicts/) &nbsp;·&nbsp;
 [**Session 04: Classes**](https://inboxpraveen.github.io/Py-Internals/sessions/04-classes/) &nbsp;·&nbsp;
 [**Session 05: Iterators**](https://inboxpraveen.github.io/Py-Internals/sessions/05-iterators/) &nbsp;·&nbsp;
+[**Session 06: Decorators**](https://inboxpraveen.github.io/Py-Internals/sessions/06-decorators/) &nbsp;·&nbsp;
 [**Glossary**](https://inboxpraveen.github.io/Py-Internals/glossary.html) &nbsp;·&nbsp;
 [**Report a Bug**](https://github.com/inboxpraveen/Py-Internals/issues) &nbsp;·&nbsp;
 [**Request a Topic**](https://github.com/inboxpraveen/Py-Internals/discussions)
 
 <br />
 
-<img width="860" alt="Py Internals — memory visualization of variable rebinding" src="./assets//images/Py-Internals.png" />
+<img width="860" alt="Py Internals — memory visualization of variable rebinding" src="./assets/images/Py-Internals.png" />
 
 </div>
 
@@ -53,7 +54,7 @@ Py Internals closes that gap, visually, for free.
 
 - 🎞️ **Step-by-step animations** — walk through code execution one step at a time, or let it autoplay
 - 🧠 **Real memory diagrams** — see the actual heap, stack frames, reference counts, and GC cycles
-- 🔬 **Type explorer** — every built-in Python type, its mutability, and its memory behavior
+- 🔬 **Type explorer** — the nine types you meet first, their mutability, and how each behaves in memory
 - ✅ **Check-your-understanding quizzes** — predict the memory, then see why
 - 📚 **Glossary** — plain-English definitions you can search mid-lesson
 - ⌨️ **Keyboard playback** — `→` `←` Space `R` to step the lab
@@ -61,7 +62,7 @@ Py Internals closes that gap, visually, for free.
 - 📱 **Fully responsive** — reads well on mobile, animates beautifully on desktop
 - ⚡ **No login, no account, no tracking** — just open and learn
 - 💾 **Progress saved locally** — your completed sessions are remembered via `localStorage`
-- 🌐 **Works offline** — pure static files, once loaded they work without internet
+- 🌐 **Nothing to install** — pure static files; after the first load only the web fonts need the network
 
 ---
 
@@ -74,7 +75,7 @@ Py Internals closes that gap, visually, for free.
 | 03 | [Lists, Dicts & References](https://inboxpraveen.github.io/Py-Internals/sessions/03-lists-dicts/) | ✅ Live | Aliasing, shallow copy, deep copy, nested mutation |
 | 04 | [Classes & Objects](https://inboxpraveen.github.io/Py-Internals/sessions/04-classes/) | ✅ Live | `self`, `__init__`, `__dict__`, class vs instance, bound methods, MRO |
 | 05 | [Iterators & Generators](https://inboxpraveen.github.io/Py-Internals/sessions/05-iterators/) | ✅ Live | `iter` / `next`, `yield`, suspended frames, lazy vs eager |
-| 06 | Decorators | 📋 Planned | First-class functions, wrapper pattern, `functools` |
+| 06 | [Decorators](https://inboxpraveen.github.io/Py-Internals/sessions/06-decorators/) | ✅ Live | `f = deco(f)`, wrappers, closure cells, `functools.wraps`, stacking |
 | 07 | The GIL & Concurrency | 📋 Planned | GIL, threads vs processes, `asyncio` |
 
 ---
@@ -84,7 +85,7 @@ Py Internals closes that gap, visually, for free.
 ```
 Py-Internals/
 ├── index.html                   ← Course homepage & session grid
-├── LICENSE                      ← PJ Community License v1.0
+├── LICENSE                      ← Py Internals Community License v1.0
 ├── README.md                    ← This file
 ├── IMPLEMENTATION_GUIDE.md      ← How to build new sessions
 │
@@ -98,7 +99,7 @@ Py-Internals/
 │   │   └── session.css          ← Shared session layout, quizzes, legends
 │   │
 │   └── js/
-│       ├── core.js              ← App init, sidebar, utilities (PJ.Core)
+│       ├── core.js              ← App init, sidebar, progress, quizzes (PJ.Core)
 │       ├── animator.js          ← Play/pause/step engine (PJ.Animator)
 │       ├── memory-viz.js        ← Memory snapshot renderer (PJ.MemoryViz)
 │       └── syntax.js            ← Python syntax highlighter (PJ.Syntax)
@@ -110,7 +111,8 @@ Py-Internals/
     ├── 02-functions/            ← Frames, LEGB, closures, defaults
     ├── 03-lists-dicts/          ← Aliases, shallow/deep copy
     ├── 04-classes/              ← self, __dict__, bound methods
-    └── 05-iterators/            ← iter/next, yield, lazy evaluation
+    ├── 05-iterators/            ← iter/next, yield, lazy evaluation
+    └── 06-decorators/           ← f = deco(f), wrappers, functools.wraps
 ```
 
 ---
@@ -135,7 +137,10 @@ npx serve .
 
 Then open [http://localhost:8000](http://localhost:8000).
 
-> **Why a server?** The JS modules use `fetch()` to load session data, which requires a server context. Opening `index.html` directly as a `file://` URL won't work.
+> **Why a server?** Opening the files straight from disk mostly works, but a
+> local server keeps the root-relative paths, the browser cache, and the
+> `localStorage` origin behaving the way they will in production. It is one
+> command and saves confusing surprises.
 
 ---
 
@@ -154,7 +159,7 @@ Contributions are very welcome — especially new sessions.
 ### Adding a session
 
 1. Read [`IMPLEMENTATION_GUIDE.md`](IMPLEMENTATION_GUIDE.md) — it covers everything
-2. Copy `sessions/01-variables/` as a starting point
+2. Copy `sessions/06-decorators/` as a starting point — it is the current reference shell
 3. Create your demo steps in `session.js` following the memory snapshot format
 4. Submit a PR against `main`
 
@@ -179,7 +184,7 @@ Contributions are very welcome — especially new sessions.
 |-------|--------|-----|
 | Markup | Semantic HTML5 | Accessible, no framework needed |
 | Styles | Vanilla CSS with custom properties | Zero runtime, full browser support |
-| Scripts | Vanilla JS (ES2020 modules) | No bundler, trivial to read and fork |
+| Scripts | Vanilla JS, plain `<script>` tags | No bundler, no modules, trivial to read and fork |
 | Fonts | [Lora](https://fonts.google.com/specimen/Lora) · [DM Sans](https://fonts.google.com/specimen/DM+Sans) · [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono) | Editorial + readable + code-optimised |
 | Hosting | GitHub Pages | Free, zero config, git-native |
 | Persistence | `localStorage` | Session progress, no backend needed |

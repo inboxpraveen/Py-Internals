@@ -26,7 +26,7 @@
 ```
 Py-Internals/
 ├── index.html                  ← Course homepage
-├── LICENSE                     ← PI Community License
+├── LICENSE                     ← Py Internals Community License v1.0
 ├── README.md
 ├── IMPLEMENTATION_GUIDE.md     ← This file
 │
@@ -40,7 +40,7 @@ Py-Internals/
 │   │   └── session.css         ← Shared session-page layout (overview, lab, tables)
 │   │
 │   └── js/
-│       ├── core.js             ← App init, sidebar, utilities
+│       ├── core.js             ← App init, sidebar, progress, quizzes, PJ.Session.mount
 │       ├── animator.js         ← Step engine (autoplay, pause, step, speed)
 │       ├── memory-viz.js       ← Renders memory snapshots to DOM
 │       └── syntax.js           ← Python syntax highlighter + line tools
@@ -53,6 +53,7 @@ Py-Internals/
     ├── 03-lists-dicts/         ← Containers, aliases, shallow copies
     ├── 04-classes/             ← Instances, self, __dict__, methods
     ├── 05-iterators/           ← iter/next, yield, lazy evaluation
+    ├── 06-decorators/          ← f = deco(f), wrappers, closure cells, wraps
     └── ...
 
 `glossary.html` at the repo root is the searchable term list. Link it from every session topbar.
@@ -109,8 +110,36 @@ All values are CSS custom properties on `:root`. Use them everywhere — never h
 
 ### Session-specific CSS
 
-Put it in a `<style>` block inside the session's `index.html`, after the link tags.
-Keep it minimal — prefer the existing utilities.
+**There is none.** Sessions carry no `<style>` block at all — every session page
+loads exactly the six stylesheets above and nothing else.
+
+Sessions 01–03 used to keep a few hundred lines of inline CSS each. Those blocks
+were ~95% identical to `session.css`, and the small differences meant the same
+component quietly rendered differently depending on which session you were
+reading. They have all been removed.
+
+If your session needs a style that does not exist yet:
+
+1. Check first — `grep -rn "your-class" assets/css/` — it very likely exists.
+2. If it genuinely does not, add it to `session.css` (or `components.css` if it
+   is a general-purpose component), using design tokens only.
+3. Give it a name that describes the idea, not the session (`.lookup-path`, not
+   `.session04-lookup`), because the next session will want it too.
+
+The one exception is `index.html` and `glossary.html`, which are standalone
+pages outside the session shell and keep their own page-level `<style>`.
+
+### Where the shared session styles live
+
+Everything the session shell needs is already in `session.css`:
+`learning-overview`, `learning-card`, `learning-path`, `stage-intro`,
+`demo-guide`, `demo-selector`, `demo-pill`, `demo-watch`, `demo-group`,
+`key-idea`, `lookup-path`, `mistake-list`, `explanation-strip`, `in-plain`,
+`then-precise`, `flow-grid`, `rule-grid` (with `rule-card--rebind` /
+`rule-card--mutate`), `diagram-grid`, `mental-model`, `comparison-table`,
+`reference-map`, `type-explorer` and the `type-card` family.
+
+Use them as they are. Do not copy them into a session.
 
 ### Shared additions from Session 02
 
@@ -132,7 +161,7 @@ It did introduce a few session-local patterns that future container-heavy sessio
 - `.reference-map` and related elements — a static narrative diagram for showing names pointing to container objects and container slots pointing to values.
 - The convention of displaying nested container references as readable labels like `list -> 0x7f560010` inside list cells or dict values.
 
-Keep these styles session-local until at least one more session needs them unchanged. If future sessions reuse the same `reference-map` or `diagram-card` structure, move the CSS into `components.css` or a small shared narrative-diagram section.
+These are now in `session.css` and available to every session.
 
 ---
 
@@ -215,7 +244,11 @@ touch sessions/02-functions/session.js
 
 ### Step 2: Copy the HTML shell
 
-Prefer Session 04 or 05 as the template — they load `session.css` and boot with `PJ.Session.mount`. Session 04 is the richest object-model example (`classRef`, `bases`, inheritance). Use Session 02 if you need a call stack, or Session 03 for container/reference topics. Replace:
+Copy `sessions/06-decorators/` — it is the current reference shell (no inline
+styles, no inline `onclick`, `PJ.Session.mount`, skip link, labelled controls).
+Session 04 is the richest object-model example (`classRef`, `bases`,
+inheritance); Session 02 is the one to read for call stacks; Session 03 for
+containers and references. Replace:
 - `<title>` — update session name
 - `<meta name="description">` — describe the session
 - `.session-hero__eyebrow` — e.g., "Foundations · Session 02"
@@ -236,12 +269,50 @@ Sketch it on paper first:
 
 ### Step 4: Write `session.js`
 
-Define `DEMOS` object (one key per demo) and call `initStage()` on DOMContentLoaded.
+Define an `ADDRS` map and a `DEMOS` object (one key per demo), then hand both to
+`PJ.Session.mount` on `DOMContentLoaded`:
+
+```js
+document.addEventListener('DOMContentLoaded', () => {
+  PJ.Session.mount({
+    sessionId: '06-decorators',   // must match the folder name and PJ.COURSE id
+    demos: DEMOS,
+    defaultDemo: 'manual',
+    defaultSpeed: 900,
+  });
+});
+```
+
+That is the whole bootstrap. `mount` wires the demo pills (from their
+`data-demo` attributes), the code panel, the memory panel, the explanation
+strip, the animator and completion tracking. **Do not** write your own
+`initStage`, `switchDemo`, `scrollTo`, read-progress bar or sidebar scroll-spy —
+`PJ.Core.init()` already installs the last two on every page, and a second copy
+means two scroll listeners doing the same work.
+
+**Never add an `onclick` attribute.** Demo pills are found by `data-demo`;
+sidebar links navigate by their `href="#id"` with `scroll-behavior: smooth`.
+An inline handler that duplicates a listener in `core.js` fires twice — that is
+how the mobile menu ended up toggling itself shut on every tap.
 
 ### Step 5: Write the narrative
 
 Below the stage, add an `<article class="narrative">` with explanatory text, callouts,
 code blocks, and type cards. This is where the deeper explanation lives.
+
+### Step 5b: Register the session in `PJ.COURSE`
+
+In `assets/js/core.js`, add an entry (or flip `status` from `planned` to
+`live`):
+
+```js
+{ id: '06-decorators', num: '06', title: 'Decorators', short: 'f = deco(f), wrappers, wraps', status: 'live' },
+```
+
+This is not optional. `PJ.COURSE` drives the "Session N of M" counter, the
+Start-here / Done badges, the Continue-Learning button and the next-incomplete
+logic. A session that is not registered still renders, but its own chrome
+silently reports the wrong numbers.
 
 ### Step 6: Add to `index.html` (homepage)
 
@@ -517,6 +588,31 @@ On a subclass, show bases instead of copying methods:
 
 `classRef` and `bases` are teaching links for `__class__` / `__bases__`. Count them in `refcount` when you want the diagram to show that instances keep the class alive.
 
+### Function attributes (`__name__`, `__wrapped__`)
+
+A `type: 'function'` object accepts `pairs`, so a decorator session can show the
+labels a wrapper carries:
+
+```js
+{
+  id: 'wrapper',
+  pyId: ADDRS.wrapper,
+  type: 'function',
+  value: 'wrapper(text)',
+  refcount: 1,
+  mutable: false,
+  dictLabel: 'function attributes',
+  pairs: [
+    { key: '__name__', value: 'greet', type: 'str' },
+    { key: '__wrapped__', value: 'greet @ 0x7f9200c8', type: 'str' },
+  ],
+}
+```
+
+For a closure, keep using a separate labelled `dict` object (`dictLabel:
+'closure cell on wrapper'`) as Session 02 does. Real closures are a tuple of
+cells, not a dict — the label is what keeps the diagram honest.
+
 ### Demo "Watch for" hints
 
 Each demo may include a `watch` HTML string. `PJ.Session.mount` writes it into `#demoWatch`. Older sessions can call `PJ.Session.setWatch(demo.watch)` from their own `switchDemo`.
@@ -640,14 +736,14 @@ Session 02 introduced a reusable page structure for complex topics, and Session 
 <article class="narrative">...</article>
 ```
 
-These classes are still session-local today, but the pattern is recommended for future in-depth sessions:
+All of these classes are in `session.css`. Every live session uses this order:
 - `learning-overview` states the mental model and learning path before the animation.
 - `stage-intro` explains how to read the code panel and memory panel.
 - `demo-guide` gives short interaction instructions.
 - `demo-selector` switches between 3-5 focused demos.
 - `narrative` provides the deep explanation after learners have seen the animation.
 
-If two or more future sessions need the same layout classes unchanged, move them into shared CSS instead of copying them again.
+Follow the same order in a new session so a reader who has done one session already knows where to look in the next.
 
 ### Static Reference Map Pattern
 
@@ -674,7 +770,7 @@ Use this for concepts where a static diagram helps learners pause after the anim
 - shallow copy before/after states;
 - function parameter references.
 
-These classes currently live in Session 03's local `<style>` block. Do not assume they are globally available until they are moved into shared CSS.
+These classes live in `session.css` and are available to every session.
 
 ### Entrance Animations
 
@@ -694,7 +790,11 @@ Delays: `delay-1` = 80ms, `delay-2` = 160ms, `delay-3` = 240ms, `delay-4` = 320m
 ### DO
 
 - ✅ Use design tokens (CSS variables) for every color, size, and spacing value
-- ✅ Test on mobile (375px) and large screens (1440px) before committing
+- ✅ Test at 320px, 375px, 768px, 900px and 1440px before committing
+- ✅ Explain in plain words first, then name the term — the `in-plain` / `then-precise`
+     pair exists for exactly this, and it is what makes one page work for a
+     school student and a senior engineer at the same time
+- ✅ Run every factual claim through the interpreter before you write it down
 - ✅ Keep steps short — one concept per step
 - ✅ Use `state: 'new'` on newly created heap objects (triggers the appear animation)
 - ✅ Use `state: 'gc'` on objects about to be garbage collected (triggers the red pulsing border)
@@ -709,6 +809,10 @@ Delays: `delay-1` = 80ms, `delay-2` = 160ms, `delay-3` = 240ms, `delay-4` = 320m
 
 ### DON'T
 
+- ❌ Add a `<style>` block to a session page, or an `onclick` attribute anywhere
+- ❌ Re-implement anything `PJ.Core.init()` or `PJ.Session.mount()` already does
+- ❌ State a Python fact you have not run — especially about refcounts, identity or freeing
+- ❌ Draw a cached small int (−5 to 256) or a short string as garbage collected; they are immortal
 - ❌ Hardcode hex colors or pixel values — use CSS variables
 - ❌ Add more than 10 steps to a demo — learners lose context
 - ❌ Skip the initial "empty state" step — learners need to see the baseline
@@ -725,95 +829,130 @@ Delays: `delay-1` = 80ms, `delay-2` = 160ms, `delay-3` = 240ms, `delay-4` = 320m
 
 Before shipping a session, verify:
 
-- [ ] Stage code panel readable at 375px width
-- [ ] Memory panel not overflowing on mobile
-- [ ] Playback controls accessible with thumb (tap targets ≥ 44px)
-- [ ] Sidebar toggle visible and functional on mobile
+- [ ] No horizontal page scroll at **320px** — the strictest real width. Check with
+      `document.documentElement.scrollWidth > document.documentElement.clientWidth`.
+- [ ] Stage code panel readable at 375px; indentation visible (the panel uses `white-space: pre`)
+- [ ] Memory panel scrolls rather than clipping when a snapshot is tall — step to
+      the busiest step of the busiest demo and confirm you can reach the bottom
+- [ ] The memory panel does not overlap the explanation strip below it
+- [ ] Playback controls reachable with a thumb (tap targets ≥ 44px on touch)
+- [ ] Sidebar toggle opens **and** closes, and tapping a section link dismisses it
 - [ ] Narrative text has appropriate padding on mobile (`var(--sp-5)`)
 - [ ] Type explorer grid wraps gracefully at small sizes
 - [ ] Comparison tables scroll horizontally (wrap in `<div style="overflow-x:auto">`)
+- [ ] Check the awkward middle too: **860–1024px**, where the sidebar is still
+      pinned but the stage has just gone single-column
+- [ ] Prose never says "on the right" or "on the left" about the panels — below
+      860px they stack vertically
+- [ ] Tab through the whole lab: every control has a visible focus ring, and
+      `Space` on a quiz option answers it rather than starting playback
 
 ---
 
 ## 10. Example: Minimal New Session
 
-Here's the minimal `session.js` for a new session (e.g., Session 02: Functions):
+Here is the complete `session.js` for a new session. This is the whole file —
+there is no `initStage`, no `switchDemo`, no scroll wiring.
 
 ```js
 'use strict';
 
+/* Stable, made-up CPython-style addresses. Reuse the same address for the same
+   object across steps so a learner can track it by eye. */
 const ADDRS = {
-  funcObj:   '0x7f50a0',
-  frameInt:  '0x7f60b4',
+  greetFn: '0x7f9100a0',
+  int2:    '0x7f110002',
+};
+
+const EMPTY = {
+  frames: [{ name: 'global', vars: [] }],
+  heap: [],
+  highlight: [],
 };
 
 const DEMOS = {
   callStack: {
+    watch: 'Watch the frame appear, then disappear. The function object stays put.',
     code: `def greet(name):
     return "Hello, " + name
 
 result = greet("Alice")`,
     steps: [
       {
-        title: 'Before calling <code>greet()</code>',
-        desc: 'The function <code>greet</code> is defined but not called. It exists as a function object on the heap.',
+        // First step: always the empty/initial state, always lines: [].
+        title: 'Nothing has run yet',
+        desc: 'The module has been read but no line has executed.',
+        lines: [],
+        memory: EMPTY,
+      },
+      {
+        title: '<code>def greet</code> creates a function object',
+        desc: '<code>def</code> builds an object on the heap and binds a name to it. The body does not run.',
         lines: [1, 2],
         memory: {
-          frames: [
-            { name: 'global', vars: [
-              { name: 'greet', ref: 'fObj', pyId: ADDRS.funcObj, type: 'function', state: 'new' },
-            ]},
-          ],
+          frames: [{ name: 'global', vars: [
+            { name: 'greet', ref: 'greetFn', pyId: ADDRS.greetFn, type: 'function', state: 'new' },
+          ]}],
           heap: [
-            { id: 'fObj', pyId: ADDRS.funcObj, type: 'function', value: 'greet(name)', refcount: 1, mutable: false, state: 'new' },
+            { id: 'greetFn', pyId: ADDRS.greetFn, type: 'function', value: 'greet(name)', refcount: 1, mutable: false, state: 'new' },
           ],
-          highlight: ['fObj'],
+          highlight: ['greetFn'],
         },
       },
-      // ... more steps
+      // ... more steps; last one summarises the final state.
     ],
   },
 };
 
-let currentAnimator = null;
-let memViz = null;
-
-function initStage() {
-  memViz = new PJ.MemoryViz('memPanel');
-  switchDemo('callStack');
-}
-
-function switchDemo(demoKey) {
-  document.querySelectorAll('.demo-pill').forEach(p => {
-    p.classList.toggle('active', p.dataset.demo === demoKey);
+document.addEventListener('DOMContentLoaded', () => {
+  PJ.Session.mount({
+    sessionId: '07-your-topic',
+    demos: DEMOS,
+    defaultDemo: 'callStack',
+    defaultSpeed: 900,
   });
-
-  const demo = DEMOS[demoKey];
-  const codePanel = document.getElementById('codePanel');
-  PJ.Syntax.render(demo.code, codePanel);
-
-  if (currentAnimator) currentAnimator.pause();
-
-  currentAnimator = new PJ.Animator({
-    steps: demo.steps,
-    containerId: 'stage',
-    onStep(step, index, total) {
-      PJ.Syntax.highlightLines(codePanel, step.lines || []);
-      if (step.memory) memViz.render(step.memory);
-
-      document.getElementById('stepNum').textContent   = index + 1;
-      document.getElementById('stepTitle').innerHTML   = step.title || '';
-      document.getElementById('stepDesc').innerHTML    = step.desc  || '';
-    },
-    onComplete() {},
-    onReset() { PJ.Syntax.highlightLines(codePanel, []); },
-  });
-
-  currentAnimator.mount();
-}
-
-document.addEventListener('DOMContentLoaded', initStage);
+});
 ```
+
+### Before you open a PR
+
+Run these. They are quick and they catch the mistakes that actually ship:
+
+```bash
+# 1. The file parses.
+node --check sessions/07-your-topic/session.js
+
+# 2. Every `lines:` number is a real line of that demo's own `code` string.
+#    (Off-by-one line references are the single most common session bug.)
+node -e "
+  const fs=require('fs');
+  let src=fs.readFileSync('sessions/07-your-topic/session.js','utf8')
+            .replace(/document\.addEventListener[\s\S]*$/,'')+'
+module.exports=DEMOS;';
+  fs.writeFileSync('/tmp/d.js',src);
+  for (const [k,d] of Object.entries(require('/tmp/d.js'))) {
+    const n=d.code.split('
+').length;
+    d.steps.forEach((s,i)=>(s.lines||[]).forEach(L=>{
+      if(L<1||L>n) console.log('BAD', k, 'step', i+1, '-> line', L, '(code has', n, 'lines)');
+    }));
+    if((d.steps[0].lines||[]).length) console.log('BAD', k, 'step 1 should have lines: []');
+    if(d.steps.length<5||d.steps.length>10) console.log('WARN', k, 'has', d.steps.length, 'steps');
+  }
+  console.log('line-reference check done');
+"
+
+# 3. Every factual claim is true in the Python you are targeting.
+python -c "import sys; print(sys.version)"
+```
+
+**Run your claims through the interpreter.** If a step says an object is freed,
+prove it — subclass with `__del__` and watch it fire. If it says two names share
+an object, check `a is b`. Small integers (−5 to 256) and short strings are
+cached and, since CPython 3.12, **immortal**: `sys.getrefcount(42)` is
+4294967295 and they are never garbage collected. Never draw one with
+`state: 'gc'` or `refcount: 0`. When a demo needs a genuine refcount → 0 → freed
+moment, use a list.
 
 ---
 

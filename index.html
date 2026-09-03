@@ -4,7 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Py Internals — Learn Python from the Inside Out</title>
-  <meta name="description" content="An open-source, interactive Python course. Understand variables, memory, types and more through beautiful visualizations." />
+  <meta name="description" content="An open-source, interactive Python course. See what Python actually does with your code — names, objects, frames, references and garbage collection, visualized step by step." />
+  <meta name="theme-color" content="#1A6B5C" />
+  <link rel="canonical" href="https://inboxpraveen.github.io/Py-Internals/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Py Internals — Learn Python from the Inside Out" />
+  <meta property="og:description" content="An open-source, interactive Python course. Watch names bind, refcounts move, and frames come and go — one step at a time." />
+  <meta property="og:url" content="https://inboxpraveen.github.io/Py-Internals/" />
+  <meta property="og:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/Py-Internals.png" />
+  <meta name="twitter:card" content="summary_large_image" />
 
   <!-- CSS -->
   <link rel="icon" type="image/png" href="assets/images/Python-logo.png" />
@@ -117,6 +125,7 @@
     .session-card {
       display: flex;
       align-items: flex-start;
+      flex-wrap: wrap;
       gap: var(--sp-5);
       padding: var(--sp-6);
       background: var(--clr-surface);
@@ -325,7 +334,7 @@
 
     .course-path {
       display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: var(--sp-3);
       margin-top: var(--sp-6);
     }
@@ -384,6 +393,12 @@
       .course-path { grid-template-columns: 1fr; }
     }
 
+    @media (max-width: 520px) {
+      .session-card { gap: var(--sp-4); padding: var(--sp-5); }
+      .session-card__num { width: 40px; height: 40px; }
+      .session-card__arrow { display: none; }
+    }
+
     @media (max-width: 640px) {
       .home-hero { padding: var(--sp-12) var(--sp-5) var(--sp-10); }
       .sessions-grid { padding: var(--sp-8) var(--sp-5); }
@@ -411,7 +426,7 @@
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
         <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
       </svg>
-      GitHub
+      <span class="btn__label">GitHub</span>
     </a>
   </div>
 </header>
@@ -425,7 +440,7 @@
       Open Source · Free Forever · Interactive
     </div>
     <h1 class="home-hero__title animate-fade-up delay-1">
-      Learn Python the way<br>it <em>actually</em> works
+      Learn Python the way it <em>actually</em> works
     </h1>
     <p class="home-hero__lead animate-fade-up delay-2">
       Not just syntax — <strong>memory, reasoning, and mental models.</strong>
@@ -488,7 +503,7 @@
         <p>Every session ends with a short quiz. If an answer surprises you, rewind the demo. The <a href="glossary.html" style="color:var(--clr-accent)">glossary</a> is there when a term is fuzzy.</p>
       </div>
     </div>
-    <div class="course-path" aria-label="How the five live sessions connect">
+    <div class="course-path" aria-label="How the live sessions connect">
       <a class="course-path__step" href="sessions/01-variables/">
         <div class="course-path__num">01</div>
         <div class="course-path__title">Names</div>
@@ -513,6 +528,11 @@
         <div class="course-path__num">05</div>
         <div class="course-path__title">Cursors</div>
         <div class="course-path__idea">Iterators walk; generators pause a frame.</div>
+      </a>
+      <a class="course-path__step" href="sessions/06-decorators/">
+        <div class="course-path__num">06</div>
+        <div class="course-path__title">Wrappers</div>
+        <div class="course-path__idea">A name is rebound to a function that remembers yours.</div>
       </a>
     </div>
   </section>
@@ -632,20 +652,27 @@
       </svg>
     </a>
 
-    <div class="session-card locked" data-session="06-decorators">
+    <a href="sessions/06-decorators/" class="session-card animate-fade-up delay-5" data-session="06-decorators">
       <div class="session-card__num">06</div>
       <div class="session-card__body">
-        <div class="session-card__title" style="display:flex;align-items:center;gap:8px;">
-          Decorators <span class="coming-soon-badge">soon</span>
+        <div class="session-card__title">Decorators</div>
+        <div class="session-card__desc">
+          Why <code>@decorator</code> is just <code>f = deco(f)</code>, where your original
+          function goes when a wrapper swallows it, and what <code>functools.wraps</code>
+          is really putting back.
         </div>
-        <div class="session-card__desc">First-class functions, the wrapper pattern, and what <code>@decorator</code> does to a name.</div>
         <div class="session-card__tags">
+          <span class="session-card__tag">@</span>
           <span class="session-card__tag">wrapper</span>
-          <span class="session-card__tag">closure</span>
-          <span class="session-card__tag">functools</span>
+          <span class="session-card__tag">closure cell</span>
+          <span class="session-card__tag">functools.wraps</span>
+          <span class="session-card__tag">stacking</span>
         </div>
       </div>
-    </div>
+      <svg class="session-card__arrow" width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M7 10h6M10 7l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
 
     <div class="session-card locked" data-session="07-gil">
       <div class="session-card__num">07</div>

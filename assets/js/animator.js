@@ -110,9 +110,12 @@ PJ.Animator = class {
 
     track.innerHTML = '';
     this.steps.forEach((step, i) => {
-      const dot = document.createElement('span');
+      const dot = document.createElement('button');
+      dot.type = 'button';
       dot.className = 'step-track__dot';
-      dot.title = String(step.title || `Step ${i + 1}`).replace(/<[^>]+>/g, '');
+      const label = String(step.title || `Step ${i + 1}`).replace(/<[^>]+>/g, '');
+      dot.title = label;
+      dot.setAttribute('aria-label', `Step ${i + 1}: ${label}`);
       dot.addEventListener('click', () => this.goTo(i));
 
       if (i < this.steps.length - 1) {
@@ -132,8 +135,13 @@ PJ.Animator = class {
 
     dots.forEach((dot, i) => {
       dot.classList.remove('active', 'visited');
-      if (i === this._currentIndex) dot.classList.add('active');
-      else if (i < this._currentIndex) dot.classList.add('visited');
+      if (i === this._currentIndex) {
+        dot.classList.add('active');
+        dot.setAttribute('aria-current', 'step');
+      } else {
+        dot.removeAttribute('aria-current');
+        if (i < this._currentIndex) dot.classList.add('visited');
+      }
     });
   }
 
@@ -208,10 +216,26 @@ PJ.Animator = class {
     if (PJ.Animator._active === this) PJ.Animator._active = null;
   }
 
+  /**
+   * The lab only owns the keyboard while it is on screen. Otherwise Space and
+   * the arrows belong to the reader, who is probably scrolling the narrative.
+   */
+  _labHasKeyboard() {
+    const root = this._container;
+    if (!root || root === document) return false;
+    if (root.contains(document.activeElement)) return true;
+    const r = root.getBoundingClientRect();
+    return r.bottom > 0 && r.top < window.innerHeight;
+  }
+
   _handleKey(e) {
     const tag = (e.target && e.target.tagName) || '';
-    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return;
+    // BUTTON matters: quiz answers are buttons, and Space is how a keyboard user
+    // picks one. Stealing it here made the quiz unanswerable without a mouse.
+    if (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'A'].includes(tag)) return;
+    if (e.target && e.target.isContentEditable) return;
     if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (!this._labHasKeyboard()) return;
 
     if (e.key === 'ArrowRight') {
       e.preventDefault();
@@ -255,15 +279,15 @@ PJ.Animator = class {
     const total   = this.steps.length;
     const current = this._currentIndex + 1;
     this._els.counter.textContent = `${current} / ${total}`;
+    this._els.counter.classList.remove('count-change');
+    void this._els.counter.offsetWidth;
     this._els.counter.classList.add('count-change');
-    this._els.counter.addEventListener('animationend', () => {
-      this._els.counter.classList.remove('count-change');
-    }, { once: true });
   }
 
   _setPlayIcon(state) {
     const btn = this._els.playBtn;
     if (!btn) return;
+    btn.setAttribute('aria-label', state === 'play' ? 'Play the walkthrough' : 'Pause the walkthrough');
     btn.innerHTML = state === 'play'
       ? `<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
            <path d="M3 2.5l8 4.5-8 4.5z"/>

@@ -13,16 +13,25 @@ PJ.COURSE = [
   { id: '03-lists-dicts', num: '03', title: 'Lists, Dicts & References',        short: 'Aliases, copies, nested refs', status: 'live' },
   { id: '04-classes',     num: '04', title: 'Classes & Objects',                short: 'self, __dict__, methods',      status: 'live' },
   { id: '05-iterators',   num: '05', title: 'Iterators & Generators',           short: 'iter, next, yield',            status: 'live' },
-  { id: '06-decorators',  num: '06', title: 'Decorators',                       short: 'Wrappers and first-class fns', status: 'planned' },
+  { id: '06-decorators',  num: '06', title: 'Decorators',                       short: 'f = deco(f), wrappers, wraps', status: 'live' },
   { id: '07-gil',         num: '07', title: 'The GIL & Concurrency',            short: 'Threads, processes, asyncio',  status: 'planned' },
 ];
 
 PJ.Core = (function () {
 
+  function _readCompleted() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('pj_completed') || '[]');
+      return Array.isArray(saved) ? saved : [];
+    } catch (err) {
+      return [];
+    }
+  }
+
   const state = {
     sidebarOpen: false,
     currentSession: null,
-    completedSessions: JSON.parse(localStorage.getItem('pj_completed') || '[]'),
+    completedSessions: _readCompleted(),
   };
 
   function init() {
@@ -68,14 +77,28 @@ PJ.Core = (function () {
 
     if (!toggle || !sidebar) return;
 
+    // The button owns its behaviour here. Inline onclick handlers used to do the
+    // same thing, which toggled twice per tap and left the menu permanently shut.
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-controls', 'sessionNav');
+    if (!sidebar.id) sidebar.id = 'sessionNav';
     toggle.addEventListener('click', () => toggleSidebar());
 
     if (overlay) {
       overlay.addEventListener('click', () => closeSidebar());
     }
 
+    // On a phone the sidebar covers the page, so tapping a section link has to
+    // dismiss it — otherwise you scroll to a heading you cannot see.
+    sidebar.addEventListener('click', (e) => {
+      if (e.target.closest('.sidebar__item') && state.sidebarOpen) closeSidebar();
+    });
+
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && state.sidebarOpen) closeSidebar();
+      if (e.key === 'Escape' && state.sidebarOpen) {
+        closeSidebar();
+        toggle.focus();
+      }
     });
   }
 
@@ -86,6 +109,7 @@ PJ.Core = (function () {
   function openSidebar() {
     document.querySelector('.sidebar')?.classList.add('open');
     document.querySelector('.sidebar-overlay')?.classList.add('active');
+    document.querySelector('.menu-toggle')?.setAttribute('aria-expanded', 'true');
     state.sidebarOpen = true;
     document.body.style.overflow = 'hidden';
   }
@@ -93,6 +117,7 @@ PJ.Core = (function () {
   function closeSidebar() {
     document.querySelector('.sidebar')?.classList.remove('open');
     document.querySelector('.sidebar-overlay')?.classList.remove('active');
+    document.querySelector('.menu-toggle')?.setAttribute('aria-expanded', 'false');
     state.sidebarOpen = false;
     document.body.style.overflow = '';
   }
@@ -137,13 +162,16 @@ PJ.Core = (function () {
 
   function _rememberVisit() {
     const id = currentSessionId();
-    if (id) localStorage.setItem('pj_last', id);
+    if (!id) return;
+    try { localStorage.setItem('pj_last', id); } catch (err) { /* ignore */ }
   }
 
   function markSessionComplete(sessionId) {
     if (!state.completedSessions.includes(sessionId)) {
       state.completedSessions.push(sessionId);
-      localStorage.setItem('pj_completed', JSON.stringify(state.completedSessions));
+      try {
+        localStorage.setItem('pj_completed', JSON.stringify(state.completedSessions));
+      } catch (err) { /* private browsing — progress just won't persist */ }
     }
   }
 
@@ -268,6 +296,12 @@ PJ.Core = (function () {
         });
 
         const explain = card.querySelector('.quiz-explain');
+        if (explain) {
+          // Without this the verdict and the explanation — the part that actually
+          // teaches — are visible only to people who can see them.
+          explain.setAttribute('role', 'status');
+          explain.setAttribute('aria-live', 'polite');
+        }
         if (explain && !explain.querySelector('.quiz-explain__label')) {
           const label = document.createElement('span');
           label.className = 'quiz-explain__label';
@@ -298,7 +332,11 @@ PJ.Core = (function () {
               const right = card.querySelector(`.quiz-option[data-choice="${answer}"]`);
               if (right) right.classList.add('is-correct');
             }
-            card.querySelectorAll('.quiz-option').forEach((b) => { b.disabled = true; });
+            // aria-disabled, not disabled: disabling the button the reader just
+            // pressed drops focus to <body> and they have to tab back from the top.
+            card.querySelectorAll('.quiz-option').forEach((b) => {
+              b.setAttribute('aria-disabled', 'true');
+            });
 
             if (answered === cards.length) {
               let score = quiz.querySelector('.quiz-score');
@@ -320,7 +358,7 @@ PJ.Core = (function () {
                   : 'Re-read the teal explanations, then rewind the matching demo and try again.'}</p>`;
 
               const sessionId = quiz.dataset.session || currentSessionId();
-              if (sessionId && perfect) markSessionComplete(sessionId);
+              if (sessionId) markSessionComplete(sessionId);
             }
           });
         });
@@ -372,13 +410,8 @@ PJ.Core = (function () {
       el.textContent = `Session ${String(index + 1).padStart(2, '0')} of ${String(live.length).padStart(2, '0')}`;
     });
 
-    const footer = document.querySelector('.session-footer');
-    if (footer) {
-      const io = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting) markSessionComplete(id);
-      }, { threshold: 0.55 });
-      io.observe(footer);
-    }
+    // Completion is earned by finishing the quiz (see _initQuizzes), not by
+    // scrolling to the bottom — otherwise the Done badge means nothing.
   }
 
   function scrollToSection(selector) {
@@ -461,19 +494,22 @@ PJ.Session = {
 
   mount(options) {
     const demos = options.demos;
-    const defaultDemo = options.defaultDemo;
+    const defaultDemo = options.defaultDemo || Object.keys(demos)[0];
     const defaultSpeed = options.defaultSpeed ?? 900;
     const sessionId = options.sessionId;
     const memViz = new PJ.MemoryViz('memPanel');
     let currentAnimator = null;
 
     function switchDemo(demoKey) {
-      document.querySelectorAll('.demo-pill').forEach((p) => {
-        p.classList.toggle('active', p.dataset.demo === demoKey);
-      });
-
       const demo = demos[demoKey];
       if (!demo) return;
+
+      document.querySelectorAll('.demo-pill').forEach((p) => {
+        const isActive = p.dataset.demo === demoKey;
+        p.classList.toggle('active', isActive);
+        p.setAttribute('aria-selected', String(isActive));
+        p.tabIndex = isActive ? 0 : -1;
+      });
 
       PJ.Session.setWatch(demo.watch);
 
@@ -485,10 +521,13 @@ PJ.Session = {
         currentAnimator.unmount();
       }
 
+      const speedSel = document.querySelector('[data-action="speed"]');
+      const chosenSpeed = speedSel ? parseInt(speedSel.value, 10) : defaultSpeed;
+
       currentAnimator = new PJ.Animator({
         steps: demo.steps,
         containerId: 'stage',
-        defaultSpeed,
+        defaultSpeed: Number.isFinite(chosenSpeed) ? chosenSpeed : defaultSpeed,
         onStep(step, index) {
           PJ.Syntax.highlightLines(codePanel, step.lines || []);
           if (step.memory) memViz.render(step.memory);
@@ -508,6 +547,7 @@ PJ.Session = {
         },
         onComplete() {
           if (sessionId) PJ.Core.markSessionComplete(sessionId);
+          if (typeof options.onComplete === 'function') options.onComplete();
         },
         onReset() {
           PJ.Syntax.highlightLines(codePanel, []);
@@ -516,6 +556,24 @@ PJ.Session = {
 
       currentAnimator.mount();
     }
+
+    // Pills are wired here rather than with inline onclick attributes, so a
+    // session never depends on a global function existing.
+    const pills = [...document.querySelectorAll('.demo-pill')];
+    pills.forEach((pill, i) => {
+      pill.setAttribute('role', 'tab');
+      pill.addEventListener('click', () => switchDemo(pill.dataset.demo));
+      pill.addEventListener('keydown', (e) => {
+        const dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+        if (!dir) return;
+        e.preventDefault();
+        const nextPill = pills[(i + dir + pills.length) % pills.length];
+        nextPill.focus();
+        switchDemo(nextPill.dataset.demo);
+      });
+    });
+    const selector = document.querySelector('.demo-selector');
+    if (selector) selector.setAttribute('role', 'tablist');
 
     window.switchDemo = switchDemo;
     window.scrollToSection = PJ.Core.scrollToSection;

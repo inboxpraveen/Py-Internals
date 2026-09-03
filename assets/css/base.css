@@ -8,21 +8,23 @@
 
 /* ── Design Tokens ────────────────────────────────────────── */
 :root {
+  color-scheme: light;
+
   /* Palette */
   --clr-bg:          #FAFAF7;
   --clr-surface:     #FFFFFF;
   --clr-surface-2:   #F4F4EF;
   --clr-border:      #E2E2D8;
-  --clr-border-soft: #EBEBЕ4;
+  --clr-border-soft: #EBEBE4;
 
   --clr-text:        #1A1A18;
   --clr-text-2:      #4A4A44;
-  --clr-text-3:      #8A8A80;
+  --clr-text-3:      #6E6E64;
   --clr-text-inv:    #FAFAF7;
 
   --clr-accent:      #1A6B5C;   /* deep teal */
   --clr-accent-lt:   #E6F4F1;   /* teal tint */
-  --clr-accent-2:    #B85C1A;   /* amber — for warnings/highlights */
+  --clr-accent-2:    #A85315;   /* amber — for warnings/highlights (AA on its tint) */
   --clr-accent-2lt:  #FDF0E6;
 
   /* Memory visualization colors */
@@ -79,6 +81,7 @@
   --sp-4:  1rem;
   --sp-5:  1.25rem;
   --sp-6:  1.5rem;
+  --sp-7:  1.75rem;
   --sp-8:  2rem;
   --sp-10: 2.5rem;
   --sp-12: 3rem;
@@ -125,7 +128,9 @@
 }
 
 html {
-  font-size: 16px;
+  /* Percentage, not px: a fixed root size silently ignores the reader's
+     browser font-size preference. */
+  font-size: 100%;
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
 }

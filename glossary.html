@@ -5,10 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Glossary — Py Internals</title>
   <meta name="description" content="Plain-English definitions for Python memory, names, objects, frames, iterators, and more." />
+  <meta name="theme-color" content="#1A6B5C" />
+  <link rel="canonical" href="https://inboxpraveen.github.io/Py-Internals/glossary.html" />
   <link rel="icon" type="image/png" href="assets/images/Python-logo.png" />
+  <link rel="apple-touch-icon" href="assets/images/Python-logo.png" />
   <link rel="stylesheet" href="assets/css/base.css" />
   <link rel="stylesheet" href="assets/css/layout.css" />
   <link rel="stylesheet" href="assets/css/components.css" />
+  <link rel="stylesheet" href="assets/css/animations.css" />
   <style>
     .glossary {
       max-width: 860px;
@@ -109,7 +113,14 @@
     </a>
   </div>
   <div class="topbar__actions">
-    <a href="index.html" class="btn btn--secondary btn--sm">All Sessions</a>
+    <a href="index.html" class="btn btn--ghost btn--sm">All Sessions</a>
+    <a href="https://github.com/inboxpraveen/Py-Internals" target="_blank" rel="noopener"
+       class="btn btn--secondary btn--sm" style="display:inline-flex;align-items:center;gap:6px;">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+      </svg>
+      <span class="btn__label">GitHub</span>
+    </a>
   </div>
 </header>
 
@@ -119,7 +130,7 @@
     Short definitions for the words this course uses again and again.
     Search, then jump back into the session that shows the idea in memory.
   </p>
-  <input class="glossary__search" id="glossarySearch" type="search" placeholder="Search terms — alias, frame, yield, MRO…" autocomplete="off" />
+  <input class="glossary__search" id="glossarySearch" type="search" placeholder="Search terms — alias, frame, yield, wrapper, MRO…" autocomplete="off" />
   <div class="glossary-filters" id="glossaryFilters" role="tablist" aria-label="Filter by topic">
     <button type="button" class="glossary-filter is-active" data-filter="all">All</button>
     <button type="button" class="glossary-filter" data-filter="objects">Objects</button>
@@ -127,6 +138,7 @@
     <button type="button" class="glossary-filter" data-filter="containers">Containers</button>
     <button type="button" class="glossary-filter" data-filter="classes">Classes</button>
     <button type="button" class="glossary-filter" data-filter="iteration">Iteration</button>
+    <button type="button" class="glossary-filter" data-filter="decorators">Decorators</button>
   </div>
   <p class="glossary-empty" id="glossaryEmpty">No terms match that search.</p>
 
@@ -171,6 +183,22 @@
     <article class="term" id="refcount" data-terms="refcount reference count garbage collection gc">
       <h3>Reference count</h3>
       <p>How many names or containers currently point at an object. In CPython, when this hits zero the object is freed immediately. Cycles need a separate collector.</p>
+    </article>
+    <article class="term" id="heap" data-terms="heap memory allocation objects">
+      <h3>Heap</h3>
+      <p>The region of memory where objects live. Every Python object — an int, a list, a function, a class — is allocated on the heap. Names live in namespaces and point into it.</p>
+    </article>
+    <article class="term" id="call-stack" data-terms="call stack frames traceback">
+      <h3>Call stack</h3>
+      <p>The pile of frames for calls currently in progress. Each call pushes a frame; each return pops one. A traceback is a printout of this stack. See <a href="sessions/02-functions/">Session 02</a>.</p>
+    </article>
+    <article class="term" id="garbage-collection" data-terms="garbage collection gc free refcount zero cycles">
+      <h3>Garbage collection</h3>
+      <p>Freeing objects nothing refers to any more. CPython does this mainly by reference counting: the instant a count hits zero the object is freed. A separate cyclic collector handles objects that only refer to each other.</p>
+    </article>
+    <article class="term" id="small-int-cache" data-terms="small int cache interning immortal cached integers">
+      <h3>Small-integer cache</h3>
+      <p>CPython builds the integers −5 to 256 once at start-up and hands out the same object every time, so <code>a = 42; b = 42</code> gives two names for one object. Those objects are never freed. It is an implementation detail, not a language guarantee — never write code that depends on it.</p>
     </article>
     <article class="term" id="interning" data-terms="interning small int cache">
       <h3>Interning</h3>
@@ -299,6 +327,34 @@
     <article class="term" id="stopiteration" data-terms="stopiteration exhausted">
       <h3>StopIteration</h3>
       <p>The signal that an iterator is exhausted. A <code>for</code> loop catches it and exits. The collection is unchanged; the iterator is spent. A new <code>for</code> on a list creates a new iterator. A generator does not rewind.</p>
+    </article>
+  </section>
+
+  <section class="glossary-group" data-group="decorators">
+    <h2>Decorators</h2>
+    <article class="term" id="decorator" data-terms="decorator @ syntactic sugar wrap">
+      <h3>Decorator</h3>
+      <p>A callable that takes a function and returns a replacement. <code>@deco</code> above a <code>def</code> is shorthand for <code>f = deco(f)</code>: your function is built, handed to <code>deco</code>, and the name is bound to whatever comes back. See <a href="sessions/06-decorators/">Session 06</a>.</p>
+    </article>
+    <article class="term" id="wrapper" data-terms="wrapper inner function replacement">
+      <h3>Wrapper</h3>
+      <p>The function a decorator returns. It usually calls the original and adds something around it. After decorating, your name points at the wrapper — not at the function you wrote.</p>
+    </article>
+    <article class="term" id="closure-cell" data-terms="closure cell free variable remembered state __closure__">
+      <h3>Closure cell</h3>
+      <p>The small box that keeps an outer name alive for an inner function. It is why a wrapper can still reach your original function after the decorator's frame is gone, and why that original is not garbage collected even though no name points at it. See <a href="sessions/02-functions/">Session 02</a>.</p>
+    </article>
+    <article class="term" id="decorator-factory" data-terms="decorator factory arguments repeat parameterised">
+      <h3>Decorator factory</h3>
+      <p>A function you call to <em>get</em> a decorator, which is how a decorator takes arguments. In <code>@repeat(2)</code>, <code>repeat(2)</code> runs first and returns the decorator that is then applied to your function.</p>
+    </article>
+    <article class="term" id="functools-wraps" data-terms="functools wraps __name__ __doc__ metadata">
+      <h3><code>functools.wraps</code></h3>
+      <p>A decorator applied to a wrapper. It copies <code>__name__</code>, <code>__qualname__</code>, <code>__doc__</code>, <code>__module__</code> and <code>__annotations__</code> from the original function onto the wrapper, so tracebacks and <code>help()</code> keep telling the truth.</p>
+    </article>
+    <article class="term" id="wrapped" data-terms="__wrapped__ unwrap original">
+      <h3><code>__wrapped__</code></h3>
+      <p>The attribute <code>functools.wraps</code> sets on a wrapper, pointing at the function underneath. It is how tools reach past a decorator to the real thing.</p>
     </article>
   </section>
 </main>
