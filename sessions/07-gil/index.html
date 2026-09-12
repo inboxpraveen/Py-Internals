@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Session 07: The GIL &amp; Concurrency — Py Internals</title>
+  <meta name="description" content="Why CPython keeps one interpreter lock, what it does and does not protect, and how threads, processes and asyncio each get around it — shown step by step in memory." />
+  <meta name="theme-color" content="#1A6B5C" />
+  <link rel="icon" type="image/png" href="../../assets/images/Python-logo.png" />
+  <link rel="apple-touch-icon" href="../../assets/images/Python-logo.png" />
+  <link rel="stylesheet" href="../../assets/css/base.css" />
+  <link rel="stylesheet" href="../../assets/css/layout.css" />
+  <link rel="stylesheet" href="../../assets/css/components.css" />
+  <link rel="stylesheet" href="../../assets/css/memory-viz.css" />
+  <link rel="stylesheet" href="../../assets/css/animations.css" />
+  <link rel="stylesheet" href="../../assets/css/session.css" />
+</head>
+<body>
+
+<a class="skip-link" href="#demo-handoff">Skip to the interactive lab</a>
+
+<header class="topbar">
+  <div class="topbar__logo">
+    <button class="menu-toggle" aria-label="Open session menu">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+        <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <a href="../../index.html" class="topbar__home" aria-label="Py Internals home">
+      <div class="topbar__logo-mark">Py</div>
+      <span class="topbar__brand">Py<span>Internals</span></span>
+    </a>
+  </div>
+  <div class="topbar__actions">
+    <a href="../../glossary.html" class="btn btn--ghost btn--sm">Glossary</a>
+    <span class="session-count" data-role="session-count">Session 07 of 07</span>
+  </div>
+</header>
+
+<div class="sidebar-overlay"></div>
+
+<div class="app-shell" style="grid-template-rows:unset">
+  <aside class="sidebar" aria-label="Session sections">
+    <div class="sidebar__section">
+      <div class="sidebar__label">Session 07</div>
+      <a href="#intro" class="sidebar__item active">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <circle cx="9" cy="9" r="7"/><path d="M9 6v4l2 2"/>
+        </svg>
+        Introduction
+      </a>
+      <a href="#demo-handoff" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M2 9h14M9 2v14"/>
+        </svg>
+        Interactive Lab
+      </a>
+      <a href="#why" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <rect x="4" y="8" width="10" height="7" rx="2"/><path d="M6.5 8V6a2.5 2.5 0 015 0v2"/>
+        </svg>
+        Why a lock exists
+      </a>
+      <a href="#handoff" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M2 6h9l-2-2M16 12H7l2 2"/>
+        </svg>
+        The 5 ms handover
+      </a>
+      <a href="#atomic" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M9 2.5l6.5 12h-13z" stroke-linejoin="round"/><path d="M9 7v3.5M9 12.5h.01"/>
+        </svg>
+        Not thread-safe
+      </a>
+      <a href="#choose" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M9 15V7M9 7L5.5 10.5M9 7l3.5 3.5M9 3v1"/>
+        </svg>
+        Waiting vs thinking
+      </a>
+      <a href="#processes" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <rect x="2" y="3" width="6" height="12" rx="1.5"/><rect x="10" y="3" width="6" height="12" rx="1.5"/>
+        </svg>
+        Separate processes
+      </a>
+      <a href="#asyncio" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <circle cx="9" cy="9" r="6.5"/><path d="M9 4.5V9l3 1.8"/>
+        </svg>
+        One event loop
+      </a>
+      <a href="#future" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M4 14V9M9 14V4M14 14v-7"/><path d="M2 16h14"/>
+        </svg>
+        A future without it
+      </a>
+      <a href="#mistakes" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <circle cx="9" cy="9" r="7"/><path d="M6.5 6.5l5 5M11.5 6.5l-5 5"/>
+        </svg>
+        Common mistakes
+      </a>
+      <a href="#quiz" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <circle cx="9" cy="9" r="7"/><path d="M7 7a2 2 0 113 1.8v1.2M9 13h.01"/>
+        </svg>
+        Check yourself
+      </a>
+    </div>
+    <div class="sidebar__section">
+      <div class="sidebar__label">Course</div>
+      <a href="../06-decorators/" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M11 5l-4 4 4 4"/>
+        </svg>
+        Previous Session
+      </a>
+      <a href="../../glossary.html" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M4 3.5h8a2 2 0 012 2V15H6a2 2 0 01-2-2z"/><path d="M4 13a2 2 0 012-2h8"/>
+        </svg>
+        Glossary
+      </a>
+      <a href="../../index.html" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M3 9L9 3l6 6M5 7v8h8V7"/>
+        </svg>
+        All Sessions
+      </a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <div class="session-hero" id="intro">
+      <div class="session-hero__breadcrumb">
+        <a href="../../index.html">Home</a>
+        <span>&rsaquo;</span>
+        Session 07
+      </div>
+      <div class="session-hero__eyebrow">Runtime &middot; Session 07</div>
+      <h1 class="session-hero__title">The GIL &amp; Concurrency</h1>
+      <p class="session-hero__subtitle">
+        Python can start as many threads as you like, and will run exactly one of
+        them at a time. That single sentence explains why your threaded program
+        got slower, why your counter came out one short, and why the fix is
+        sometimes a lock, sometimes a second process, and sometimes neither.
+        Here is the lock itself, and what it is actually protecting.
+      </p>
+      <div class="session-meta">
+        <div class="session-meta__item">~50 minutes</div>
+        <div class="session-meta__item">6 interactive demos</div>
+        <div class="session-meta__item">Builds on Sessions 01, 02 and 05</div>
+      </div>
+    </div>
+
+    <div class="progress-bar"><div class="progress-bar__fill" id="readProgress" style="width:0%"></div></div>
+
+    <section class="learning-overview">
+      <div class="learning-card">
+        <div class="learning-card__label">Learning goal</div>
+        <h2 class="learning-card__title">The GIL exists because of <code>refcount</code>.</h2>
+        <p class="learning-card__body">
+          Session 01 showed that every object carries a count of how many names
+          point at it. That count is a plain number in memory. Let two threads
+          change it at the same instant and it silently goes wrong &mdash; too high
+          and the object never gets freed, too low and it gets freed while you are
+          still using it. CPython&rsquo;s answer is one lock around the whole
+          interpreter. Everything else in this session is a consequence.
+        </p>
+        <div class="concept-chip-row">
+          <span class="type-chip type-chip--instance">Thread</span>
+          <span class="type-chip type-chip--instance">Lock</span>
+          <span class="type-chip type-chip--instance">Process</span>
+          <span class="type-chip type-chip--coroutine">coroutine</span>
+          <span class="type-chip type-chip--method">event loop</span>
+        </div>
+      </div>
+      <div class="learning-card">
+        <div class="learning-card__label">Recommended path</div>
+        <div class="learning-path">
+          <div class="learning-path__step">
+            <span class="learning-path__num">1</span>
+            <span><strong>Watch one row.</strong> Demo 1 adds a grey box at the bottom of the memory panel. The <code>GIL</code> line in it names the only thread allowed to run.</span>
+          </div>
+          <div class="learning-path__step">
+            <span class="learning-path__num">2</span>
+            <span><strong>Lose a deposit.</strong> Demo 2 shows a correct-looking line of code dropping an update, with the GIL working perfectly the whole time.</span>
+          </div>
+          <div class="learning-path__step">
+            <span class="learning-path__num">3</span>
+            <span><strong>Then pick a tool.</strong> Demos 4&ndash;6 are three different escapes: release the lock, own a second one, or never contend for it at all.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="demo-handoff">
+      <section class="stage-intro" aria-labelledby="stage-title">
+        <div>
+          <div class="stage-intro__label">Interactive lab</div>
+          <h2 id="stage-title">The memory panel gained a new box</h2>
+          <p>
+            Below the call frames there is now a grey box labelled
+            <strong>CPython interpreter</strong>. It is not a call frame &mdash; it is
+            the runtime itself, and its <code>GIL</code> row names whichever thread
+            currently has permission to execute Python. Every frame above it that is
+            not that thread is alive, ready, and not running.
+          </p>
+        </div>
+        <div class="stage-intro__hint">
+          Tip: at every step, read the <code>GIL</code> row first, then find the frame
+          whose badge says <em>running</em>. They always agree.
+        </div>
+      </section>
+
+      <div class="demo-guide">
+        <div class="demo-guide__step"><span class="demo-guide__badge">1</span> Choose a demo</div>
+        <span class="demo-guide__arrow">&rsaquo;</span>
+        <div class="demo-guide__step"><span class="demo-guide__badge">2</span> Step with <kbd>&rarr;</kbd> or Play</div>
+        <span class="demo-guide__arrow">&rsaquo;</span>
+        <div class="demo-guide__step"><span class="demo-guide__badge">3</span> Watch who holds the lock</div>
+        <span class="demo-guide__arrow">&rsaquo;</span>
+        <div class="demo-guide__step"><span class="demo-guide__badge">4</span> Read the model below</div>
+      </div>
+
+      <div class="mem-legend" aria-label="How to read the memory diagram">
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--stack"></span> One frame per live thread &mdash; solid means running, dashed means waiting</div>
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--heap"></span> Thread, Lock, Process and coroutine objects</div>
+        <div class="mem-legend__item"><kbd>&rarr;</kbd> next <kbd>&larr;</kbd> back <kbd>Space</kbd> play <kbd>R</kbd> reset</div>
+      </div>
+
+      <div class="demo-selector">
+        <button class="demo-pill active" data-demo="handoff">1 &middot; One lock, two threads</button>
+        <button class="demo-pill" data-demo="race">2 &middot; The lost deposit</button>
+        <button class="demo-pill" data-demo="lock">3 &middot; Fixing it with a Lock</button>
+        <button class="demo-pill" data-demo="blocking">4 &middot; Waiting vs computing</button>
+        <button class="demo-pill" data-demo="processes">5 &middot; A second process</button>
+        <button class="demo-pill" data-demo="asyncio">6 &middot; One event loop</button>
+      </div>
+
+      <div class="demo-watch" id="demoWatch"></div>
+
+      <div class="stage" id="stage">
+        <div class="stage__code-panel">
+          <div class="panel-header panel-header--dark">
+            <span>python</span>
+            <div style="display:flex;align-items:center;gap:6px" aria-hidden="true">
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+            </div>
+          </div>
+          <div class="code-panel-body" id="codePanel"></div>
+          <div class="step-track" data-role="step-track" id="stepTrack" role="group" aria-label="Jump to a step"></div>
+          <div class="playback-controls" id="controls">
+            <div class="playback-controls__left">
+              <button class="step-btn" data-action="prev" title="Previous step" aria-label="Previous step" disabled>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M8 2L4 6l4 4"/></svg>
+              </button>
+              <button class="play-btn" data-action="play" title="Play / Pause" aria-label="Play the walkthrough">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true"><path d="M3 2.5l8 4.5-8 4.5z"/></svg>
+              </button>
+              <button class="step-btn" data-action="next" title="Next step" aria-label="Next step">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M4 2l4 4-4 4"/></svg>
+              </button>
+              <button class="btn btn--ghost btn--sm" data-action="reset" title="Reset" aria-label="Reset to the first step">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path d="M10 6A4 4 0 112 6" stroke-linecap="round"/>
+                  <path d="M2 3v3h3" fill="currentColor" stroke="none"/>
+                </svg>
+                Reset
+              </button>
+            </div>
+            <div class="playback-controls__right">
+              <div class="speed-control">
+                <label for="speedSelect">Speed:</label>
+                <select class="speed-select" id="speedSelect" data-action="speed">
+                  <option value="1700">0.5&times;</option>
+                  <option value="900" selected>1&times;</option>
+                  <option value="600">1.5&times;</option>
+                  <option value="400">2&times;</option>
+                </select>
+              </div>
+              <span class="step-counter" data-role="step-counter">1 / 1</span>
+            </div>
+          </div>
+        </div>
+        <div class="stage__memory-panel">
+          <div class="panel-header">
+            <span style="color:var(--clr-text-3)">Memory</span>
+            <div style="display:flex;align-items:center;gap:6px;font-size:var(--fs-xs);color:var(--clr-text-3)">
+              <span style="display:inline-block;width:8px;height:8px;background:var(--clr-mem-stack);border-radius:2px;opacity:.6"></span>
+              stack
+              <span style="display:inline-block;width:8px;height:8px;background:var(--clr-mem-heap);border-radius:2px;opacity:.6;margin-left:4px"></span>
+              heap
+            </div>
+          </div>
+          <div class="mem-panel-body" id="memPanel"></div>
+        </div>
+      </div>
+
+      <div class="explanation-strip" aria-live="polite">
+        <div class="explanation-strip__step-num" id="stepNum">1</div>
+        <div class="explanation-strip__content">
+          <h3 id="stepTitle" class="explanation-text">One thread, and it already holds the lock</h3>
+          <p id="stepDesc" class="explanation-text">Press Play or use Next to watch the interpreter lock change hands.</p>
+        </div>
+      </div>
+    </div>
+
+    <article class="narrative">
+      <h2 id="why">Why there is a lock at all</h2>
+      <p class="in-plain">
+        <span class="in-plain__label">In plain words</span>
+        Imagine a room full of people and one microphone. Anyone can be in the room,
+        but only the person holding the microphone may speak. It looks like a strange
+        rule until you hear the room with four people talking at once. Python&rsquo;s
+        microphone is called the <strong>Global Interpreter Lock</strong>, and the noise
+        it prevents is not people talking &mdash; it is threads editing the same numbers.
+      </p>
+      <p class="narrative-lede then-precise">
+        Precisely: every object in CPython carries a reference count, and Session 01
+        showed you it moving. Incrementing a count is not one indivisible machine
+        operation &mdash; it is read, add, write. Two threads doing that at the same
+        instant can both read <code>4</code> and both write <code>5</code>, so one
+        increment is lost. A count that ends up too high leaks the object forever.
+        A count that ends up too low frees it while your code is still holding it,
+        and the next line reads memory that no longer belongs to Python.
+      </p>
+
+      <div class="flow-grid">
+        <div class="flow-card">
+          <div class="section-label">1 &middot; The problem</div>
+          <h3>Shared bookkeeping</h3>
+          <p>
+            Refcounts, the small-integer cache, the free lists, the import machinery.
+            Every thread touches all of it, constantly, on almost every line.
+          </p>
+        </div>
+        <div class="flow-card">
+          <div class="section-label">2 &middot; The obvious fix</div>
+          <h3>A lock on every object</h3>
+          <p>
+            Correct, and expensive. You would pay for locking on every operation in
+            every program &mdash; including the single-threaded ones, which is most of them.
+          </p>
+        </div>
+        <div class="flow-card">
+          <div class="section-label">3 &middot; The choice made</div>
+          <h3>One lock, held by one thread</h3>
+          <p>
+            Nearly free when one thread runs, and it makes the whole interpreter safe
+            at a stroke. The bill arrives only when you want two threads computing.
+          </p>
+        </div>
+      </div>
+
+      <div class="callout callout--info">
+        <div class="callout__icon">Model</div>
+        <div>
+          <div class="callout__title">The GIL is a property of CPython, not of Python</div>
+          <div class="callout__body">
+            The language does not require it. Jython and IronPython never had one,
+            PyPy has one for the same reasons CPython does, and CPython itself can now
+            be built without it (see <a href="#future">A future without it</a>).
+            &ldquo;Python is single-threaded&rdquo; is wrong twice over: the threads are
+            real OS threads, and the restriction belongs to one implementation.
+          </div>
+        </div>
+      </div>
+
+      <div class="try-this">
+        <div class="try-this__label">Try this in a REPL</div>
+        <p>
+          <code>import sys</code>, then <code>a = [1, 2, 3]</code> and
+          <code>sys.getrefcount(a)</code>. Bind a second name, <code>b = a</code>, and
+          look again. That number is the thing the GIL protects &mdash; and it changes
+          on almost every line you write.
+        </p>
+      </div>
+
+      <div id="handoff">
+        <div class="section-divider"><div class="section-divider__label">The handover</div></div>
+        <h2>Five milliseconds, then pass the microphone</h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Nobody gets to hold the microphone forever. A timer runs, and when it goes
+          off the current speaker is asked to hand it over. They do not stop
+          mid-syllable &mdash; they finish the word they are on. And if they walk off
+          to fetch something, they hand it over immediately without being asked.
+        </p>
+        <p class="then-precise">
+          Precisely: the interpreter sets a flag when a thread has held the GIL for
+          <code>sys.getswitchinterval()</code> seconds &mdash; <strong>5&nbsp;ms</strong> by
+          default. The running thread only notices that flag at certain points in the
+          bytecode, chiefly a jump back to the top of a loop and a call into a
+          function. It is never checked in the middle of a short straight run of
+          bytecodes. A thread that instead calls something that waits &mdash;
+          <code>time.sleep</code>, a socket read, a disk write &mdash; releases the GIL
+          itself, before it starts waiting.
+        </p>
+
+        <div class="lookup-path" aria-label="The steps of a GIL handover">
+          <div class="lookup-path__step is-hit">
+            <span class="lookup-path__where">Tick</span>
+            <span>5&nbsp;ms have passed. Another thread is waiting, so the interpreter raises a &ldquo;please drop it&rdquo; flag.</span>
+            <span class="lookup-path__result">requested</span>
+          </div>
+          <div class="lookup-path__step is-hit">
+            <span class="lookup-path__where">Safe point</span>
+            <span>The running thread reaches a loop jump or a call and notices the flag. The current bytecode always finishes.</span>
+            <span class="lookup-path__result">noticed</span>
+          </div>
+          <div class="lookup-path__step is-hit">
+            <span class="lookup-path__where">Release</span>
+            <span>It drops the GIL and queues up again behind everybody else. Its frame, its locals and its half-finished line all stay exactly as they were.</span>
+            <span class="lookup-path__result">suspended</span>
+          </div>
+          <div class="lookup-path__step is-hit">
+            <span class="lookup-path__where">Reacquire</span>
+            <span>Some other thread takes it and runs. Eventually the first one gets it back and carries on from the same bytecode.</span>
+            <span class="lookup-path__result">resumed</span>
+          </div>
+        </div>
+
+        <div class="callout callout--warn">
+          <div class="callout__icon">Care</div>
+          <div>
+            <div class="callout__title">Nothing can force a handover that never reaches a safe point</div>
+            <div class="callout__body">
+              A C extension that goes away for two seconds without releasing the GIL
+              freezes every other Python thread for two seconds, and there is no timer
+              that can help. This is why a well-behaved extension releases the lock
+              around its own long computations &mdash; and why a badly-behaved one makes
+              a whole web server stutter.
+            </div>
+          </div>
+        </div>
+
+        <div class="try-this">
+          <div class="try-this__label">Try this in a REPL</div>
+          <p>
+            <code>sys.getswitchinterval()</code> prints <code>0.005</code>.
+            <code>sys.setswitchinterval(0.05)</code> makes threads swap ten times less
+            often, and <code>sys.setswitchinterval(0.0001)</code> ten times more. Time a
+            two-thread CPU loop at each setting. Faster swapping does not buy you
+            throughput &mdash; it buys you overhead.
+          </p>
+        </div>
+      </div>
+
+      <div id="atomic">
+        <div class="section-divider"><div class="section-divider__label">The dangerous half-truth</div></div>
+        <h2>&ldquo;The GIL makes Python thread-safe&rdquo; is false</h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          The microphone rule stops two people speaking over each other. It does not
+          stop one person reading a number off the whiteboard, being interrupted, and
+          writing their answer back after somebody else has already changed it. The
+          number they wrote is arithmetically correct and completely wrong.
+        </p>
+        <p class="then-precise">
+          Precisely: the GIL guarantees that one <em>bytecode</em> completes before
+          another begins. It makes no promise about one <em>line</em> of your source,
+          which is almost always several bytecodes. <code>acct.set(acct.get() + 1)</code>
+          compiles to a load, a call, an add and another call &mdash; and a call is
+          exactly one of the places the interpreter checks whether to switch threads.
+        </p>
+
+        <div style="overflow-x:auto">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>What the GIL promises</th>
+                <th>What it does not promise</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>One bytecode finishes before the next starts</td>
+                <td>One line of your code finishes before another thread runs</td>
+              </tr>
+              <tr>
+                <td>Reference counts stay correct</td>
+                <td><em>Your</em> counters, totals and caches stay correct</td>
+              </tr>
+              <tr>
+                <td>The interpreter never corrupts its own structures</td>
+                <td>Your dictionary is in a sensible state halfway through an update</td>
+              </tr>
+              <tr>
+                <td>You will not get a segfault from plain Python code</td>
+                <td>You will not get a wrong answer</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="rule-grid">
+          <div class="rule-card rule-card--rebind">
+            <div class="rule-card__label">Why it is easy to miss</div>
+            <h3>It usually works</h3>
+            <p>
+              Run <code>count += 1</code> in a tight loop across four threads on
+              CPython 3.13 and you will very likely get the right total &mdash; six runs
+              out of six while writing this session. The whole read-add-write sits
+              between two safe points, so nothing gets in.
+            </p>
+          </div>
+          <div class="rule-card rule-card--mutate">
+            <div class="rule-card__label">Why that is worse</div>
+            <h3>Until it does not</h3>
+            <p>
+              Move the same logic into a getter and a setter and the calls open a gap.
+              The same script, on the same machine, lost <strong>139,004</strong> of a
+              million increments on one run &mdash; and lost none on the next.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout callout--insight">
+          <div class="callout__icon">Key</div>
+          <div>
+            <div class="callout__title">A bug that appears one run in three is worse than one that appears every time</div>
+            <div class="callout__body">
+              It passes your tests. It passes code review. It shows up as a support
+              ticket six weeks later, on a busier machine, and it will not reproduce
+              on yours. Do not reason about whether a switch <em>will</em> land in your
+              gap. Remove the gap.
+            </div>
+          </div>
+        </div>
+
+        <h3>Removing the gap</h3>
+        <p>
+          A <code>threading.Lock</code> is a plain object with two states. One thread
+          at a time may hold it; anybody else asking is parked until it is released.
+          Always take it with <code>with</code>, so it is released even when the body
+          raises.
+        </p>
+
+        <div class="code-block">
+          <div class="code-block__header">
+            <div class="code-block__dots">
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+            </div>
+            <span class="code-block__lang">python</span>
+          </div>
+          <div class="code-block__body"><span class="tok-cmt"># the gap is open: another thread can run between get() and set()</span>
+acct.set(acct.get() + <span class="tok-num">1</span>)
+
+<span class="tok-cmt"># the gap is closed: nobody else can be inside these lines</span>
+<span class="tok-kw">with</span> lock:
+    acct.set(acct.get() + <span class="tok-num">1</span>)</div>
+        </div>
+
+        <div class="reference-map" aria-label="Two queues, one for the GIL and one for the Lock">
+          <div class="reference-map__row">
+            <div class="reference-map__name">Thread-1</div>
+            <div class="reference-map__arrow">-&gt;</div>
+            <div class="reference-map__object">
+              holds the GIL and holds the Lock
+              <span class="reference-map__slot">running, and safe from interference</span>
+            </div>
+          </div>
+          <div class="reference-map__row">
+            <div class="reference-map__name">Thread-2</div>
+            <div class="reference-map__arrow">-&gt;</div>
+            <div class="reference-map__object">
+              waiting on the Lock @ 0x7fa300c0
+              <span class="reference-map__slot">not in the GIL queue at all &mdash; a different wait</span>
+            </div>
+          </div>
+          <div class="reference-map__row">
+            <div class="reference-map__name">Thread-3</div>
+            <div class="reference-map__arrow">-&gt;</div>
+            <div class="reference-map__object">
+              waiting for the GIL
+              <span class="reference-map__slot">ready to run, just not chosen yet</span>
+            </div>
+          </div>
+        </div>
+
+        <p>
+          Those are two genuinely different queues, and Demo&nbsp;3 shows both at once.
+          Getting them confused is how people conclude that &ldquo;locks do nothing in
+          Python because there is already a lock&rdquo;.
+        </p>
+
+        <div class="callout callout--success">
+          <div class="callout__icon">Better</div>
+          <div>
+            <div class="callout__title">Usually you should not be writing locks at all</div>
+            <div class="callout__body">
+              <code>queue.Queue</code> is already correct: producers <code>put</code>,
+              consumers <code>get</code>, and no shared variable exists for anyone to
+              race on. <code>concurrent.futures</code> hands results back as return
+              values. Shared mutable state plus hand-written locking is the option of
+              last resort, not the default.
+            </div>
+          </div>
+        </div>
+
+        <div class="try-this">
+          <div class="try-this__label">Try this in a REPL</div>
+          <p>
+            Write the <code>Account</code> class from Demo&nbsp;2, run it across four
+            threads doing 100,000 deposits each, and print the total. Run it ten times.
+            Then wrap the line in <code>with lock:</code> and run it ten more. The first
+            set of numbers is the lesson.
+          </p>
+        </div>
+      </div>
+
+      <div id="choose">
+        <div class="section-divider"><div class="section-divider__label">Choosing a tool</div></div>
+        <h2>Is your code waiting, or is it thinking?</h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          If your program is slow because it keeps waiting for other people &mdash; a
+          website, a database, a disk &mdash; then doing the waiting all at once helps
+          enormously, and threads do exactly that. If it is slow because it is genuinely
+          thinking hard, threads cannot help, because thinking needs the microphone.
+        </p>
+        <p class="then-precise">
+          Precisely: a thread that blocks on I/O has released the GIL, so every other
+          thread is free to run. Four one-second sleeps across four threads finished in
+          <strong>0.50&nbsp;s</strong> instead of <strong>2.01&nbsp;s</strong>. A thread
+          that computes never releases it voluntarily, so two of them simply take turns
+          and pay the swapping cost on top: the same work took <strong>1.81&nbsp;s</strong>
+          serially and <strong>2.49&nbsp;s</strong> across two threads.
+        </p>
+
+        <div style="overflow-x:auto">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Your bottleneck</th>
+                <th>Reach for</th>
+                <th>Why it works</th>
+                <th>What it costs</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Waiting on network, disk, database, a subprocess</td>
+                <td><code>threading</code>, or <code>ThreadPoolExecutor</code></td>
+                <td>Every blocking call releases the GIL, so the waits overlap</td>
+                <td>Shared objects mean you now own the race conditions</td>
+              </tr>
+              <tr>
+                <td>Thousands of simultaneous network waits</td>
+                <td><code>asyncio</code></td>
+                <td>One thread, one loop, no OS thread per connection</td>
+                <td>Async all the way down &mdash; one blocking call stalls everything</td>
+              </tr>
+              <tr>
+                <td>Heavy computation in pure Python</td>
+                <td><code>multiprocessing</code>, or <code>ProcessPoolExecutor</code></td>
+                <td>A second interpreter has a second GIL, so a second core is usable</td>
+                <td>Startup time, and every argument and result is copied</td>
+              </tr>
+              <tr>
+                <td>Heavy computation inside NumPy, hashing, compression</td>
+                <td><code>threading</code> is fine here</td>
+                <td>Those libraries release the GIL while they work in C</td>
+                <td>Only applies while you are inside the library, not around it</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout--info">
+          <div class="callout__icon">Tip</div>
+          <div>
+            <div class="callout__title">You can test the answer by changing one word</div>
+            <div class="callout__body">
+              <code>concurrent.futures</code> gives you <code>ThreadPoolExecutor</code>
+              and <code>ProcessPoolExecutor</code> with an identical API. Write the code
+              against one, swap the class name, and time both. That measurement beats
+              any argument about what your bottleneck &ldquo;should&rdquo; be.
+            </div>
+          </div>
+        </div>
+
+        <div class="key-idea">
+          <div class="key-idea__icon">&darr;</div>
+          <p>
+            <strong>Waiting</strong> overlaps: threads and <code>asyncio</code> both turn
+            <em>n</em> waits into roughly one wait.
+          </p>
+        </div>
+        <div class="key-idea">
+          <div class="key-idea__icon">&rarr;</div>
+          <p>
+            <strong>Thinking</strong> does not overlap inside one interpreter: threads
+            interleave it and add overhead. Only a second process adds a second core.
+          </p>
+        </div>
+        <div class="key-idea">
+          <div class="key-idea__icon">&times;</div>
+          <p>
+            <strong>Neither</strong> fixes an algorithm. Four processes on an
+            <em>O(n&sup2;)</em> loop is still an <em>O(n&sup2;)</em> loop.
+          </p>
+        </div>
+      </div>
+
+      <div id="processes">
+        <div class="section-divider"><div class="section-divider__label">Separate rooms</div></div>
+        <h2>A second process brings its own lock &mdash; and its own memory</h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          If the trouble is that everyone is sharing one microphone, build a second
+          room with its own. The catch is immediate and total: nothing said in one room
+          is heard in the other. Anything you want the other room to know has to be
+          written down, carried across, and read out again.
+        </p>
+        <p class="then-precise">
+          Precisely: <code>multiprocessing.Process</code> starts a second operating-system
+          process running a second CPython interpreter, with its own heap and its own
+          GIL. The two really do execute Python at the same instant &mdash; the benchmark
+          that took <strong>1.81&nbsp;s</strong> serially and <strong>2.49&nbsp;s</strong>
+          across two threads took <strong>1.08&nbsp;s</strong> across two processes.
+          Arguments and results are <strong>pickled</strong> to bytes and rebuilt on the
+          other side, so the child gets equal values at different addresses, never the
+          same objects.
+        </p>
+
+        <div class="diagram-grid">
+          <div class="diagram-card">
+            <h3>A thread shares your objects</h3>
+            <p>
+              Same heap, same addresses, same <code>id()</code>. Mutate a list in one
+              thread and every other thread sees it &mdash; which is convenient, and is
+              also the entire source of the bugs in the section above.
+            </p>
+          </div>
+          <div class="diagram-card">
+            <h3>A process shares your values</h3>
+            <p>
+              Different heap, different addresses. Mutate the copy in the child and the
+              parent never finds out. No locking needed, because there is nothing shared
+              left to lock.
+            </p>
+          </div>
+        </div>
+
+        <h3>The guard is not optional</h3>
+        <p>
+          To reach your <code>child</code> function, the new process has to import your
+          module &mdash; which re-runs every line at the top level of it. Without the
+          guard, that includes the line that starts a process, so the child starts a
+          grandchild, and so on until something gives out.
+        </p>
+
+        <div class="code-block">
+          <div class="code-block__header">
+            <div class="code-block__dots">
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+            </div>
+            <span class="code-block__lang">python</span>
+          </div>
+          <div class="code-block__body"><span class="tok-kw">import</span> multiprocessing <span class="tok-kw">as</span> mp
+
+<span class="tok-kw">def</span> work(n):
+    <span class="tok-kw">return</span> n * n
+
+<span class="tok-kw">if</span> __name__ == <span class="tok-str">"__main__"</span>:          <span class="tok-cmt"># required, not a style choice</span>
+    <span class="tok-fn">print</span>(mp.get_start_method())     <span class="tok-cmt"># 'spawn' on Windows and macOS</span>
+    <span class="tok-kw">with</span> mp.Pool(<span class="tok-num">4</span>) <span class="tok-kw">as</span> pool:
+        <span class="tok-fn">print</span>(pool.<span class="tok-fn">map</span>(work, <span class="tok-fn">range</span>(<span class="tok-num">10</span>)))</div>
+        </div>
+
+        <div class="callout callout--warn">
+          <div class="callout__icon">Care</div>
+          <div>
+            <div class="callout__title">Run this from a file, never from the REPL</div>
+            <div class="callout__body">
+              Where the start method is <code>spawn</code>, the child imports
+              <code>__main__</code> &mdash; and an interactive session is not importable.
+              Every <code>multiprocessing</code> example in this session belongs in a
+              <code>.py</code> file. Check what your platform does with
+              <code>mp.get_start_method()</code> before you assume.
+            </div>
+          </div>
+        </div>
+
+        <h3>Getting something back</h3>
+        <p>
+          Since mutation does not travel, the child has to hand results over explicitly.
+          In rough order of how often you should reach for them:
+        </p>
+
+        <div class="lookup-path" aria-label="Ways to get data back from a child process">
+          <div class="lookup-path__step is-hit">
+            <span class="lookup-path__where">Best</span>
+            <span>Return a value from the function and let <code>Pool.map</code> or <code>ProcessPoolExecutor</code> collect it.</span>
+            <span class="lookup-path__result">return</span>
+          </div>
+          <div class="lookup-path__step is-hit">
+            <span class="lookup-path__where">Streaming</span>
+            <span>A <code>multiprocessing.Queue</code> or <code>Pipe</code>, for results that arrive as they are produced.</span>
+            <span class="lookup-path__result">Queue</span>
+          </div>
+          <div class="lookup-path__step is-miss">
+            <span class="lookup-path__where">Large data</span>
+            <span><code>shared_memory</code> or a <code>Manager</code>, when copying is what is actually costing you.</span>
+            <span class="lookup-path__result">shared</span>
+          </div>
+          <div class="lookup-path__step is-miss">
+            <span class="lookup-path__where">Never</span>
+            <span>Mutating a global and hoping. It works in your fork-based test on Linux and silently stops working elsewhere.</span>
+            <span class="lookup-path__result">no</span>
+          </div>
+        </div>
+
+        <div class="callout callout--info">
+          <div class="callout__icon">Cost</div>
+          <div>
+            <div class="callout__title">Everything you send has to be picklable, and pays for the trip</div>
+            <div class="callout__body">
+              Lambdas, nested functions, open file handles, database connections and
+              locks cannot be pickled, and you find out when you submit the job. Even
+              when it works, a process pool over a large array can spend more time
+              copying than computing &mdash; which is why the benchmark above used a task
+              big enough to be worth the postage.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="asyncio">
+        <div class="section-divider"><div class="section-divider__label">The third option</div></div>
+        <h2>One thread, one to-do list, no lock to fight over</h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Think of one person cooking dinner. They put the kettle on and, instead of
+          standing there, go and chop onions. They are not two people and they never do
+          two things at once &mdash; they simply never stand still while something else
+          is boiling. <code>asyncio</code> is that, and the <code>await</code> keyword is
+          where they put a job down.
+        </p>
+        <p class="then-precise">
+          Precisely: an <code>async def</code> function returns a <strong>coroutine
+          object</strong> when called and runs none of its body &mdash; exactly like a
+          generator in Session 05. The <strong>event loop</strong> drives those objects,
+          running one until it hits an <code>await</code> that cannot complete
+          immediately. At that point the coroutine suspends, keeping its frame, and the
+          loop picks up the next ready one. Two one-second waits took
+          <strong>0.50&nbsp;s</strong> under <code>gather</code>, against
+          <strong>1.01&nbsp;s</strong> awaited one after the other &mdash; on a single
+          thread, with <code>threading.enumerate()</code> reporting only
+          <code>MainThread</code>.
+        </p>
+
+        <div class="diagram-grid">
+          <div class="diagram-card">
+            <h3>Threads are pre-emptive</h3>
+            <p>
+              Your code can be interrupted anywhere the interpreter allows it, and you
+              cannot see where by reading the source. That is why you need locks, and
+              why Demo&nbsp;2 lost a deposit.
+            </p>
+          </div>
+          <div class="diagram-card">
+            <h3>Coroutines are cooperative</h3>
+            <p>
+              A coroutine is only ever suspended at an <code>await</code> &mdash; a word
+              you typed. Between two <code>await</code>s nothing else can run, so plain
+              read-modify-write of a local structure is safe without a lock.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout callout--insight">
+          <div class="callout__icon">Key</div>
+          <div>
+            <div class="callout__title">Session 05, with a scheduler attached</div>
+            <div class="callout__body">
+              A generator suspends at <code>yield</code> and someone calls
+              <code>next()</code> to resume it. A coroutine suspends at
+              <code>await</code> and the event loop resumes it. Same paused frame, same
+              kept locals &mdash; the only new idea is <em>who</em> decides when to
+              continue, and what they were waiting for.
+            </div>
+          </div>
+        </div>
+
+        <h3>The one mistake that undoes all of it</h3>
+        <p>
+          There is exactly one thread. A synchronous call that blocks it blocks the loop,
+          and every other coroutine stops &mdash; including the ones that were just about
+          to finish. This is not a subtle performance issue; it turns a concurrent
+          program back into a sequential one.
+        </p>
+
+        <div style="overflow-x:auto">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Blocks the whole loop</th>
+                <th>Use instead</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>time.sleep(1)</code></td>
+                <td><code>await asyncio.sleep(1)</code></td>
+              </tr>
+              <tr>
+                <td><code>requests.get(url)</code></td>
+                <td>An async client, awaited</td>
+              </tr>
+              <tr>
+                <td><code>open(path).read()</code> on a slow disk</td>
+                <td><code>await asyncio.to_thread(read_it, path)</code></td>
+              </tr>
+              <tr>
+                <td>A long pure-Python computation</td>
+                <td>A process pool, awaited through <code>run_in_executor</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout--warn">
+          <div class="callout__icon">Watch</div>
+          <div>
+            <div class="callout__title">A forgotten <code>await</code> fails quietly</div>
+            <div class="callout__body">
+              Calling <code>fetch(url)</code> without awaiting it builds a coroutine
+              object and throws it away. Nothing runs, no exception is raised, and you
+              get <code>RuntimeWarning: coroutine 'fetch' was never awaited</code> on
+              stderr &mdash; which is easy to miss in a busy log. If an async function
+              seems to do nothing at all, look for the missing keyword first.
+            </div>
+          </div>
+        </div>
+
+        <div class="recap-box">
+          <div class="recap-box__label">What you should be able to draw</div>
+          <p>
+            One thread. One event loop object holding a list of ready tasks and a list of
+            timers. Several coroutine objects on the heap, each with a paused frame and a
+            line number it stopped at. No second stack, no GIL contention, and not one
+            lock &mdash; because nothing ever ran at the same time as anything else.
+          </p>
+        </div>
+      </div>
+
+      <div id="future">
+        <div class="section-divider"><div class="section-divider__label">What happens next</div></div>
+        <h2>A future without it &mdash; and why your bugs survive</h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          The microphone rule is finally being lifted. There is now a build of CPython
+          with no GIL at all, where threads really can compute at the same time. It is a
+          genuinely big change &mdash; and it makes the mistakes in this session
+          <em>more</em> likely to bite, not less.
+        </p>
+        <p class="then-precise">
+          Precisely: <a href="https://peps.python.org/pep-0703/" target="_blank" rel="noopener">PEP&nbsp;703</a>
+          added an optional free-threaded build. Python&nbsp;3.13 shipped it as
+          experimental and Python&nbsp;3.14 made it officially supported, alongside the
+          ordinary build, which still has the GIL and remains the default. On 3.13 or
+          newer, ask the interpreter which one you are in with
+          <code>sys._is_gil_enabled()</code>.
+        </p>
+
+        <div class="rule-grid">
+          <div class="rule-card rule-card--mutate">
+            <div class="rule-card__label">What changes</div>
+            <h3>CPU-bound threads finally scale</h3>
+            <p>
+              Four threads on four cores computing at once, sharing objects directly,
+              with none of the pickling that <code>multiprocessing</code> charges you.
+              That is the whole point of the work.
+            </p>
+          </div>
+          <div class="rule-card rule-card--rebind">
+            <div class="rule-card__label">What does not</div>
+            <h3>Every race in this session</h3>
+            <p>
+              The lost deposit in Demo&nbsp;2 is not caused by the GIL &mdash; it happens
+              <em>despite</em> it. Remove the lock and the two threads no longer take
+              turns at all, so the gap you were relying on getting away with is wide open.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout callout--success">
+          <div class="callout__icon">Good</div>
+          <div>
+            <div class="callout__title">Code that was already correct stays correct</div>
+            <div class="callout__body">
+              If your shared state is behind a <code>Lock</code>, or lives in a
+              <code>queue.Queue</code>, or simply does not exist because every task returns
+              a value, then free-threaded Python is pure upside. The work you did to make
+              threads safe is exactly the work that makes them fast later.
+            </div>
+          </div>
+        </div>
+
+        <div class="try-this">
+          <div class="try-this__label">Try this in a REPL</div>
+          <p>
+            <code>import sys; sys._is_gil_enabled()</code> &mdash; it exists from
+            Python&nbsp;3.13 onwards, and raises <code>AttributeError</code> before that.
+            On a normal build it prints <code>True</code>. Free-threaded builds are installed separately &mdash; on
+            most platforms the executable has a <code>t</code> suffix, such as
+            <code>python3.14t</code> &mdash; and print <code>False</code>. The same
+            script, two answers, and only one of them runs your threads in parallel.
+          </p>
+        </div>
+      </div>
+
+      <div id="mistakes">
+        <div class="section-divider"><div class="section-divider__label">Common mistakes</div></div>
+        <h2>Six ways this goes wrong</h2>
+
+        <div class="mistake-list">
+          <div class="mistake-item">
+            <h3>Adding threads to speed up a computation</h3>
+            <p>
+              The classic. The work is pure Python, so every thread needs the GIL for
+              every bytecode, so they take turns and pay for the swapping on top. Measure
+              before and after &mdash; you will usually find it got slower. Use processes,
+              or a library that releases the GIL, or a better algorithm.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Trusting the GIL to protect your data</h3>
+            <p>
+              &ldquo;Only one thread runs at a time, so I do not need a lock.&rdquo; Only
+              one thread runs <em>one bytecode</em> at a time. Anything you write as one
+              line and think of as one action &mdash; read-add-write, check-then-act,
+              append-if-missing &mdash; is several, and a switch can land in the middle.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Blocking the event loop</h3>
+            <p>
+              One <code>time.sleep</code>, one synchronous HTTP call or one long
+              computation inside a coroutine stops every other coroutine dead. The
+              symptom is an async program that is exactly as fast as the sequential one
+              it replaced. Push the blocking part out with
+              <code>asyncio.to_thread</code> or an executor.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Omitting <code>if __name__ == "__main__":</code></h3>
+            <p>
+              Wherever the start method is <code>spawn</code>, the child re-imports your
+              module, re-runs the line that started it, and spawns another child. The
+              error is usually a wall of <code>RuntimeError</code> about the bootstrapping
+              phase. The guard is part of the API, not a convention.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Never joining, or never awaiting</h3>
+            <p>
+              A thread you do not <code>join()</code> may not have finished when you read
+              its results. A coroutine you do not <code>await</code> never runs at all and
+              only whispers a <code>RuntimeWarning</code>. In both cases the program
+              produces an answer, which is why the bug survives so long.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Taking two locks in two different orders</h3>
+            <p>
+              One thread holds A and wants B; another holds B and wants A; neither will
+              ever move again, and your program simply stops with no error at all. Fix it
+              by always taking locks in one fixed order, by holding one lock at a time, or
+              by not sharing the state in the first place.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout callout--success">
+          <div class="callout__icon">Check</div>
+          <div>
+            <div class="callout__title">Two questions catch nearly all of it</div>
+            <div class="callout__body">
+              <strong>Is this code waiting or thinking?</strong> &mdash; that picks
+              threads, processes or <code>asyncio</code>.
+              <strong>Between which two lines could another thread run?</strong> &mdash;
+              that finds the race. If the answer to the second is &ldquo;anywhere&rdquo;,
+              you need a lock, a queue, or no sharing at all.
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <section class="quiz" id="quiz" data-session="07-gil">
+      <div class="section-divider"><div class="section-divider__label">Check your understanding</div></div>
+      <h2>Can you predict the memory?</h2>
+      <p class="quiz__lede">Every question comes back to the same two: who holds the lock, and where could a switch land?</p>
+
+      <div class="quiz-card" data-answer="2">
+        <div class="quiz-card__q">1. Why does CPython have a Global Interpreter Lock at all?</div>
+        <button class="quiz-option" data-choice="0">Because Python threads are not real operating-system threads</button>
+        <button class="quiz-option" data-choice="1">Because the language specification requires programs to be deterministic</button>
+        <button class="quiz-option" data-choice="2">Because interpreter bookkeeping such as reference counts would be corrupted by unsynchronised threads</button>
+        <div class="quiz-explain">
+          The threads are genuine OS threads, and the language says nothing about this. The GIL is CPython's
+          way of keeping its own shared structures &mdash; refcounts first among them &mdash; correct without
+          putting a lock on every object.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="1">
+        <div class="quiz-card__q">2. Four threads each run a tight loop of pure-Python arithmetic on a four-core machine. What happens?</div>
+        <button class="quiz-option" data-choice="0">Roughly four times faster &mdash; one thread per core</button>
+        <button class="quiz-option" data-choice="1">No faster, and usually slower, because only one thread can execute bytecode at a time</button>
+        <button class="quiz-option" data-choice="2">Exactly the same speed, since the interpreter runs them in turn at no cost</button>
+        <div class="quiz-explain">
+          They interleave rather than overlap, and every handover costs something. Measured while writing this
+          session: 1.81&nbsp;s serially became 2.49&nbsp;s across two threads. Processes are the fix.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="0">
+        <div class="quiz-card__q">3. Two threads run <code>acct.set(acct.get() + 1)</code> once each, starting from <code>0</code>. What can the balance be?</div>
+        <button class="quiz-option" data-choice="0">Either <code>1</code> or <code>2</code>, depending on where the thread switch lands</button>
+        <button class="quiz-option" data-choice="1">Always <code>2</code> &mdash; the GIL makes the line atomic</button>
+        <button class="quiz-option" data-choice="2">Always <code>1</code> &mdash; the second write always overwrites the first</button>
+        <div class="quiz-explain">
+          The GIL keeps one bytecode indivisible, not one line. A switch at the call boundary lets both threads
+          read <code>0</code>, and the second write lands on top of the first. Sometimes it does, sometimes it
+          does not &mdash; which is exactly what makes it dangerous.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="2">
+        <div class="quiz-card__q">4. Four threads each call <code>time.sleep(1)</code>. Roughly how long does the whole thing take?</div>
+        <button class="quiz-option" data-choice="0">About four seconds &mdash; the GIL serialises them</button>
+        <button class="quiz-option" data-choice="1">About two seconds &mdash; they overlap in pairs</button>
+        <button class="quiz-option" data-choice="2">About one second &mdash; <code>sleep</code> releases the GIL, so the four waits overlap</button>
+        <div class="quiz-explain">
+          Blocking calls hand the GIL back before they wait. All four threads sit outside the interpreter at the
+          same time and nobody holds the lock at all. Measured: 2.01&nbsp;s serially, 0.50&nbsp;s across four threads.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="1">
+        <div class="quiz-card__q">5. A child process appends to a list it was given as an argument. What does the parent see afterwards?</div>
+        <button class="quiz-option" data-choice="0">The appended item, because lists are mutable and mutation is shared</button>
+        <button class="quiz-option" data-choice="1">The original list, unchanged &mdash; the child mutated a pickled copy in its own memory</button>
+        <button class="quiz-option" data-choice="2">An error, because mutable objects cannot be passed to a process</button>
+        <div class="quiz-explain">
+          Processes do not share a heap. The argument was pickled and rebuilt at a different address in a
+          different address space. To get data back, return it, or send it through a <code>Queue</code> or <code>Pipe</code>.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="0">
+        <div class="quiz-card__q">6. Inside a coroutine you call <code>time.sleep(2)</code> instead of <code>await asyncio.sleep(2)</code>. What happens?</div>
+        <button class="quiz-option" data-choice="0">The whole event loop stops for two seconds &mdash; every other coroutine is frozen</button>
+        <button class="quiz-option" data-choice="1">Only this coroutine pauses; the loop carries on with the others</button>
+        <button class="quiz-option" data-choice="2"><code>asyncio</code> detects it and moves the call to a worker thread</button>
+        <div class="quiz-explain">
+          There is one thread and the loop is running on it. A synchronous block holds that thread, so nothing
+          else can be resumed. <code>await</code> is what hands control back; a blocking call never does.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="2">
+        <div class="quiz-card__q">7. On a free-threaded build (Python&nbsp;3.13+, where <code>sys._is_gil_enabled()</code> returns <code>False</code>), what happens to the lost-deposit bug from Demo&nbsp;2?</div>
+        <button class="quiz-option" data-choice="0">It disappears &mdash; without a GIL there are no thread switches to interrupt the line</button>
+        <button class="quiz-option" data-choice="1">It is unchanged, because it was caused by the GIL in the first place</button>
+        <button class="quiz-option" data-choice="2">It gets easier to hit &mdash; the threads now genuinely run at once, so the gap is wide open</button>
+        <div class="quiz-explain">
+          The race was never caused by the GIL; it survived despite it. Removing the lock removes the accidental
+          protection of &ldquo;only one thread at a time&rdquo;, so code that happened to get away with it stops
+          getting away with it. Your own <code>Lock</code> still works, and is still the answer.
+        </div>
+      </div>
+    </section>
+
+    <div class="session-footer">
+      <a href="../06-decorators/" class="btn btn--secondary">&larr; Session 06: Decorators</a>
+      <div style="text-align:center;font-size:var(--fs-xs);color:var(--clr-text-3)" data-role="session-count">Session 07 of 07</div>
+      <a href="../../index.html" class="btn btn--primary">Back to course</a>
+    </div>
+  </main>
+</div>
+
+<script src="../../assets/js/core.js"></script>
+<script src="../../assets/js/syntax.js"></script>
+<script src="../../assets/js/memory-viz.js"></script>
+<script src="../../assets/js/animator.js"></script>
+<script src="session.js"></script>
+</body>
+</html>

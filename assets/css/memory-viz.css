@@ -49,6 +49,57 @@
   box-shadow: 0 0 0 3px rgba(26,107,92,0.08);
 }
 
+/* Concurrency frames. A thread can hold a live frame without being the thread
+   that is currently executing, so the frame says which it is rather than
+   relying on its position in the stack. */
+.mem-frame--running .mem-frame__scope-badge {
+  background: var(--clr-accent-lt);
+  color: var(--clr-accent);
+}
+
+.mem-frame--waiting,
+.mem-frame--blocked {
+  opacity: 0.72;
+  border-style: dashed;
+}
+
+.mem-frame--waiting .mem-frame__header,
+.mem-frame--blocked .mem-frame__header {
+  color: var(--clr-text-3);
+}
+
+.mem-frame--waiting .mem-frame__scope-badge {
+  background: var(--clr-surface-2);
+  color: var(--clr-text-3);
+  border: 1px solid var(--clr-border);
+}
+
+.mem-frame--blocked .mem-frame__scope-badge {
+  background: var(--clr-accent-2lt);
+  color: var(--clr-accent-2);
+}
+
+/* The interpreter itself — not a call frame, so it does not look like one. */
+.mem-frame--runtime {
+  background: var(--clr-surface-2);
+  border-style: solid;
+  border-color: var(--clr-border);
+}
+
+.mem-frame--runtime .mem-frame__header {
+  background: var(--clr-surface);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+.mem-frame--runtime .mem-frame__scope-badge {
+  background: #F0EBFC;
+  color: var(--clr-type-float);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 .mem-frame__header {
   background: var(--clr-surface-2);
   padding: var(--sp-2) var(--sp-3);

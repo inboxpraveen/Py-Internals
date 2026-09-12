@@ -235,6 +235,7 @@
 .type-chip--method   { background: #F5F3FF; color: var(--clr-type-method); border: 1px solid #DDD6FE; }
 .type-chip--generator{ background: #F0FDFA; color: var(--clr-type-generator); border: 1px solid #99F6E4; }
 .type-chip--iterator { background: #ECFEFF; color: var(--clr-type-iterator); border: 1px solid #A5F3FC; }
+.type-chip--coroutine{ background: #E0F7FA; color: var(--clr-type-coroutine); border: 1px solid #9BE2EE; }
 
 /* ── Callout Boxes ────────────────────────────────────────── */
 .callout {

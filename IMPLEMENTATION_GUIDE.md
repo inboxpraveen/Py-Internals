@@ -54,6 +54,7 @@ Py-Internals/
     ├── 04-classes/             ← Instances, self, __dict__, methods
     ├── 05-iterators/           ← iter/next, yield, lazy evaluation
     ├── 06-decorators/          ← f = deco(f), wrappers, closure cells, wraps
+    ├── 07-gil/                 ← the GIL, races, locks, processes, asyncio
     └── ...
 
 `glossary.html` at the repo root is the searchable term list. Link it from every session topbar.
@@ -163,6 +164,72 @@ It did introduce a few session-local patterns that future container-heavy sessio
 
 These are now in `session.css` and available to every session.
 
+### Shared additions from Session 07
+
+Session 07 needed to draw something no previous session had: several live call
+frames belonging to *different threads*, only one of which is executing. The
+old rule — "the deepest frame is the active one" — cannot express that, so
+three small, backward-compatible additions were made.
+
+**`frame.state`** — a frame may declare its own status instead of inferring it
+from position. Recognised values render as `.mem-frame--<state>` in
+`memory-viz.css`:
+
+| `state` | Renders as | Use it for |
+|---------|-----------|------------|
+| `running` | solid border, teal ring, teal badge | the thread that currently holds the GIL |
+| `waiting` | dashed border, dimmed, grey badge | a live frame that is ready but not chosen |
+| `blocked` | dashed border, dimmed, amber badge | parked on a lock, a join, or I/O |
+| `runtime` | grey panel, uppercase header | the interpreter itself, not a call frame |
+
+**`frame.badge`** — replaces the word `scope` in the frame header. Keep it
+short (under about 16 characters): `running`, `waiting for GIL`,
+`blocked on lock`, `PID 4120`.
+
+**The active-frame rule.** If *any* frame in a snapshot carries a `state`, the
+`.mem-frame--active` highlight follows `state === 'running'` instead of the
+deepest frame. Sessions 01–06 set no `state`, so their rendering is unchanged.
+
+```js
+frames: [
+  { name: 'CPython interpreter', badge: 'runtime', state: 'runtime', vars: [
+    { name: 'GIL', value: 'held by Thread-1', inline: true, state: 'rebound' },
+  ]},
+  { name: 'global',        badge: 'blocked on join', state: 'blocked', vars: [...] },
+  { name: 'work(name="A")', badge: 'running',        state: 'running', vars: [...] },
+  { name: 'work(name="B")', badge: 'waiting for GIL', state: 'waiting', vars: [] },
+]
+```
+
+Frame order stays **stable across steps** — only the `state` and `badge` change.
+Reordering frames to put the running one last would work, but the reader then
+has to re-find each thread on every step, which defeats the point.
+
+**A `coroutine` type** was added the same way `generator` was in Session 05:
+a token in `base.css`, a chip in `components.css`, an entry in
+`PJ.Core.getTypeColor`, and entries in `_renderValueHTML`, `pairTypes` and
+`_defaultDictLabel` in `memory-viz.js`. Adding a type means all five places;
+miss `pairTypes` and the object's `pairs` silently render nothing.
+
+`Thread`, `Lock`, `Process` and `Task` deliberately did **not** get their own
+types. They are genuine instances, so they use Session 04's vocabulary —
+`type: 'instance'` with a `classRef` — which needs no new infrastructure and
+reinforces a model the reader already has.
+
+### Two things a concurrency session cannot draw honestly
+
+The visualizer has one stack and one heap, so:
+
+- **Two processes** share the one heap panel. Say so in the demo's `watch`
+  string, give the child's objects addresses from a visibly different family
+  (`0x7fb5…` against the parent's `0x7fa5…`), and label every object with a
+  `note` naming the process it lives in.
+- **A value on the evaluation stack** — the half of a read-modify-write that a
+  race depends on — is not a named local. Session 07 shows it as an inline var
+  called `value read` and says in the step text that it is the value sitting on
+  that thread's own stack. Label invented rows; never let one look like a
+  real name.
+
 ---
 
 ## 3. The JavaScript Modules
@@ -237,18 +304,22 @@ The `containerId` element must contain buttons with these `data-action` attribut
 ### Step 1: Create the folder
 
 ```bash
-mkdir sessions/02-functions
-touch sessions/02-functions/index.html
-touch sessions/02-functions/session.js
+mkdir sessions/08-your-topic
+touch sessions/08-your-topic/index.html
+touch sessions/08-your-topic/session.js
 ```
 
 ### Step 2: Copy the HTML shell
 
-Copy `sessions/06-decorators/` — it is the current reference shell (no inline
-styles, no inline `onclick`, `PJ.Session.mount`, skip link, labelled controls).
-Session 04 is the richest object-model example (`classRef`, `bases`,
-inheritance); Session 02 is the one to read for call stacks; Session 03 for
-containers and references. Replace:
+Copy `sessions/06-decorators/` — it is the leanest complete shell (no inline
+styles, no inline `onclick`, `PJ.Session.mount`, skip link, labelled controls),
+so you start with structure and not with someone else's scaffolding to delete.
+
+Then read the session closest to your topic before you write a demo:
+Session 07 for the widest range of narrative components and for anything with
+more than one thread of control (`frame.state`, `frame.badge`); Session 04 for
+the object model (`classRef`, `bases`, inheritance); Session 02 for call stacks;
+Session 03 for containers and references. In your copy, replace:
 - `<title>` — update session name
 - `<meta name="description">` — describe the session
 - `.session-hero__eyebrow` — e.g., "Foundations · Session 02"
@@ -306,7 +377,7 @@ In `assets/js/core.js`, add an entry (or flip `status` from `planned` to
 `live`):
 
 ```js
-{ id: '06-decorators', num: '06', title: 'Decorators', short: 'f = deco(f), wrappers, wraps', status: 'live' },
+{ id: '07-gil', num: '07', title: 'The GIL & Concurrency', short: 'Threads, processes, asyncio', status: 'live' },
 ```
 
 This is not optional. `PJ.COURSE` drives the "Session N of M" counter, the
@@ -438,6 +509,14 @@ Use `frames` when the demo needs a call stack. This is the recommended format fo
 ```
 
 Frame ordering rule: write frames from caller to callee (`global`, then the active function, then deeper calls). The visualizer reverses that order visually so the active frame appears at the top of the call stack.
+
+A frame also accepts two optional fields, added for Session 07 and described
+under *Shared additions from Session 07* above:
+
+- `badge` — replaces the `scope` label in the frame header.
+- `state` — `'running'`, `'waiting'`, `'blocked'` or `'runtime'`. When any frame
+  in the snapshot sets this, the active highlight follows `'running'` rather
+  than stack position.
 
 ### Function objects
 
@@ -800,6 +879,7 @@ Delays: `delay-1` = 80ms, `delay-2` = 160ms, `delay-3` = 240ms, `delay-4` = 320m
 - ✅ Use `state: 'gc'` on objects about to be garbage collected (triggers the red pulsing border)
 - ✅ Use `state: 'rebound'` on a var row when its reference has just changed
 - ✅ Use `frames` instead of `frame` when showing function calls, recursion, closures, or nested scopes
+- ✅ Use `frame.state` and `frame.badge` when more than one frame is live at once, and keep frame order fixed across steps
 - ✅ Represent function definitions with `type: 'function'` heap objects
 - ✅ Represent list and dict aliases by pointing multiple names at the same heap object ID
 - ✅ For nested containers, render the nested object separately and label parent slots/values with `name -> 0x7f...`
@@ -819,6 +899,8 @@ Delays: `delay-1` = 80ms, `delay-2` = 160ms, `delay-3` = 240ms, `delay-4` = 320m
 - ❌ Use `inline: true` on variables that point to heap objects — use `ref` instead
 - ❌ Explain Python behavior through C/Cython implementation details in learner-facing copy; keep the model Python-level unless low-level details are essential
 - ❌ Claim the visualizer's nested-reference labels are literal CPython storage; they are teaching labels for Python-level references
+- ❌ Reorder frames between steps to show which one is running — set `state: 'running'` instead, or the reader loses track of which thread is which
+- ❌ Add a new `type` without updating all five places (`base.css` token, `components.css` chip, `getTypeColor`, `_renderValueHTML`, `pairTypes`) — a missing `pairTypes` entry drops the object's `pairs` with no error
 - ❌ Name heap objects generically (e.g., `obj1`) — use meaningful names like `iCount` for an int named `count`
 - ❌ Forget to update the sidebar active state in each session
 - ❌ Add session-global styles that leak into the common CSS files
@@ -846,6 +928,14 @@ Before shipping a session, verify:
       860px they stack vertically
 - [ ] Tab through the whole lab: every control has a visible focus ring, and
       `Space` on a quiz option answers it rather than starting playback
+- [ ] If any frame sets `state`, step every demo and confirm exactly one frame
+      carries the `running` highlight per step (two is correct only when the
+      snapshot shows two interpreters, as in Session 07's process demo)
+- [ ] Frame `badge` text does not wrap the frame header at 320px — keep badges
+      under about 16 characters
+- [ ] Compare your tallest memory snapshot against the existing ceiling
+      (~1200px, set by Sessions 04 and 07). Measure it, do not guess:
+      `document.getElementById('memPanel').scrollHeight` at your busiest step
 
 ---
 
@@ -906,7 +996,7 @@ result = greet("Alice")`,
 
 document.addEventListener('DOMContentLoaded', () => {
   PJ.Session.mount({
-    sessionId: '07-your-topic',
+    sessionId: '08-your-topic',
     demos: DEMOS,
     defaultDemo: 'callStack',
     defaultSpeed: 900,
@@ -920,27 +1010,27 @@ Run these. They are quick and they catch the mistakes that actually ship:
 
 ```bash
 # 1. The file parses.
-node --check sessions/07-your-topic/session.js
+node --check sessions/08-your-topic/session.js
 
 # 2. Every `lines:` number is a real line of that demo's own `code` string.
 #    (Off-by-one line references are the single most common session bug.)
-node -e "
-  const fs=require('fs');
-  let src=fs.readFileSync('sessions/07-your-topic/session.js','utf8')
-            .replace(/document\.addEventListener[\s\S]*$/,'')+'
-module.exports=DEMOS;';
-  fs.writeFileSync('/tmp/d.js',src);
-  for (const [k,d] of Object.entries(require('/tmp/d.js'))) {
-    const n=d.code.split('
-').length;
-    d.steps.forEach((s,i)=>(s.lines||[]).forEach(L=>{
-      if(L<1||L>n) console.log('BAD', k, 'step', i+1, '-> line', L, '(code has', n, 'lines)');
-    }));
-    if((d.steps[0].lines||[]).length) console.log('BAD', k, 'step 1 should have lines: []');
-    if(d.steps.length<5||d.steps.length>10) console.log('WARN', k, 'has', d.steps.length, 'steps');
-  }
-  console.log('line-reference check done');
-"
+node -e '
+const fs = require("fs"), os = require("os"), path = require("path");
+const src = fs.readFileSync(process.argv[1], "utf8")
+  .replace(/document\.addEventListener[\s\S]*$/, "") + "\nmodule.exports = DEMOS;";
+const tmp = path.join(os.tmpdir(), "pj-demos.js");
+fs.writeFileSync(tmp, src);
+let bad = 0;
+for (const [k, d] of Object.entries(require(tmp))) {
+  const n = d.code.split("\n").length;
+  d.steps.forEach((s, i) => (s.lines || []).forEach(L => {
+    if (L < 1 || L > n) { console.log("BAD", k, "step", i + 1, "-> line", L, "(code has", n, "lines)"); bad++; }
+  }));
+  if ((d.steps[0].lines || []).length) { console.log("BAD", k, "step 1 should have lines: []"); bad++; }
+  if (d.steps.length < 5 || d.steps.length > 10) console.log("WARN", k, "has", d.steps.length, "steps");
+}
+console.log(bad ? "FAILED: " + bad + " bad line reference(s)" : "line references: all clean");
+' sessions/08-your-topic/session.js
 
 # 3. Every factual claim is true in the Python you are targeting.
 python -c "import sys; print(sys.version)"

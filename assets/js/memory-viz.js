@@ -100,11 +100,21 @@ PJ.MemoryViz = class {
     section.appendChild(label);
 
     const displayFrames = [...frames].reverse();
+
+    // Most sessions have one obvious active frame: the deepest call. A
+    // concurrency session does not — several threads have live frames and only
+    // one of them holds the GIL — so a frame may declare its own state instead.
+    const anyExplicitState = frames.some((f) => f.state);
+
     displayFrames.forEach((frame, index) => {
       const frameEl = this._renderFrameElement(frame, highlight);
-      if (index === 0 && frames.length > 1) {
-        frameEl.classList.add('mem-frame--active');
-      }
+      if (frame.state) frameEl.classList.add(`mem-frame--${frame.state}`);
+
+      const isActive = anyExplicitState
+        ? frame.state === 'running'
+        : index === 0 && frames.length > 1;
+      if (isActive) frameEl.classList.add('mem-frame--active');
+
       section.appendChild(frameEl);
     });
 
@@ -141,8 +151,8 @@ PJ.MemoryViz = class {
         <rect x="1" y="1" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
         <path d="M4 4h4M4 6h3M4 8h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
       </svg>
-      <span>${frame.name || 'global'}</span>
-      <span class="mem-frame__scope-badge">scope</span>
+      <span>${this._esc(frame.name || 'global')}</span>
+      <span class="mem-frame__scope-badge">${this._esc(frame.badge || 'scope')}</span>
     `;
     frameEl.appendChild(header);
 
@@ -255,7 +265,7 @@ PJ.MemoryViz = class {
 
     // Value / items. Class, instance, method, and generator objects
     // may show a type link, a short label, and optional key/value pairs.
-    const pairTypes = ['dict', 'class', 'instance', 'method', 'generator', 'iterator', 'function'];
+    const pairTypes = ['dict', 'class', 'instance', 'method', 'generator', 'iterator', 'function', 'coroutine'];
     if (obj.type === 'list' || obj.type === 'tuple' || obj.type === 'set') {
       el.appendChild(this._renderCollectionItems(obj));
     } else {
@@ -300,6 +310,7 @@ PJ.MemoryViz = class {
     if (type === 'instance') return 'instance __dict__';
     if (type === 'method') return 'bound method';
     if (type === 'generator' || type === 'iterator') return 'internal state';
+    if (type === 'coroutine') return 'suspended state';
     if (type === 'function') return 'function attributes';
     return '';
   }
@@ -376,6 +387,7 @@ PJ.MemoryViz = class {
     if (type === 'method')   return `<span style="color:var(--clr-type-method)">${value}</span>`;
     if (type === 'generator')return `<span style="color:var(--clr-type-generator)">${value}</span>`;
     if (type === 'iterator') return `<span style="color:var(--clr-type-iterator)">${value}</span>`;
+    if (type === 'coroutine')return `<span style="color:var(--clr-type-coroutine)">${value}</span>`;
     return `<span>${value}</span>`;
   }
 

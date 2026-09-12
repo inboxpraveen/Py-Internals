@@ -139,6 +139,7 @@
     <button type="button" class="glossary-filter" data-filter="classes">Classes</button>
     <button type="button" class="glossary-filter" data-filter="iteration">Iteration</button>
     <button type="button" class="glossary-filter" data-filter="decorators">Decorators</button>
+    <button type="button" class="glossary-filter" data-filter="concurrency">Concurrency</button>
   </div>
   <p class="glossary-empty" id="glossaryEmpty">No terms match that search.</p>
 
@@ -355,6 +356,74 @@
     <article class="term" id="wrapped" data-terms="__wrapped__ unwrap original">
       <h3><code>__wrapped__</code></h3>
       <p>The attribute <code>functools.wraps</code> sets on a wrapper, pointing at the function underneath. It is how tools reach past a decorator to the real thing.</p>
+    </article>
+  </section>
+
+  <section class="glossary-group" data-group="concurrency">
+    <h2>Concurrency</h2>
+    <article class="term" id="gil" data-terms="gil global interpreter lock cpython">
+      <h3>GIL (Global Interpreter Lock)</h3>
+      <p>The single lock a thread must hold to execute Python bytecode in CPython. It exists because interpreter bookkeeping &mdash; reference counts above all &mdash; would be corrupted by unsynchronised threads. It is a property of CPython, not of the Python language. See <a href="sessions/07-gil/">Session 07</a>.</p>
+    </article>
+    <article class="term" id="thread" data-terms="thread threading concurrent os thread">
+      <h3>Thread</h3>
+      <p>A real operating-system thread, sharing the whole heap with its siblings. <code>threading.Thread(...)</code> only creates an <em>object</em>; the OS thread appears at <code>.start()</code>, which is when <code>ident</code> stops being <code>None</code>.</p>
+    </article>
+    <article class="term" id="switch-interval" data-terms="switch interval getswitchinterval 5ms handover preemption">
+      <h3>Switch interval</h3>
+      <p>How long a thread may hold the GIL before the interpreter asks it to hand over &mdash; <code>sys.getswitchinterval()</code>, 5&nbsp;ms by default. The request is only honoured at a safe point, chiefly a jump back to the top of a loop or a call into a function.</p>
+    </article>
+    <article class="term" id="race-condition" data-terms="race condition lost update data race interleaving">
+      <h3>Race condition</h3>
+      <p>A bug whose outcome depends on the order in which threads happen to run. The classic shape is read-modify-write: two threads read the same value, both compute from it, and the second write erases the first. The GIL does not prevent this &mdash; it only keeps single bytecodes indivisible.</p>
+    </article>
+    <article class="term" id="atomic" data-terms="atomic indivisible bytecode thread safe">
+      <h3>Atomic</h3>
+      <p>An operation that cannot be interrupted partway. In CPython one bytecode is atomic; one <em>line</em> of your source usually is not, because it compiles to several. If a switch can land in the middle, the operation is not atomic.</p>
+    </article>
+    <article class="term" id="lock" data-terms="lock mutex acquire release threading.Lock with">
+      <h3>Lock</h3>
+      <p><code>threading.Lock</code> &mdash; an object only one thread may hold at a time. Wrapping a read-modify-write in <code>with lock:</code> makes it indivisible with respect to every other thread that uses the same lock. A thread waiting for a lock is in a different queue from a thread waiting for the GIL.</p>
+    </article>
+    <article class="term" id="deadlock" data-terms="deadlock stuck two locks ordering">
+      <h3>Deadlock</h3>
+      <p>Two threads each holding a lock the other needs. Neither can ever proceed and no error is raised &mdash; the program simply stops. Prevented by always acquiring locks in the same order, or by holding only one at a time.</p>
+    </article>
+    <article class="term" id="cpu-bound" data-terms="cpu bound io bound bottleneck waiting computing">
+      <h3>CPU-bound / I/O-bound</h3>
+      <p>The question that picks your tool. I/O-bound code is slow because it waits &mdash; threads and <code>asyncio</code> overlap the waiting. CPU-bound code is slow because it computes &mdash; only a second process (or a library that releases the GIL) adds a second core.</p>
+    </article>
+    <article class="term" id="process" data-terms="process multiprocessing separate memory address space second gil">
+      <h3>Process</h3>
+      <p>A second operating-system process running a second interpreter, with its own heap and its own GIL. Two processes genuinely execute Python at the same instant. They share no objects at all, so anything passed between them is copied.</p>
+    </article>
+    <article class="term" id="pickling" data-terms="pickle pickling serialise copy arguments">
+      <h3>Pickling</h3>
+      <p>Turning an object into bytes so it can cross a process boundary and be rebuilt on the other side. The result is an equal object at a different address, never the same object. Lambdas, open files, connections and locks cannot be pickled.</p>
+    </article>
+    <article class="term" id="start-method" data-terms="spawn fork forkserver start method main guard">
+      <h3>Start method</h3>
+      <p>How <code>multiprocessing</code> creates a child &mdash; <code>spawn</code>, <code>fork</code> or <code>forkserver</code>; check yours with <code>mp.get_start_method()</code>. Where the child re-imports your module (<code>spawn</code> is the default on Windows and macOS), the <code>if __name__ == "__main__":</code> guard is required or the child spawns its own child.</p>
+    </article>
+    <article class="term" id="event-loop" data-terms="event loop asyncio scheduler ready timers">
+      <h3>Event loop</h3>
+      <p>The object <code>asyncio</code> uses to drive coroutines on a single thread. It keeps a list of tasks that are ready and a list of things being waited on, runs one task until it suspends, then picks the next.</p>
+    </article>
+    <article class="term" id="coroutine" data-terms="coroutine async def await suspended">
+      <h3>Coroutine</h3>
+      <p>What calling an <code>async def</code> function gives you: an object that has run none of its body, exactly like a generator object. It suspends at <code>await</code>, keeping its frame and locals, and the event loop resumes it later. Never awaiting one produces <code>RuntimeWarning: coroutine ... was never awaited</code>.</p>
+    </article>
+    <article class="term" id="await" data-terms="await yield point suspension cooperative">
+      <h3><code>await</code> (yield point)</h3>
+      <p>The only place a coroutine can be suspended &mdash; a word you typed, visible in the source. This is what makes <code>asyncio</code> <em>cooperative</em>: between two <code>await</code>s nothing else runs, so no lock is needed. Threads, by contrast, are pre-empted wherever the interpreter allows.</p>
+    </article>
+    <article class="term" id="task" data-terms="task asyncio gather create_task driver">
+      <h3>Task</h3>
+      <p>An object that drives one coroutine on the event loop. A coroutine on its own does nothing; <code>asyncio.gather</code> or <code>create_task</code> wraps it in a Task and hands it to the loop.</p>
+    </article>
+    <article class="term" id="free-threading" data-terms="free threaded no-gil PEP 703 is_gil_enabled">
+      <h3>Free-threaded build</h3>
+      <p>An optional CPython build with no GIL, added by PEP&nbsp;703 &mdash; experimental in 3.13, officially supported in 3.14, and separate from the default build, which still has one. Check with <code>sys._is_gil_enabled()</code>, which exists from 3.13 onwards. It makes CPU-bound threads scale; it does not fix any race condition, and makes the ones you have easier to hit.</p>
     </article>
   </section>
 </main>

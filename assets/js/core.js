@@ -14,7 +14,7 @@ PJ.COURSE = [
   { id: '04-classes',     num: '04', title: 'Classes & Objects',                short: 'self, __dict__, methods',      status: 'live' },
   { id: '05-iterators',   num: '05', title: 'Iterators & Generators',           short: 'iter, next, yield',            status: 'live' },
   { id: '06-decorators',  num: '06', title: 'Decorators',                       short: 'f = deco(f), wrappers, wraps', status: 'live' },
-  { id: '07-gil',         num: '07', title: 'The GIL & Concurrency',            short: 'Threads, processes, asyncio',  status: 'planned' },
+  { id: '07-gil',         num: '07', title: 'The GIL & Concurrency',            short: 'Threads, processes, asyncio',  status: 'live' },
 ];
 
 PJ.Core = (function () {
@@ -443,6 +443,7 @@ PJ.Core = (function () {
       method: 'var(--clr-type-method)',
       generator: 'var(--clr-type-generator)',
       iterator: 'var(--clr-type-iterator)',
+      coroutine: 'var(--clr-type-coroutine)',
     };
     return map[type] || 'var(--clr-text)';
   }
