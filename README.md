@@ -19,6 +19,7 @@
 [**Session 05: Iterators**](https://inboxpraveen.github.io/Py-Internals/sessions/05-iterators/) &nbsp;·&nbsp;
 [**Session 06: Decorators**](https://inboxpraveen.github.io/Py-Internals/sessions/06-decorators/) &nbsp;·&nbsp;
 [**Session 07: The GIL**](https://inboxpraveen.github.io/Py-Internals/sessions/07-gil/) &nbsp;·&nbsp;
+[**Session 08: Exceptions**](https://inboxpraveen.github.io/Py-Internals/sessions/08-exceptions/) &nbsp;·&nbsp;
 [**Glossary**](https://inboxpraveen.github.io/Py-Internals/glossary.html) &nbsp;·&nbsp;
 [**Report a Bug**](https://github.com/inboxpraveen/Py-Internals/issues) &nbsp;·&nbsp;
 [**Request a Topic**](https://github.com/inboxpraveen/Py-Internals/discussions)
@@ -56,6 +57,7 @@ Py Internals closes that gap, visually, for free.
 - 🎞️ **Step-by-step animations** — walk through code execution one step at a time, or let it autoplay
 - 🧠 **Real memory diagrams** — see the actual heap, stack frames, reference counts, and GC cycles
 - 🔒 **Runtime state, too** — Session 07 draws the interpreter itself, so you can watch the GIL change hands
+- 🧨 **Exceptions in flight** — Session 08 draws a frame being torn down and the traceback growing as an exception climbs the stack
 - 🔬 **Type explorer** — the nine types you meet first, their mutability, and how each behaves in memory
 - ✅ **Check-your-understanding quizzes** — predict the memory, then see why
 - 📚 **Glossary** — plain-English definitions you can search mid-lesson
@@ -79,6 +81,7 @@ Py Internals closes that gap, visually, for free.
 | 05 | [Iterators & Generators](https://inboxpraveen.github.io/Py-Internals/sessions/05-iterators/) | ✅ Live | `iter` / `next`, `yield`, suspended frames, lazy vs eager |
 | 06 | [Decorators](https://inboxpraveen.github.io/Py-Internals/sessions/06-decorators/) | ✅ Live | `f = deco(f)`, wrappers, closure cells, `functools.wraps`, stacking |
 | 07 | [The GIL & Concurrency](https://inboxpraveen.github.io/Py-Internals/sessions/07-gil/) | ✅ Live | GIL, races, `Lock`, I/O vs CPU, `multiprocessing`, `asyncio`, free threading |
+| 08 | [Exceptions, Tracebacks & Context Managers](https://inboxpraveen.github.io/Py-Internals/sessions/08-exceptions/) | ✅ Live | `raise`, stack unwinding, tracebacks, `try` / `except` / `finally`, `with`, `__enter__` / `__exit__`, `raise from` |
 
 ---
 
@@ -115,7 +118,8 @@ Py-Internals/
     ├── 04-classes/              ← self, __dict__, bound methods
     ├── 05-iterators/            ← iter/next, yield, lazy evaluation
     ├── 06-decorators/           ← f = deco(f), wrappers, functools.wraps
-    └── 07-gil/                  ← the interpreter lock, races, processes, asyncio
+    ├── 07-gil/                  ← the interpreter lock, races, processes, asyncio
+    └── 08-exceptions/           ← raise, unwinding, tracebacks, finally, with
 ```
 
 ---
@@ -162,7 +166,7 @@ Contributions are very welcome — especially new sessions.
 ### Adding a session
 
 1. Read [`IMPLEMENTATION_GUIDE.md`](IMPLEMENTATION_GUIDE.md) — it covers everything
-2. Copy `sessions/06-decorators/` as a starting point — it is the leanest complete shell; read `sessions/07-gil/` for the widest range of components
+2. Copy `sessions/06-decorators/` as a starting point — it is the leanest complete shell; read `sessions/07-gil/` for the widest range of components and `sessions/08-exceptions/` for frames being torn down
 3. Create your demo steps in `session.js` following the memory snapshot format
 4. Submit a PR against `main`
 

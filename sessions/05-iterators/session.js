@@ -29,6 +29,10 @@ const ADDRS = {
   lazyFirst: '0x7f880060',
 };
 
+/* Cached small ints (-5..256) are pre-created by CPython and never freed.
+   Drawn with an infinite refcount, exactly as Sessions 01 and 02 draw them. */
+const CACHED_INT_NOTE = 'cached small int — CPython pre-creates −5 to 256 and never frees them';
+
 const EMPTY = {
   frames: [{ name: 'global', vars: [] }],
   heap: [],
@@ -79,7 +83,7 @@ for n in nums:
               { value: 20, type: 'int' },
             ] },
             { id: 'listIt', pyId: ADDRS.listIt, type: 'iterator', value: 'list_iterator', refcount: 1, mutable: true, state: 'new', pairs: [
-              { key: 'over', value: 'list -> 0x7f810010', type: 'str' },
+              { key: 'over', value: 'list -> 0x7f810010', type: 'ref' },
               { key: 'index', value: 0, type: 'int' },
             ] },
           ],
@@ -96,13 +100,13 @@ for n in nums:
             { name: 'n', ref: 'int10', pyId: ADDRS.int10, type: 'int', state: 'new' },
           ]}],
           heap: [
-            { id: 'int10', pyId: ADDRS.int10, type: 'int', value: 10, refcount: 2, mutable: false, state: 'normal' },
+            { id: 'int10', pyId: ADDRS.int10, type: 'int', value: 10, refcount: '∞', mutable: false, state: 'normal', note: CACHED_INT_NOTE },
             { id: 'nums', pyId: ADDRS.nums, type: 'list', refcount: 2, mutable: true, state: 'normal', items: [
               { value: 10, type: 'int' },
               { value: 20, type: 'int' },
             ] },
             { id: 'listIt', pyId: ADDRS.listIt, type: 'iterator', value: 'list_iterator', refcount: 1, mutable: true, state: 'mutated', pairs: [
-              { key: 'over', value: 'list -> 0x7f810010', type: 'str' },
+              { key: 'over', value: 'list -> 0x7f810010', type: 'ref' },
               { key: 'index', value: 1, type: 'int' },
             ] },
           ],
@@ -119,14 +123,14 @@ for n in nums:
             { name: 'n', ref: 'int20', pyId: ADDRS.int20, type: 'int', state: 'rebound' },
           ]}],
           heap: [
-            { id: 'int10', pyId: ADDRS.int10, type: 'int', value: 10, refcount: 1, mutable: false, state: 'normal' },
-            { id: 'int20', pyId: ADDRS.int20, type: 'int', value: 20, refcount: 2, mutable: false, state: 'normal' },
+            { id: 'int10', pyId: ADDRS.int10, type: 'int', value: 10, refcount: '∞', mutable: false, state: 'normal' },
+            { id: 'int20', pyId: ADDRS.int20, type: 'int', value: 20, refcount: '∞', mutable: false, state: 'normal' },
             { id: 'nums', pyId: ADDRS.nums, type: 'list', refcount: 2, mutable: true, state: 'normal', items: [
               { value: 10, type: 'int' },
               { value: 20, type: 'int' },
             ] },
             { id: 'listIt', pyId: ADDRS.listIt, type: 'iterator', value: 'list_iterator', refcount: 1, mutable: true, state: 'mutated', pairs: [
-              { key: 'over', value: 'list -> 0x7f810010', type: 'str' },
+              { key: 'over', value: 'list -> 0x7f810010', type: 'ref' },
               { key: 'index', value: 2, type: 'int' },
             ] },
           ],
@@ -143,8 +147,8 @@ for n in nums:
             { name: 'n', ref: 'int20', pyId: ADDRS.int20, type: 'int', state: 'normal' },
           ]}],
           heap: [
-            { id: 'int10', pyId: ADDRS.int10, type: 'int', value: 10, refcount: 1, mutable: false, state: 'normal' },
-            { id: 'int20', pyId: ADDRS.int20, type: 'int', value: 20, refcount: 2, mutable: false, state: 'normal' },
+            { id: 'int10', pyId: ADDRS.int10, type: 'int', value: 10, refcount: '∞', mutable: false, state: 'normal' },
+            { id: 'int20', pyId: ADDRS.int20, type: 'int', value: 20, refcount: '∞', mutable: false, state: 'normal' },
             { id: 'nums', pyId: ADDRS.nums, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
               { value: 10, type: 'int' },
               { value: 20, type: 'int' },
@@ -206,7 +210,7 @@ next(it)          # raises StopIteration`,
               { value: 20, type: 'int' },
             ] },
             { id: 'itObj', pyId: ADDRS.itObj, type: 'iterator', value: 'list_iterator', refcount: 1, mutable: true, state: 'new', pairs: [
-              { key: 'over', value: 'list -> 0x7f810010', type: 'str' },
+              { key: 'over', value: 'list -> 0x7f810010', type: 'ref' },
               { key: 'index', value: 0, type: 'int' },
             ] },
           ],
@@ -224,13 +228,13 @@ next(it)          # raises StopIteration`,
             { name: 'a', ref: 'aVal', pyId: ADDRS.aVal, type: 'int', state: 'new' },
           ]}],
           heap: [
-            { id: 'aVal', pyId: ADDRS.aVal, type: 'int', value: 10, refcount: 2, mutable: false, state: 'normal' },
+            { id: 'aVal', pyId: ADDRS.aVal, type: 'int', value: 10, refcount: '∞', mutable: false, state: 'normal', note: CACHED_INT_NOTE },
             { id: 'nums', pyId: ADDRS.nums, type: 'list', refcount: 2, mutable: true, state: 'normal', items: [
               { value: 10, type: 'int' },
               { value: 20, type: 'int' },
             ] },
             { id: 'itObj', pyId: ADDRS.itObj, type: 'iterator', value: 'list_iterator', refcount: 1, mutable: true, state: 'mutated', pairs: [
-              { key: 'over', value: 'list -> 0x7f810010', type: 'str' },
+              { key: 'over', value: 'list -> 0x7f810010', type: 'ref' },
               { key: 'index', value: 1, type: 'int' },
             ] },
           ],
@@ -249,14 +253,14 @@ next(it)          # raises StopIteration`,
             { name: 'b', ref: 'bVal', pyId: ADDRS.bVal, type: 'int', state: 'new' },
           ]}],
           heap: [
-            { id: 'aVal', pyId: ADDRS.aVal, type: 'int', value: 10, refcount: 2, mutable: false, state: 'normal' },
-            { id: 'bVal', pyId: ADDRS.bVal, type: 'int', value: 20, refcount: 2, mutable: false, state: 'normal' },
+            { id: 'aVal', pyId: ADDRS.aVal, type: 'int', value: 10, refcount: '∞', mutable: false, state: 'normal' },
+            { id: 'bVal', pyId: ADDRS.bVal, type: 'int', value: 20, refcount: '∞', mutable: false, state: 'normal' },
             { id: 'nums', pyId: ADDRS.nums, type: 'list', refcount: 2, mutable: true, state: 'normal', items: [
               { value: 10, type: 'int' },
               { value: 20, type: 'int' },
             ] },
             { id: 'itObj', pyId: ADDRS.itObj, type: 'iterator', value: 'list_iterator', refcount: 1, mutable: true, state: 'mutated', pairs: [
-              { key: 'over', value: 'list -> 0x7f810010', type: 'str' },
+              { key: 'over', value: 'list -> 0x7f810010', type: 'ref' },
               { key: 'index', value: 2, type: 'int' },
             ] },
           ],
@@ -275,8 +279,8 @@ next(it)          # raises StopIteration`,
             { name: 'b', ref: 'bVal', pyId: ADDRS.bVal, type: 'int', state: 'normal' },
           ]}],
           heap: [
-            { id: 'aVal', pyId: ADDRS.aVal, type: 'int', value: 10, refcount: 2, mutable: false, state: 'normal' },
-            { id: 'bVal', pyId: ADDRS.bVal, type: 'int', value: 20, refcount: 2, mutable: false, state: 'normal' },
+            { id: 'aVal', pyId: ADDRS.aVal, type: 'int', value: 10, refcount: '∞', mutable: false, state: 'normal' },
+            { id: 'bVal', pyId: ADDRS.bVal, type: 'int', value: 20, refcount: '∞', mutable: false, state: 'normal' },
             { id: 'nums', pyId: ADDRS.nums, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
               { value: 10, type: 'int' },
               { value: 20, type: 'int' },
@@ -356,7 +360,7 @@ next(g)           # raises StopIteration`,
           ]}],
           heap: [
             { id: 'countFn', pyId: ADDRS.countFn, type: 'function', value: 'count_up() [generator]', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'int1', pyId: ADDRS.int1, type: 'int', value: 1, refcount: 2, mutable: false, state: 'normal' },
+            { id: 'int1', pyId: ADDRS.int1, type: 'int', value: 1, refcount: '∞', mutable: false, state: 'normal', note: CACHED_INT_NOTE },
             { id: 'genObj', pyId: ADDRS.genObj, type: 'generator', value: 'count_up suspended', refcount: 1, mutable: true, state: 'mutated', pairs: [
               { key: 'state', value: 'suspended', type: 'str' },
               { key: 'n', value: 1, type: 'int' },
@@ -378,8 +382,8 @@ next(g)           # raises StopIteration`,
           ]}],
           heap: [
             { id: 'countFn', pyId: ADDRS.countFn, type: 'function', value: 'count_up() [generator]', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'int1', pyId: ADDRS.int1, type: 'int', value: 1, refcount: 1, mutable: false, state: 'normal' },
-            { id: 'int2', pyId: ADDRS.int2, type: 'int', value: 2, refcount: 2, mutable: false, state: 'normal' },
+            { id: 'int1', pyId: ADDRS.int1, type: 'int', value: 1, refcount: '∞', mutable: false, state: 'normal' },
+            { id: 'int2', pyId: ADDRS.int2, type: 'int', value: 2, refcount: '∞', mutable: false, state: 'normal' },
             { id: 'genObj', pyId: ADDRS.genObj, type: 'generator', value: 'count_up suspended', refcount: 1, mutable: true, state: 'mutated', pairs: [
               { key: 'state', value: 'suspended', type: 'str' },
               { key: 'n', value: 2, type: 'int' },
@@ -401,8 +405,8 @@ next(g)           # raises StopIteration`,
           ]}],
           heap: [
             { id: 'countFn', pyId: ADDRS.countFn, type: 'function', value: 'count_up() [generator]', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'int1', pyId: ADDRS.int1, type: 'int', value: 1, refcount: 1, mutable: false, state: 'normal' },
-            { id: 'int2', pyId: ADDRS.int2, type: 'int', value: 2, refcount: 1, mutable: false, state: 'normal' },
+            { id: 'int1', pyId: ADDRS.int1, type: 'int', value: 1, refcount: '∞', mutable: false, state: 'normal' },
+            { id: 'int2', pyId: ADDRS.int2, type: 'int', value: 2, refcount: '∞', mutable: false, state: 'normal' },
             { id: 'genObj', pyId: ADDRS.genObj, type: 'generator', value: 'count_up (exhausted)', refcount: 1, mutable: true, state: 'mutated', pairs: [
               { key: 'state', value: 'closed', type: 'str' },
               { key: 'n', value: '(frame gone)', type: 'str' },
@@ -438,8 +442,8 @@ first = next(lazy)`,
             { id: 'int400', pyId: ADDRS.int400, type: 'int', value: 400, refcount: 1, mutable: false, state: 'new' },
             { id: 'int900', pyId: ADDRS.int900, type: 'int', value: 900, refcount: 1, mutable: false, state: 'new' },
             { id: 'eagerList', pyId: ADDRS.eagerList, type: 'list', refcount: 1, mutable: true, state: 'new', items: [
-              { value: '400 -> 0x7f880020', type: 'int' },
-              { value: '900 -> 0x7f880040', type: 'int' },
+              { value: '400 -> 0x7f880020', type: 'ref' },
+              { value: '900 -> 0x7f880040', type: 'ref' },
             ] },
           ],
           highlight: ['eagerList', 'int400', 'int900'],
@@ -458,8 +462,8 @@ first = next(lazy)`,
             { id: 'int400', pyId: ADDRS.int400, type: 'int', value: 400, refcount: 1, mutable: false, state: 'normal' },
             { id: 'int900', pyId: ADDRS.int900, type: 'int', value: 900, refcount: 1, mutable: false, state: 'normal' },
             { id: 'eagerList', pyId: ADDRS.eagerList, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
-              { value: '400 -> 0x7f880020', type: 'int' },
-              { value: '900 -> 0x7f880040', type: 'int' },
+              { value: '400 -> 0x7f880020', type: 'ref' },
+              { value: '900 -> 0x7f880040', type: 'ref' },
             ] },
             { id: 'lazyGen', pyId: ADDRS.lazyGen, type: 'generator', value: '(x * x for x in ...)', refcount: 1, mutable: true, state: 'new', pairs: [
               { key: 'state', value: 'created', type: 'str' },
@@ -483,8 +487,8 @@ first = next(lazy)`,
             { id: 'int400', pyId: ADDRS.int400, type: 'int', value: 400, refcount: 1, mutable: false, state: 'normal' },
             { id: 'int900', pyId: ADDRS.int900, type: 'int', value: 900, refcount: 1, mutable: false, state: 'normal' },
             { id: 'eagerList', pyId: ADDRS.eagerList, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
-              { value: '400 -> 0x7f880020', type: 'int' },
-              { value: '900 -> 0x7f880040', type: 'int' },
+              { value: '400 -> 0x7f880020', type: 'ref' },
+              { value: '900 -> 0x7f880040', type: 'ref' },
             ] },
             { id: 'lazyFirst', pyId: ADDRS.lazyFirst, type: 'int', value: 400, refcount: 1, mutable: false, state: 'new' },
             { id: 'lazyGen', pyId: ADDRS.lazyGen, type: 'generator', value: '(x * x for x in ...)', refcount: 1, mutable: true, state: 'mutated', pairs: [
@@ -509,8 +513,8 @@ first = next(lazy)`,
             { id: 'int400', pyId: ADDRS.int400, type: 'int', value: 400, refcount: 1, mutable: false, state: 'normal' },
             { id: 'int900', pyId: ADDRS.int900, type: 'int', value: 900, refcount: 1, mutable: false, state: 'normal' },
             { id: 'eagerList', pyId: ADDRS.eagerList, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
-              { value: '400 -> 0x7f880020', type: 'int' },
-              { value: '900 -> 0x7f880040', type: 'int' },
+              { value: '400 -> 0x7f880020', type: 'ref' },
+              { value: '900 -> 0x7f880040', type: 'ref' },
             ] },
             { id: 'lazyFirst', pyId: ADDRS.lazyFirst, type: 'int', value: 400, refcount: 1, mutable: false, state: 'normal' },
             { id: 'lazyGen', pyId: ADDRS.lazyGen, type: 'generator', value: '(x * x for x in ...)', refcount: 1, mutable: true, state: 'normal', pairs: [

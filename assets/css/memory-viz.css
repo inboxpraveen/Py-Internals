@@ -79,6 +79,25 @@
   color: var(--clr-accent-2);
 }
 
+/* A frame the exception is passing through on its way out (Session 08). It
+   is being torn down, so it borrows the "about to be freed" palette. */
+.mem-frame--unwinding {
+  border-style: dashed;
+  border-color: #F0C5C5;
+  background: #FFF6F6;
+}
+
+.mem-frame--unwinding .mem-frame__header {
+  background: #FCE8E8;
+  color: #8A1A1A;
+}
+
+.mem-frame--unwinding .mem-frame__scope-badge {
+  background: #FCE8E8;
+  color: #8A1A1A;
+  border: 1px solid #F0C5C5;
+}
+
 /* The interpreter itself — not a call frame, so it does not look like one. */
 .mem-frame--runtime {
   background: var(--clr-surface-2);
@@ -273,6 +292,7 @@
   padding: 1px 5px;
   border-radius: var(--radius-sm);
   color: var(--clr-text-3);
+  white-space: nowrap;
 }
 
 .mem-obj__refcount.decreasing {
@@ -349,6 +369,16 @@
   to { stroke-dashoffset: -100; }
 }
 
+/* ── Narrow screens ───────────────────────────────────────── */
+/* At 320px a variable row (name, arrow, chip, address) is wider than the
+   frame, and an object header (chip, badge, address, refcount) is wider than
+   the box. Let both wrap onto a second line instead of clipping the address. */
+@media (max-width: 420px) {
+  .mem-var { flex-wrap: wrap; row-gap: var(--sp-1); }
+  .mem-var__name { min-width: 0; }
+  .mem-obj__header { flex-wrap: wrap; row-gap: var(--sp-1); }
+}
+
 /* ── Two-panel memory layout ──────────────────────────────── */
 .mem-two-col {
   display: grid;
@@ -423,6 +453,23 @@
 .dict-key   { color: var(--clr-type-str); font-weight: 600; }
 .dict-colon { color: var(--clr-text-3); }
 .dict-val   { color: var(--clr-type-int); }
+
+/* A slot or attribute value that refers to another object on the panel.
+   Same amber as `.mem-var__ref`, so "this points somewhere" reads the same
+   whether it sits in a frame or inside a container. */
+.mem-ref-inline {
+  color: var(--clr-mem-ref);
+  font-weight: 600;
+  padding: 1px 5px;
+  background: rgba(184,92,26,0.08);
+  border: 1px solid rgba(184,92,26,0.2);
+  border-radius: var(--radius-sm);
+  /* A four-frame traceback label is longer than a phone is wide; let it wrap
+     and keep the box on every line it lands on. */
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
 
 .mem-obj__dict-label {
   padding: var(--sp-1) var(--sp-3) 0;

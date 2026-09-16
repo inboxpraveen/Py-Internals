@@ -44,6 +44,11 @@ window.PJ = window.PJ || {};
  *     ],
  *     highlight: ['obj-1'],  // IDs to highlight
  *   }
+ *
+ * Item and pair values take the same `type` vocabulary as objects, plus
+ * `type: 'ref'` for a value that is a reference to another heap object
+ * (`{ value: 'list -> 0x7f560010', type: 'ref' }`). Refs render in the amber
+ * address style rather than as a quoted string.
  */
 PJ.MemoryViz = class {
 
@@ -159,7 +164,8 @@ PJ.MemoryViz = class {
     if (!frame.vars || frame.vars.length === 0) {
       const empty = document.createElement('div');
       empty.style.cssText = 'padding:12px 16px;font-size:var(--fs-xs);color:var(--clr-text-3);font-style:italic';
-      empty.textContent = '(no variables yet)';
+      // A frame being torn down has no future; "yet" would promise one.
+      empty.textContent = frame.state === 'unwinding' ? '(locals discarded)' : '(no variables yet)';
       frameEl.appendChild(empty);
     } else {
       frame.vars.forEach(v => {
@@ -376,6 +382,11 @@ PJ.MemoryViz = class {
 
   _renderValueHTML(rawValue, type) {
     const value = typeof rawValue === 'boolean' ? rawValue : this._esc(rawValue);
+    // A slot, dict value or attribute that points at another object. Drawn in
+    // the same amber as a name's address in the frame, never in quotes — a
+    // learner must be able to tell "this slot holds a string" from "this slot
+    // refers to another box on this panel" at a glance.
+    if (type === 'ref')   return `<span class="mem-ref-inline">${String(value).replace(/-&gt;/g, '→')}</span>`;
     if (type === 'str')   return `<span style="color:var(--clr-type-str)">'${value}'</span>`;
     if (type === 'int')   return `<span style="color:var(--clr-type-int)">${value}</span>`;
     if (type === 'float') return `<span style="color:var(--clr-type-float)">${value}</span>`;

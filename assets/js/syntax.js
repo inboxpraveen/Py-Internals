@@ -10,13 +10,18 @@ window.PJ = window.PJ || {};
 PJ.Syntax = (function () {
 
   const KEYWORDS = new Set(('def class return if elif else for while in not and or import from as ' +
-    'with try except finally raise pass break continue lambda yield del global nonlocal assert is')
+    'with try except finally raise pass break continue lambda yield del global nonlocal assert is ' +
+    'async await')
     .split(' '));
 
   const BUILTINS = new Set(('print len type id range list dict tuple set int float str bool input ' +
     'enumerate zip map filter sorted reversed sum min max abs isinstance hasattr getattr setattr ' +
     'super staticmethod classmethod property iter next append extend insert remove pop update ' +
-    'keys values items copy deepcopy').split(' '));
+    'keys values items copy deepcopy open read write close').split(' '));
+
+  /* Point, ValueError, Thread: a capitalised identifier that is not SHOUTING
+     is almost always a class name in the code this course shows. */
+  const CLASS_NAME = /^[A-Z][A-Za-z0-9_]*[a-z][A-Za-z0-9_]*$/;
 
   const CONSTANTS = new Set(['True', 'False', 'None']);
 
@@ -65,6 +70,7 @@ PJ.Syntax = (function () {
         if (KEYWORDS.has(word))       out += wrap('kw', word);
         else if (CONSTANTS.has(word)) out += wrap('bool', word);
         else if (BUILTINS.has(word))  out += wrap('fn', word);
+        else if (CLASS_NAME.test(word)) out += wrap('cls', word);
         else                          out += escapeHTML(word);
       }
       else if (m[6])         out += wrap('num', m[6]);

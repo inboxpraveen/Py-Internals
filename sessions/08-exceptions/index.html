@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Session 08: Exceptions, Tracebacks &amp; Context Managers — Py Internals</title>
+  <meta name="description" content="What raise really does: an exception object walks up the call stack, clearing one frame at a time, until a handler catches it. Tracebacks, try/except/finally, with, __enter__/__exit__ and exception chaining, shown step by step in memory." />
+  <meta name="theme-color" content="#1A6B5C" />
+  <link rel="icon" type="image/png" href="../../assets/images/Python-logo.png" />
+  <link rel="apple-touch-icon" href="../../assets/images/Python-logo.png" />
+  <link rel="stylesheet" href="../../assets/css/base.css" />
+  <link rel="stylesheet" href="../../assets/css/layout.css" />
+  <link rel="stylesheet" href="../../assets/css/components.css" />
+  <link rel="stylesheet" href="../../assets/css/memory-viz.css" />
+  <link rel="stylesheet" href="../../assets/css/animations.css" />
+  <link rel="stylesheet" href="../../assets/css/session.css" />
+</head>
+<body>
+
+<a class="skip-link" href="#demo-unwind">Skip to the interactive lab</a>
+
+<header class="topbar">
+  <div class="topbar__logo">
+    <button class="menu-toggle" aria-label="Open session menu">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+        <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <a href="../../index.html" class="topbar__home" aria-label="Py Internals home">
+      <div class="topbar__logo-mark">Py</div>
+      <span class="topbar__brand">Py<span>Internals</span></span>
+    </a>
+  </div>
+  <div class="topbar__actions">
+    <a href="../../glossary.html" class="btn btn--ghost btn--sm">Glossary</a>
+    <span class="session-count" data-role="session-count">Session 08 of 08</span>
+  </div>
+</header>
+
+<div class="sidebar-overlay"></div>
+
+<div class="app-shell" style="grid-template-rows:unset">
+  <aside class="sidebar" aria-label="Session sections">
+    <div class="sidebar__section">
+      <div class="sidebar__label">Session 08</div>
+      <a href="#intro" class="sidebar__item active">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <circle cx="9" cy="9" r="7"/><path d="M9 6v4l2 2"/>
+        </svg>
+        Introduction
+      </a>
+      <a href="#demo-unwind" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M2 9h14M9 2v14"/>
+        </svg>
+        Interactive Lab
+      </a>
+      <a href="#raise" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M9 15V4M5 8l4-4 4 4"/><path d="M3 16h12"/>
+        </svg>
+        What <code>raise</code> does
+      </a>
+      <a href="#catch" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M3 4h12v4a6 6 0 01-12 0z"/><path d="M6 15h6"/>
+        </svg>
+        try, except, else, finally
+      </a>
+      <a href="#finally" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M3 9h9M9 5l4 4-4 4"/><path d="M15 3v12"/>
+        </svg>
+        The way out
+      </a>
+      <a href="#with" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <rect x="2.5" y="2.5" width="13" height="13" rx="2"/><path d="M6 9h6M6 6h6M6 12h3"/>
+        </svg>
+        Context managers
+      </a>
+      <a href="#chaining" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M7.5 10.5l3-3"/><path d="M10 5.5l1-1a2.8 2.8 0 014 4l-1 1"/><path d="M8 12.5l-1 1a2.8 2.8 0 01-4-4l1-1"/>
+        </svg>
+        One error causes another
+      </a>
+      <a href="#mistakes" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M9 2.5l6.5 12h-13z" stroke-linejoin="round"/><path d="M9 7v3.5M9 12.5h.01"/>
+        </svg>
+        Common mistakes
+      </a>
+      <a href="#quiz" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <circle cx="9" cy="9" r="7"/><path d="M7 7a2 2 0 113 1.8v1.2M9 13h.01"/>
+        </svg>
+        Check yourself
+      </a>
+    </div>
+    <div class="sidebar__section">
+      <div class="sidebar__label">Course</div>
+      <a href="../07-gil/" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M11 5l-4 4 4 4"/>
+        </svg>
+        Previous Session
+      </a>
+      <a href="../../glossary.html" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M4 3.5h8a2 2 0 012 2V15H6a2 2 0 01-2-2z"/><path d="M4 13a2 2 0 012-2h8"/>
+        </svg>
+        Glossary
+      </a>
+      <a href="../../index.html" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M3 9L9 3l6 6M5 7v8h8V7"/>
+        </svg>
+        All Sessions
+      </a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <div class="session-hero" id="intro">
+      <div class="session-hero__breadcrumb">
+        <a href="../../index.html">Home</a>
+        <span>&rsaquo;</span>
+        Session 08
+      </div>
+      <div class="session-hero__eyebrow">Control flow &middot; Session 08</div>
+      <h1 class="session-hero__title">Exceptions, Tracebacks &amp; Context Managers</h1>
+      <p class="session-hero__subtitle">
+        A traceback is not Python shouting at you. It is a receipt: the list of
+        desks an exception cleared on its way up the stack, looking for someone
+        to deal with it. Once you can see that walk, <code>try</code>,
+        <code>finally</code> and <code>with</code> stop being syntax to memorise
+        and become three ways of standing in its path.
+      </p>
+      <div class="session-meta">
+        <div class="session-meta__item">~45 minutes</div>
+        <div class="session-meta__item">6 interactive demos</div>
+        <div class="session-meta__item">Builds on Sessions 02, 04 and 05</div>
+      </div>
+    </div>
+
+    <div class="progress-bar"><div class="progress-bar__fill" id="readProgress" style="width:0%"></div></div>
+
+    <section class="learning-overview">
+      <div class="learning-card">
+        <div class="learning-card__label">Learning goal</div>
+        <h2 class="learning-card__title">An exception is an object that climbs the stack.</h2>
+        <p class="learning-card__body">
+          <code>raise</code> builds an ordinary instance, then clears one frame after another
+          until a frame with a matching <code>except</code> says stop. Every feature in this
+          session — the traceback, <code>finally</code>, <code>with</code>, chaining — is a
+          detail of that climb: what it records, what it runs on the way, and who gets to
+          intercept it.
+        </p>
+        <div class="concept-chip-row">
+          <span class="type-chip type-chip--instance">exception</span>
+          <span class="type-chip type-chip--iterator">traceback</span>
+          <span class="type-chip type-chip--function">handler</span>
+          <span class="type-chip type-chip--method">__enter__ / __exit__</span>
+          <span class="type-chip type-chip--class">__cause__</span>
+        </div>
+      </div>
+      <div class="learning-card">
+        <div class="learning-card__label">Recommended path</div>
+        <div class="learning-path">
+          <div class="learning-path__step">
+            <span class="learning-path__num">1</span>
+            <span><strong>Let one escape.</strong> Demo 1 raises with no handler anywhere. Watch the desks go and the <code>__traceback__</code> row grow.</span>
+          </div>
+          <div class="learning-path__step">
+            <span class="learning-path__num">2</span>
+            <span><strong>Then catch it.</strong> Demo 2 stops the climb one desk up — and shows why <code>err</code> vanishes before the function returns.</span>
+          </div>
+          <div class="learning-path__step">
+            <span class="learning-path__num">3</span>
+            <span><strong>Guarantee the cleanup.</strong> Demos 3–5 are the same <code>try/finally</code> idea three times, ending with <code>with</code>.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="demo-unwind">
+      <section class="stage-intro" aria-labelledby="stage-title">
+        <div>
+          <div class="stage-intro__label">Interactive lab</div>
+          <h2 id="stage-title">A frame drawn in red is being torn down</h2>
+          <p>
+            Two things are new in the memory panel. An exception shows up on the heap as an
+            instance with a few extra rows — <code>__traceback__</code> is the list of frames it has
+            passed through, outermost first. And a frame the exception is leaving turns
+            <strong>red and dashed</strong>: it is being cleared exactly as on a <code>return</code>,
+            except that no value goes back.
+          </p>
+        </div>
+        <div class="stage-intro__hint">
+          Tip: at every step, ask &ldquo;which frame is the exception in, and does that frame
+          have a <code>try</code> around the line it is on?&rdquo;
+        </div>
+      </section>
+
+      <div class="demo-guide">
+        <div class="demo-guide__step"><span class="demo-guide__badge">1</span> Choose a demo</div>
+        <span class="demo-guide__arrow">&rsaquo;</span>
+        <div class="demo-guide__step"><span class="demo-guide__badge">2</span> Step with <kbd>&rarr;</kbd> or Play</div>
+        <span class="demo-guide__arrow">&rsaquo;</span>
+        <div class="demo-guide__step"><span class="demo-guide__badge">3</span> Watch the frames go</div>
+        <span class="demo-guide__arrow">&rsaquo;</span>
+        <div class="demo-guide__step"><span class="demo-guide__badge">4</span> Read the model below</div>
+      </div>
+
+      <div class="mem-legend" aria-label="How to read the memory diagram">
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--stack"></span> Call stack &mdash; red dashed means the exception is clearing that frame</div>
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--heap"></span> Exception objects, files and context managers</div>
+        <div class="mem-legend__item"><kbd>&rarr;</kbd> next <kbd>&larr;</kbd> back <kbd>Space</kbd> play <kbd>R</kbd> reset</div>
+      </div>
+
+      <div class="demo-selector">
+        <button class="demo-pill active" data-demo="unwind">1 &middot; raise, uncaught</button>
+        <button class="demo-pill" data-demo="catch">2 &middot; try / except</button>
+        <button class="demo-pill" data-demo="finally">3 &middot; finally and return</button>
+        <button class="demo-pill" data-demo="with">4 &middot; with</button>
+        <button class="demo-pill" data-demo="withRaise">5 &middot; with, when the body raises</button>
+        <button class="demo-pill" data-demo="chain">6 &middot; raise &hellip; from</button>
+      </div>
+
+      <div class="demo-watch" id="demoWatch"></div>
+
+      <div class="stage" id="stage">
+        <div class="stage__code-panel">
+          <div class="panel-header panel-header--dark">
+            <span>python</span>
+            <div style="display:flex;align-items:center;gap:6px" aria-hidden="true">
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+            </div>
+          </div>
+          <div class="code-panel-body" id="codePanel"></div>
+          <div class="step-track" data-role="step-track" id="stepTrack" role="group" aria-label="Jump to a step"></div>
+          <div class="playback-controls" id="controls">
+            <div class="playback-controls__left">
+              <button class="step-btn" data-action="prev" title="Previous step" aria-label="Previous step" disabled>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M8 2L4 6l4 4"/></svg>
+              </button>
+              <button class="play-btn" data-action="play" title="Play / Pause" aria-label="Play the walkthrough">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true"><path d="M3 2.5l8 4.5-8 4.5z"/></svg>
+              </button>
+              <button class="step-btn" data-action="next" title="Next step" aria-label="Next step">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M4 2l4 4-4 4"/></svg>
+              </button>
+              <button class="btn btn--ghost btn--sm" data-action="reset" title="Reset" aria-label="Reset to the first step">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path d="M10 6A4 4 0 112 6" stroke-linecap="round"/>
+                  <path d="M2 3v3h3" fill="currentColor" stroke="none"/>
+                </svg>
+                Reset
+              </button>
+            </div>
+            <div class="playback-controls__right">
+              <div class="speed-control">
+                <label for="speedSelect">Speed:</label>
+                <select class="speed-select" id="speedSelect" data-action="speed">
+                  <option value="1700">0.5&times;</option>
+                  <option value="900" selected>1&times;</option>
+                  <option value="600">1.5&times;</option>
+                  <option value="400">2&times;</option>
+                </select>
+              </div>
+              <span class="step-counter" data-role="step-counter">1 / 1</span>
+            </div>
+          </div>
+        </div>
+        <div class="stage__memory-panel">
+          <div class="panel-header">
+            <span style="color:var(--clr-text-3)">Memory</span>
+            <div style="display:flex;align-items:center;gap:6px;font-size:var(--fs-xs);color:var(--clr-text-3)">
+              <span style="display:inline-block;width:8px;height:8px;background:var(--clr-mem-stack);border-radius:2px;opacity:.6"></span>
+              stack
+              <span style="display:inline-block;width:8px;height:8px;background:var(--clr-mem-heap);border-radius:2px;opacity:.6;margin-left:4px"></span>
+              heap
+            </div>
+          </div>
+          <div class="mem-panel-body" id="memPanel"></div>
+        </div>
+      </div>
+
+      <div class="explanation-strip" aria-live="polite">
+        <div class="explanation-strip__step-num" id="stepNum">1</div>
+        <div class="explanation-strip__content">
+          <h3 id="stepTitle" class="explanation-text">Nothing has run yet</h3>
+          <p id="stepDesc" class="explanation-text">Press Play or use Next to watch an exception climb the stack.</p>
+        </div>
+      </div>
+    </div>
+
+    <article class="narrative">
+      <h2 id="raise">What <code>raise</code> actually does</h2>
+      <p class="in-plain">
+        <span class="in-plain__label">In plain words</span>
+        Picture an office where every call opens a desk on top of the last. Someone at the
+        top desk hits a problem they cannot solve, writes it on a card, clears their desk and
+        hands the card down. The next person either deals with it or clears their own desk
+        and passes it on. If it reaches the front door unanswered, the card is pinned to the
+        wall &mdash; that is the traceback &mdash; and the office closes for the day.
+      </p>
+      <p class="narrative-lede then-precise">
+        Precisely: <code>raise X</code> first evaluates <code>X</code>, which is normally a
+        constructor call, so an instance of an exception class appears on the heap. The
+        interpreter then attaches a traceback entry for the current frame and looks for a
+        <code>try</code> block covering the current line. If there is none, the frame is popped
+        &mdash; locals and all, just as on <code>return</code> &mdash; and the search continues
+        in the caller at the line that made the call, which gets a traceback entry of its own.
+        Only a matching <code>except</code> stops the walk. If nothing matches before the
+        module level, the traceback is printed to <code>stderr</code> and the process exits
+        with status <code>1</code>.
+      </p>
+
+      <div class="flow-grid">
+        <div class="flow-card">
+          <div class="section-label">1 &middot; Build</div>
+          <h3>An ordinary instance</h3>
+          <p>
+            <code>ValueError("bad data")</code> is a Session 04 constructor call: a
+            <code>__class__</code> link, an <code>args</code> tuple, and room for a traceback.
+          </p>
+        </div>
+        <div class="flow-card">
+          <div class="section-label">2 &middot; Unwind</div>
+          <h3>Frames are popped</h3>
+          <p>
+            Each frame without a handler is cleared and adds one entry to
+            <code>__traceback__</code>. Locals die with the frame &mdash; the exception object
+            does not.
+          </p>
+        </div>
+        <div class="flow-card">
+          <div class="section-label">3 &middot; Stop, or crash</div>
+          <h3>A handler, or the wall</h3>
+          <p>
+            The first frame whose <code>except</code> matches keeps its desk and runs the
+            handler. Otherwise: traceback printed, exit status 1, nothing else runs.
+          </p>
+        </div>
+      </div>
+
+      <div class="callout callout--info">
+        <div class="callout__icon">Read</div>
+        <div>
+          <div class="callout__title">Read a traceback from the bottom up</div>
+          <div class="callout__body">
+            The last line is the error and its message. The entry directly above it is where
+            it was raised. Everything above that is the chain of calls that led there,
+            outermost first &mdash; the heading says <em>most recent call last</em> for exactly
+            that reason. The printed text is nothing more than the <code>__traceback__</code>
+            row from the memory panel, one frame per entry.
+          </div>
+        </div>
+      </div>
+
+      <div class="try-this">
+        <div class="try-this__label">Try this in a REPL</div>
+        <p>
+          <code>try: 1 / 0</code> then <code>except ZeroDivisionError as e: tb = e.__traceback__</code>.
+          Now inspect it: <code>tb.tb_frame.f_code.co_name</code> and <code>tb.tb_lineno</code>
+          tell you where, and <code>tb.tb_next</code> walks toward the raise site &mdash; the
+          same chain the panel draws, and the same one <code>traceback.print_exc()</code> prints.
+        </p>
+      </div>
+
+      <div id="catch">
+        <div class="section-divider"><div class="section-divider__label">Catching</div></div>
+        <h2><code>try</code>, <code>except</code>, <code>else</code>, <code>finally</code></h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          A <code>try</code> block is a desk with a note on it: &ldquo;if a card arrives while
+          I am on one of these lines, check it against this list.&rdquo; The list is the
+          <code>except</code> clauses, read top to bottom. The first one that fits handles it;
+          the rest are ignored.
+        </p>
+        <p class="then-precise">
+          Precisely: the match is <code>isinstance(exc, ExceptionClass)</code>, so a clause
+          catches the named class and every subclass of it. <code>except LookupError</code>
+          catches a <code>KeyError</code>; <code>except Exception</code> catches nearly
+          everything you will ever raise yourself. <code>else</code> runs only if the
+          <code>try</code> body finished without raising, and <code>finally</code> runs no matter
+          what &mdash; the next section is about that.
+        </p>
+
+        <div class="lookup-path" aria-label="Which clause runs">
+          <div class="lookup-path__step is-hit">
+            <span class="lookup-path__where">try</span>
+            <span>The body runs. If it finishes cleanly, skip every <code>except</code>.</span>
+            <span class="lookup-path__result">always</span>
+          </div>
+          <div class="lookup-path__step is-hit">
+            <span class="lookup-path__where">except</span>
+            <span>Only if the body raised: clauses are tested in order, and the first <code>isinstance</code> match runs. No match &mdash; the frame is cleared and the climb continues.</span>
+            <span class="lookup-path__result">first match</span>
+          </div>
+          <div class="lookup-path__step is-miss">
+            <span class="lookup-path__where">else</span>
+            <span>Only if the body did <em>not</em> raise. Keeps the code you want protected small &mdash; a bug in the <code>else</code> block is not swallowed by the <code>except</code> above it.</span>
+            <span class="lookup-path__result">no error</span>
+          </div>
+          <div class="lookup-path__step is-hit">
+            <span class="lookup-path__where">finally</span>
+            <span>Runs last on every path &mdash; after a clean body, after a handler, after an unmatched exception, and even on the way out through a <code>return</code>.</span>
+            <span class="lookup-path__result">always</span>
+          </div>
+        </div>
+
+        <div class="callout callout--insight">
+          <div class="callout__icon">Key</div>
+          <div>
+            <div class="callout__title"><code>as err</code> is a normal name &mdash; that is deleted for you</div>
+            <div class="callout__body">
+              At the end of an <code>except ... as err</code> block Python executes
+              <code>del err</code>. Reading <code>err</code> afterwards gives
+              <code>NameError</code>. The reason is a cycle: the exception references its
+              traceback, the traceback references the frames it walked through, and the frame
+              you are in would reference <code>err</code> &mdash; a loop that would keep every
+              local in every one of those frames alive until the cyclic collector got round to
+              it. If you need the exception later, bind it to another name inside the block.
+            </div>
+          </div>
+        </div>
+
+        <h3>The family tree decides what a clause catches</h3>
+        <p>
+          Exceptions are classes, and <code>except</code> matches by inheritance. A handful of
+          parents cover most of what you will meet:
+        </p>
+
+        <div style="overflow-x:auto">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>You raise or meet</th>
+                <th>Its parents</th>
+                <th>So this clause catches it</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>KeyError</code>, <code>IndexError</code></td>
+                <td><code>LookupError</code> &rarr; <code>Exception</code></td>
+                <td><code>except LookupError</code></td>
+              </tr>
+              <tr>
+                <td><code>ZeroDivisionError</code>, <code>OverflowError</code></td>
+                <td><code>ArithmeticError</code> &rarr; <code>Exception</code></td>
+                <td><code>except ArithmeticError</code></td>
+              </tr>
+              <tr>
+                <td><code>FileNotFoundError</code>, <code>PermissionError</code></td>
+                <td><code>OSError</code> &rarr; <code>Exception</code></td>
+                <td><code>except OSError</code></td>
+              </tr>
+              <tr>
+                <td><code>ValueError</code>, <code>TypeError</code>, <code>StopIteration</code></td>
+                <td><code>Exception</code></td>
+                <td><code>except Exception</code></td>
+              </tr>
+              <tr>
+                <td><code>KeyboardInterrupt</code>, <code>SystemExit</code></td>
+                <td><code>BaseException</code> only</td>
+                <td>a bare <code>except:</code> &mdash; and almost never on purpose</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout--warn">
+          <div class="callout__icon">Care</div>
+          <div>
+            <div class="callout__title">A bare <code>except:</code> catches Ctrl-C</div>
+            <div class="callout__body">
+              <code>KeyboardInterrupt</code> and <code>SystemExit</code> deliberately sit outside
+              <code>Exception</code>, so that <code>except Exception:</code> lets the user quit
+              and lets <code>sys.exit()</code> work. A bare <code>except:</code> catches them
+              too, which is how a script ends up impossible to interrupt. Name the class you
+              mean; if you genuinely mean &ldquo;anything my code could raise&rdquo;, write
+              <code>except Exception</code>.
+            </div>
+          </div>
+        </div>
+
+        <div class="try-this">
+          <div class="try-this__label">Try this in a REPL</div>
+          <p>
+            <code>KeyError.__mro__</code> prints the whole chain up to <code>object</code>.
+            Then <code>try: {}["x"]</code> with <code>except LookupError as e: print(type(e).__name__)</code>
+            &mdash; it prints <code>KeyError</code>, because the clause matched a subclass.
+            Finally, after any <code>except ... as e</code> block, type <code>e</code>: <code>NameError</code>.
+          </p>
+        </div>
+      </div>
+
+      <div id="finally">
+        <div class="section-divider"><div class="section-divider__label">The way out</div></div>
+        <h2><code>finally</code> runs before the frame is left &mdash; whatever the reason</h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          &ldquo;Lock the door on your way out&rdquo; applies whether you leave because you
+          finished, because you were called away, or because you are running from a fire.
+          <code>finally</code> is that rule. Demo 3 shows the version people find hardest to
+          believe: a <code>return</code> inside the <code>try</code> still runs the
+          <code>finally</code> block first.
+        </p>
+        <p class="then-precise">
+          Precisely: when control leaves a <code>try</code> that has a <code>finally</code>
+          &mdash; by falling off the end, by <code>return</code>, <code>break</code>,
+          <code>continue</code>, or by an exception &mdash; the interpreter parks the pending
+          result (the return value, or the exception in flight), runs the <code>finally</code>
+          block, and then resumes whatever was pending. A <code>return</code> <em>inside</em>
+          <code>finally</code> replaces the pending result, which silently discards an
+          exception that was on its way out.
+        </p>
+
+        <div class="rule-grid">
+          <div class="rule-card rule-card--mutate">
+            <div class="rule-card__label">What it guarantees</div>
+            <h3>The block runs on every exit</h3>
+            <p>
+              Files get closed, locks get released, temporary state gets restored &mdash; even
+              when the line that failed is one you did not think could fail.
+            </p>
+          </div>
+          <div class="rule-card rule-card--rebind">
+            <div class="rule-card__label">What it does not</div>
+            <h3>It does not cancel the exception</h3>
+            <p>
+              After the block, the parked exception carries on climbing. The only thing that
+              stops it is a <code>return</code>, <code>break</code> or <code>continue</code>
+              inside <code>finally</code> &mdash; and Python 3.14 warns about all three
+              (<a href="https://peps.python.org/pep-0765/" target="_blank" rel="noopener">PEP&nbsp;765</a>)
+              because they almost always hide a bug.
+            </p>
+          </div>
+        </div>
+
+        <div class="code-block">
+          <div class="code-block__header">
+            <div class="code-block__dots">
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+            </div>
+            <span class="code-block__lang">python</span>
+          </div>
+          <div class="code-block__body"><span class="tok-kw">def</span> <span class="tok-fn">risky</span>():
+    <span class="tok-kw">try</span>:
+        <span class="tok-kw">raise</span> <span class="tok-cls">ValueError</span>(<span class="tok-str">"lost"</span>)
+    <span class="tok-kw">finally</span>:
+        <span class="tok-kw">return</span> <span class="tok-str">"fine"</span>     <span class="tok-cmt"># the ValueError is thrown away — nobody will ever see it</span>
+
+<span class="tok-fn">print</span>(risky())         <span class="tok-cmt"># fine</span></div>
+        </div>
+
+        <div class="try-this">
+          <div class="try-this__label">Try this in a REPL</div>
+          <p>
+            Define <code>def f(): try: return "from try" finally: print("cleanup")</code> on
+            separate lines and call it. <code>cleanup</code> prints <em>before</em> the value
+            comes back. Then change the <code>finally</code> to <code>return "from finally"</code>
+            and see which string wins.
+          </p>
+        </div>
+      </div>
+
+      <div id="with">
+        <div class="section-divider"><div class="section-divider__label">Context managers</div></div>
+        <h2><code>with</code> is <code>try/finally</code> with the cleanup moved into the object</h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Instead of every caller remembering to lock the door, the door locks itself. An
+          object that knows how to set itself up and tear itself down is a
+          <strong>context manager</strong>, and <code>with</code> is the two-line way of saying
+          &ldquo;set up, do this, tear down &mdash; no matter what.&rdquo;
+        </p>
+        <p class="then-precise">
+          Precisely: <code>with EXPR as name:</code> evaluates <code>EXPR</code> to an object,
+          looks up <code>__enter__</code> and <code>__exit__</code> on its <em>class</em>, calls
+          <code>__enter__()</code> and binds its return value to <code>name</code>, runs the
+          body, and then calls <code>__exit__(exc_type, exc, tb)</code> &mdash; with three
+          <code>None</code>s if the body finished, or with the exception and its traceback if
+          it did not. If <code>__exit__</code> returns a true value the exception is suppressed;
+          otherwise it continues as if the <code>with</code> had not been there.
+        </p>
+
+        <div class="diagram-grid">
+          <div class="diagram-card">
+            <h3>What you write</h3>
+            <p>
+              <code>with open(path) as f:</code> then a body that uses <code>f</code>. Two lines,
+              no cleanup in sight. Demo 4 is the success path; demo 5 is the body raising.
+            </p>
+          </div>
+          <div class="diagram-card">
+            <h3>What runs (roughly)</h3>
+            <p>
+              <code>mgr = open(path)</code>; <code>f = type(mgr).__enter__(mgr)</code>;
+              a <code>try</code> around the body; on an exception,
+              <code>__exit__(type, exc, tb)</code> and re-raise unless it returned true;
+              on success, <code>__exit__(None, None, None)</code>.
+            </p>
+          </div>
+        </div>
+
+        <div class="code-block">
+          <div class="code-block__header">
+            <div class="code-block__dots">
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+            </div>
+            <span class="code-block__lang">python</span>
+          </div>
+          <div class="code-block__body"><span class="tok-cmt"># with EXPR as name:  BODY   — is close to this:</span>
+mgr = EXPR
+exit_ = <span class="tok-fn">type</span>(mgr).__exit__
+name = <span class="tok-fn">type</span>(mgr).__enter__(mgr)
+<span class="tok-kw">try</span>:
+    BODY
+<span class="tok-kw">except</span> <span class="tok-cls">BaseException</span> <span class="tok-kw">as</span> e:
+    <span class="tok-kw">if</span> <span class="tok-kw">not</span> exit_(mgr, <span class="tok-fn">type</span>(e), e, e.__traceback__):
+        <span class="tok-kw">raise</span>                 <span class="tok-cmt"># __exit__ said "not handled": keep climbing</span>
+<span class="tok-kw">else</span>:
+    exit_(mgr, <span class="tok-bool">None</span>, <span class="tok-bool">None</span>, <span class="tok-bool">None</span>)</div>
+        </div>
+
+        <h3>Managers you already use</h3>
+        <div style="overflow-x:auto">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Expression</th>
+                <th><code>as</code> gives you</th>
+                <th><code>__exit__</code> does</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>open(path)</code></td>
+                <td>the file object itself</td>
+                <td>closes it &mdash; which is why <code>with open(...)</code> is the idiom, not <code>f = open(...)</code></td>
+              </tr>
+              <tr>
+                <td><code>threading.Lock()</code></td>
+                <td><code>True</code> &mdash; so nobody writes <code>as</code></td>
+                <td>releases the lock, which is why Session 07 said &ldquo;always take it with <code>with</code>&rdquo;</td>
+              </tr>
+              <tr>
+                <td><code>tempfile.TemporaryDirectory()</code></td>
+                <td>the path, as a string</td>
+                <td>deletes the whole directory</td>
+              </tr>
+              <tr>
+                <td><code>sqlite3.connect(...)</code></td>
+                <td>the connection</td>
+                <td>commits on success, rolls back on an exception &mdash; and does <em>not</em> close the connection</td>
+              </tr>
+              <tr>
+                <td><code>contextlib.suppress(FileNotFoundError)</code></td>
+                <td><code>None</code></td>
+                <td>returns <code>True</code> for the named classes, swallowing them</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout--insight">
+          <div class="callout__icon">Key</div>
+          <div>
+            <div class="callout__title">Session 05&rsquo;s generator, cut at the <code>yield</code></div>
+            <div class="callout__body">
+              <code>@contextlib.contextmanager</code> turns a generator function into a context
+              manager: everything before the <code>yield</code> is <code>__enter__</code>, the
+              yielded value is what <code>as</code> binds, and everything after it is
+              <code>__exit__</code>. If the body raises, the exception is thrown <em>into</em> the
+              paused generator at the <code>yield</code> &mdash; so wrap the <code>yield</code> in
+              <code>try/finally</code> if the cleanup must happen either way. Same suspended
+              frame as Session 05; a different caller pulling the strings.
+            </div>
+          </div>
+        </div>
+
+        <div class="try-this">
+          <div class="try-this__label">Try this in a REPL</div>
+          <p>
+            <code>with 42: pass</code> &mdash; <code>TypeError: 'int' object does not support the
+            context manager protocol</code>, raised before the body ever runs. Then
+            <code>with open("x.txt", "w") as f: pass</code> followed by <code>f.closed</code>: the
+            name survived the block and reports <code>True</code>.
+          </p>
+        </div>
+      </div>
+
+      <div id="chaining">
+        <div class="section-divider"><div class="section-divider__label">Chaining</div></div>
+        <h2>One error causes another</h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Sometimes the person who receives the card cannot fix the problem, but can describe
+          it better: &ldquo;the file is corrupt&rdquo; is more useful to the caller than
+          &ldquo;invalid literal for int()&rdquo;. Python lets you raise the better card while
+          keeping the original stapled to it &mdash; and the traceback shows both.
+        </p>
+        <p class="then-precise">
+          Precisely: any exception raised while another is being handled gets
+          <code>__context__</code> set to the one being handled, automatically.
+          <code>raise New from old</code> additionally sets <code>__cause__</code> and
+          <code>__suppress_context__ = True</code>. The printer uses those attributes to choose
+          its sentence &mdash; and <code>from None</code> hides the first exception from the
+          output while leaving it reachable through <code>__context__</code>.
+        </p>
+
+        <div style="overflow-x:auto">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Inside an <code>except</code> block</th>
+                <th>Attributes on the new exception</th>
+                <th>The traceback says</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>raise RuntimeError("bad input")</code></td>
+                <td><code>__context__</code> &rarr; the original</td>
+                <td><em>During handling of the above exception, another exception occurred:</em></td>
+              </tr>
+              <tr>
+                <td><code>raise RuntimeError("bad input") from err</code></td>
+                <td><code>__cause__</code> and <code>__context__</code> &rarr; the original</td>
+                <td><em>The above exception was the direct cause of the following exception:</em></td>
+              </tr>
+              <tr>
+                <td><code>raise RuntimeError("bad input") from None</code></td>
+                <td><code>__context__</code> &rarr; the original, but suppressed</td>
+                <td>only the new exception is printed</td>
+              </tr>
+              <tr>
+                <td><code>raise</code> (bare)</td>
+                <td>the <em>same</em> object, unchanged</td>
+                <td>the original traceback, continued from here</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout--warn">
+          <div class="callout__icon">Care</div>
+          <div>
+            <div class="callout__title"><code>raise</code>, not <code>raise err</code>, to re-raise</div>
+            <div class="callout__body">
+              Both continue the same exception, but <code>raise err</code> adds a fresh traceback
+              entry for the line it is on, so the same function appears twice in the printed
+              traceback &mdash; once for the original failure and once for the re-raise. A bare
+              <code>raise</code> continues the traceback exactly where it was.
+            </div>
+          </div>
+        </div>
+
+        <div class="recap-box">
+          <div class="recap-box__label">What you should be able to draw</div>
+          <p>
+            A stack of frames with one drawn red, an exception instance on the heap whose
+            <code>__traceback__</code> lists every frame it has cleared, a handler frame that
+            keeps its desk, and &mdash; for chaining &mdash; a second exception whose
+            <code>__cause__</code> arrow points back at the first. If you can draw that, every
+            traceback you meet is a picture you have already seen.
+          </p>
+        </div>
+      </div>
+
+      <div id="mistakes">
+        <div class="section-divider"><div class="section-divider__label">Common mistakes</div></div>
+        <h2>Six ways this goes wrong</h2>
+
+        <div class="mistake-list">
+          <div class="mistake-item">
+            <h3>Catching too much</h3>
+            <p>
+              <code>except Exception: pass</code> turns every bug in the block &mdash; a typo, a
+              <code>None</code> where a list should be, a missing key &mdash; into silence. Catch
+              the class you expect, at the place you can actually recover. If you only want to
+              log and move on, log the traceback (<code>logging.exception(...)</code>) so the bug
+              still leaves a trail.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>A bare <code>except:</code></h3>
+            <p>
+              It catches <code>KeyboardInterrupt</code> and <code>SystemExit</code> as well, so
+              Ctrl-C stops working and <code>sys.exit()</code> gets swallowed. The widest net
+              that still lets the program be stopped is <code>except Exception</code>.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Using <code>err</code> after the block</h3>
+            <p>
+              <code>except ValueError as err:</code> then <code>print(err)</code> two lines later
+              &mdash; <code>NameError: name 'err' is not defined</code>. Python deleted it to break
+              the frame &harr; traceback cycle. Bind it to another name inside the block if you
+              need it afterwards.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3><code>return</code> inside <code>finally</code></h3>
+            <p>
+              It overrides the pending return value <em>and</em> discards any exception in
+              flight. The failure is not an error you see; it is an error you never see. Python
+              3.14 emits a <code>SyntaxWarning</code> for it. Put the <code>return</code> after the
+              <code>try</code> statement instead.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Opening a file without <code>with</code></h3>
+            <p>
+              <code>data = open(path).read()</code> works on CPython because the file object is
+              freed &mdash; and therefore closed &mdash; the moment its reference count hits zero.
+              Keep the object alive by accident, or run under PyPy, and the handle stays open.
+              <code>with open(path) as f:</code> closes it on a line you can point at.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Several classes without the parentheses</h3>
+            <p>
+              <code>except ValueError, TypeError:</code> is a <code>SyntaxError</code> in every
+              Python up to 3.13 (<em>multiple exception types must be parenthesized</em>). Write
+              the tuple: <code>except (ValueError, TypeError) as err:</code>. Python 3.14 finally
+              allows the bare form when there is no <code>as</code>, but the tuple works
+              everywhere.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout callout--success">
+          <div class="callout__icon">Check</div>
+          <div>
+            <div class="callout__title">Two questions catch nearly all of it</div>
+            <div class="callout__body">
+              <strong>Which frame should deal with this?</strong> &mdash; that decides where the
+              <code>try</code> goes, and it is usually further up than the line that fails.
+              <strong>What must happen on the way out, even if it fails?</strong> &mdash; that
+              is a <code>finally</code>, or better, a <code>with</code>.
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <section class="quiz" id="quiz" data-session="08-exceptions">
+      <div class="section-divider"><div class="section-divider__label">Check your understanding</div></div>
+      <h2>Can you predict the memory?</h2>
+      <p class="quiz__lede">Every question comes back to the same two: which frame is the exception in, and what runs on the way out?</p>
+
+      <div class="quiz-card" data-answer="1">
+        <div class="quiz-card__q">1. What is the first thing <code>raise ValueError("bad data")</code> does?</div>
+        <button class="quiz-option" data-choice="0">Prints the traceback and stops the program</button>
+        <button class="quiz-option" data-choice="1">Calls <code>ValueError("bad data")</code> &mdash; an ordinary constructor &mdash; and gets an instance back</button>
+        <button class="quiz-option" data-choice="2">Searches the whole stack for a matching <code>except</code> before building anything</button>
+        <div class="quiz-explain">
+          The expression after <code>raise</code> is evaluated first, exactly like any other expression. Only once the
+          instance exists does the interpreter attach a traceback entry and start looking for a handler, one frame at a time.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="2">
+        <div class="quiz-card__q">2. An exception reaches the module level and no <code>try</code> covers it. What happens?</div>
+        <button class="quiz-option" data-choice="0">Python skips the failing line and carries on with the next one</button>
+        <button class="quiz-option" data-choice="1">The exception is stored in a variable for you to inspect later</button>
+        <button class="quiz-option" data-choice="2">The traceback is printed to <code>stderr</code>, the process exits with status 1, and nothing after that line runs</button>
+        <div class="quiz-explain">
+          An exception that runs out of frames ends the program. The traceback you see is the <code>__traceback__</code>
+          chain, one entry per frame it cleared, outermost first.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="0">
+        <div class="quiz-card__q">3. <code>{}["x"]</code> raises a <code>KeyError</code> inside a <code>try</code> whose only clause is <code>except LookupError:</code>. Is it caught?</div>
+        <button class="quiz-option" data-choice="0">Yes &mdash; <code>KeyError</code> is a subclass of <code>LookupError</code>, and matching uses <code>isinstance</code></button>
+        <button class="quiz-option" data-choice="1">No &mdash; the class names have to be identical</button>
+        <button class="quiz-option" data-choice="2">Only if <code>KeyError</code> is listed as well, in a tuple</button>
+        <div class="quiz-explain">
+          Exceptions are classes with a family tree. A clause catches the class it names and every subclass. That is
+          also why <code>except Exception</code> catches nearly everything &mdash; and why a bare <code>except:</code> catches too much.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="2">
+        <div class="quiz-card__q">4. After an <code>except ValueError as err:</code> block ends, you write <code>print(err)</code>. What happens?</div>
+        <button class="quiz-option" data-choice="0">It prints the message &mdash; <code>err</code> is a normal local variable</button>
+        <button class="quiz-option" data-choice="1">It prints <code>None</code>, because the exception has been handled</button>
+        <button class="quiz-option" data-choice="2"><code>NameError</code> &mdash; Python deletes <code>err</code> at the end of the block to break a reference cycle</button>
+        <div class="quiz-explain">
+          The exception holds the traceback, the traceback holds the frames, and this frame would hold <code>err</code>.
+          To stop that loop keeping every local alive, the name is unbound for you. Copy it to another name if you need it.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="1">
+        <div class="quiz-card__q">5. Inside a <code>try</code> that has a <code>finally</code>, the body executes <code>return f.read()</code>. In what order do things happen?</div>
+        <button class="quiz-option" data-choice="0">The frame returns immediately; <code>finally</code> runs later, when the file object is garbage collected</button>
+        <button class="quiz-option" data-choice="1">The value is computed and parked, <code>finally</code> runs, and only then is the parked value returned</button>
+        <button class="quiz-option" data-choice="2"><code>finally</code> is skipped, because <code>return</code> leaves the block before it is reached</button>
+        <div class="quiz-explain">
+          <code>finally</code> runs on every way out of the <code>try</code>, and <code>return</code> is one of them. The return value
+          is evaluated first, held, and delivered after the cleanup &mdash; unless the <code>finally</code> block returns something of its own.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="0">
+        <div class="quiz-card__q">6. The body of a <code>with</code> block raises. The manager&rsquo;s <code>__exit__</code> runs and returns <code>False</code>. What happens next?</div>
+        <button class="quiz-option" data-choice="0">The same exception continues climbing the stack, with the cleanup already done</button>
+        <button class="quiz-option" data-choice="1">The exception is suppressed; execution continues after the <code>with</code> block</button>
+        <button class="quiz-option" data-choice="2">A second exception is raised, saying <code>__exit__</code> failed to handle the first</button>
+        <div class="quiz-explain">
+          <code>__exit__</code> receives the exception and votes: a true return value swallows it, a false one (including the
+          <code>None</code> a bare function returns) lets it carry on. Either way the cleanup ran &mdash; that is the point of <code>with</code>.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="2">
+        <div class="quiz-card__q">7. Inside an <code>except ValueError as err:</code> block you write <code>raise RuntimeError("bad input") from err</code>. What does the printed traceback show?</div>
+        <button class="quiz-option" data-choice="0">Only the <code>RuntimeError</code> &mdash; the <code>ValueError</code> was handled and is gone</button>
+        <button class="quiz-option" data-choice="1">Only the <code>ValueError</code> &mdash; the original always wins</button>
+        <button class="quiz-option" data-choice="2">Both, oldest first, joined by <em>The above exception was the direct cause of the following exception</em></button>
+        <div class="quiz-explain">
+          <code>from err</code> sets <code>__cause__</code> on the new exception, which keeps the old one alive and tells the
+          printer how the two are related. Without <code>from</code>, <code>__context__</code> is still set and the sentence becomes
+          <em>During handling of the above exception, another exception occurred</em>.
+        </div>
+      </div>
+    </section>
+
+    <div class="session-footer">
+      <a href="../07-gil/" class="btn btn--secondary">&larr; Session 07: The GIL</a>
+      <div style="text-align:center;font-size:var(--fs-xs);color:var(--clr-text-3)" data-role="session-count">Session 08 of 08</div>
+      <a href="../../index.html" class="btn btn--primary">Back to course</a>
+    </div>
+  </main>
+</div>
+
+<script src="../../assets/js/core.js"></script>
+<script src="../../assets/js/syntax.js"></script>
+<script src="../../assets/js/memory-viz.js"></script>
+<script src="../../assets/js/animator.js"></script>
+<script src="session.js"></script>
+</body>
+</html>

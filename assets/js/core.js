@@ -15,6 +15,7 @@ PJ.COURSE = [
   { id: '05-iterators',   num: '05', title: 'Iterators & Generators',           short: 'iter, next, yield',            status: 'live' },
   { id: '06-decorators',  num: '06', title: 'Decorators',                       short: 'f = deco(f), wrappers, wraps', status: 'live' },
   { id: '07-gil',         num: '07', title: 'The GIL & Concurrency',            short: 'Threads, processes, asyncio',  status: 'live' },
+  { id: '08-exceptions',  num: '08', title: 'Exceptions, Tracebacks & Context Managers', short: 'raise, unwind, catch, with', status: 'live' },
 ];
 
 PJ.Core = (function () {

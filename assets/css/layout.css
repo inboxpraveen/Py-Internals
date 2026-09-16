@@ -273,6 +273,16 @@
   background: var(--clr-surface);
 }
 
+/* Grid items default to min-width: auto, so one long `white-space: pre` code
+   line used to widen the whole stage past the viewport — the memory panel and
+   the speed control were clipped on phones, and in the two-column layout the
+   memory panel was squeezed to ~260px. Let the panels shrink; the code body
+   scrolls sideways instead. */
+.stage__code-panel,
+.stage__memory-panel {
+  min-width: 0;
+}
+
 .panel-header {
   display: flex;
   align-items: center;
@@ -380,6 +390,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+/* `.btn` is nowrap + overflow hidden, which silently cut "Session 03: Lists,
+   Dicts & References" down to "Session 03: Lists" once the row got tight. Let
+   the two navigation labels wrap instead. */
+.session-footer .btn {
+  white-space: normal;
+  text-align: center;
+  line-height: var(--lh-snug);
 }
 
 /* ── Progress Bar ─────────────────────────────────────────── */
@@ -476,5 +496,13 @@
   }
   .explanation-strip__step-num { width: 30px; height: 30px; font-size: var(--fs-xs); }
   .explanation-strip__content h3 { font-size: var(--fs-md); }
-  .session-footer { padding: var(--sp-5) var(--sp-5); }
+  .session-footer {
+    padding: var(--sp-5) var(--sp-5);
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-3);
+  }
+  .session-footer .btn { width: 100%; padding-top: var(--sp-3); padding-bottom: var(--sp-3); }
+  /* Counter first, then previous, then next — reads like a page footer. */
+  .session-footer [data-role="session-count"] { order: -1; }
 }

@@ -55,6 +55,7 @@ Py-Internals/
     ├── 05-iterators/           ← iter/next, yield, lazy evaluation
     ├── 06-decorators/          ← f = deco(f), wrappers, closure cells, wraps
     ├── 07-gil/                 ← the GIL, races, locks, processes, asyncio
+    ├── 08-exceptions/          ← raise, unwinding, tracebacks, finally, with
     └── ...
 
 `glossary.html` at the repo root is the searchable term list. Link it from every session topbar.
@@ -181,6 +182,7 @@ from position. Recognised values render as `.mem-frame--<state>` in
 | `waiting` | dashed border, dimmed, grey badge | a live frame that is ready but not chosen |
 | `blocked` | dashed border, dimmed, amber badge | parked on a lock, a join, or I/O |
 | `runtime` | grey panel, uppercase header | the interpreter itself, not a call frame |
+| `unwinding` | red dashed border, red badge | a frame an exception is clearing on its way up (Session 08) |
 
 **`frame.badge`** — replaces the word `scope` in the frame header. Keep it
 short (under about 16 characters): `running`, `waiting for GIL`,
@@ -229,6 +231,73 @@ The visualizer has one stack and one heap, so:
   called `value read` and says in the step text that it is the value sitting on
   that thread's own stack. Label invented rows; never let one look like a
   real name.
+
+### Shared additions from Session 08
+
+Session 08 needed to draw an exception in flight, which surfaced two gaps.
+
+**`type: 'ref'` for item and pair values.** Sessions 03–07 wrote pointer
+labels such as `{ value: 'list -> 0x7f560010', type: 'str' }`, and the
+renderer dutifully drew them as *quoted strings* in string colour — so a slot
+that refers to another object looked exactly like a slot holding text. Every
+pointer label is now `type: 'ref'`, which renders in the same amber address
+style as a name's `pyId` in the frame, with no quotes and a real arrow:
+
+```js
+items: [{ value: 'inner -> 0x7f5a1010', type: 'ref' }]
+pairs: [{ key: '__cause__', value: 'ValueError -> 0x7fc60140', type: 'ref' }]
+```
+
+`ref` is a value type only. There is no `ref` heap object, no chip, and no
+entry in `pairTypes` — the "five places" rule below is for object types.
+
+**`state: 'unwinding'`** — a frame the exception is passing through. It renders
+red and dashed (the same palette as `state: 'gc'` on an object) with whatever
+`badge` you give it (`raising`, `unwinding`, `no handler`). As with Session
+07's states, once any frame in a snapshot sets a `state`, the active ring
+follows `state === 'running'` only; a snapshot with an `unwinding` frame and no
+`running` frame draws no ring at all, which is the honest picture — nothing is
+executing while the exception climbs.
+
+**Exceptions are instances.** Following Session 07's precedent (`Thread`,
+`Lock`, `Process` are instances, not new types), an exception is
+`type: 'instance'` with a `classRef` and a few well-known pairs. Session 08
+wraps that in an `exception()` helper; copy it rather than re-inventing it:
+
+```js
+{ id: 'exc', pyId: ADDRS.exc, type: 'instance', value: 'ValueError("bad data")',
+  refcount: 1, mutable: true,
+  classRef: { name: 'ValueError', pyId: ADDRS.ValueErrorCls },
+  dictLabel: 'exception state',
+  pairs: [
+    { key: 'args',          value: '("bad data",)',                      type: 'tuple' },
+    { key: '__traceback__', value: 'main (line 8) → parse (line 5) → load (line 2)', type: 'ref' },
+    { key: '__cause__',     value: 'None', type: 'none' },
+    { key: '__context__',   value: 'None', type: 'none' },
+  ] }
+```
+
+`__traceback__` is drawn as the list of frames the exception has passed
+through, **outermost first** — the order `tb_next` walks and the order the
+printed traceback uses. It grows by one entry per frame cleared. Do not draw
+it innermost-first because "that is where it started"; the reader will then
+read the printed traceback backwards.
+
+**The syntax highlighter** now colours `async` / `await` as keywords and a
+capitalised identifier that is not all-caps (`Point`, `ValueError`,
+`Thread`) as a class name (`.tok-cls`). Session code strings need nothing
+extra; static `code-block` HTML in the narrative still uses the token classes
+by hand.
+
+**Two layout rules every session now relies on.** Grid items default to
+`min-width: auto`, so one long `white-space: pre` code line used to widen the
+whole `.stage` past the viewport on phones and squeeze the memory panel in the
+two-column layout; `.stage__code-panel` and `.stage__memory-panel` are now
+`min-width: 0` and the code body scrolls sideways instead. And
+`.session-footer` stacks its three children below 768px, with the button
+labels allowed to wrap — `.btn` is `nowrap` + `overflow: hidden` everywhere
+else, which was quietly truncating "Session 03: Lists, Dicts & References" to
+"Session 03: Lists".
 
 ---
 
@@ -304,9 +373,9 @@ The `containerId` element must contain buttons with these `data-action` attribut
 ### Step 1: Create the folder
 
 ```bash
-mkdir sessions/08-your-topic
-touch sessions/08-your-topic/index.html
-touch sessions/08-your-topic/session.js
+mkdir sessions/09-your-topic
+touch sessions/09-your-topic/index.html
+touch sessions/09-your-topic/session.js
 ```
 
 ### Step 2: Copy the HTML shell
@@ -317,9 +386,11 @@ so you start with structure and not with someone else's scaffolding to delete.
 
 Then read the session closest to your topic before you write a demo:
 Session 07 for the widest range of narrative components and for anything with
-more than one thread of control (`frame.state`, `frame.badge`); Session 04 for
-the object model (`classRef`, `bases`, inheritance); Session 02 for call stacks;
-Session 03 for containers and references. In your copy, replace:
+more than one thread of control (`frame.state`, `frame.badge`); Session 08 for
+anything that tears frames down (`state: 'unwinding'`, the `exception()`
+helper); Session 04 for the object model (`classRef`, `bases`, inheritance);
+Session 02 for call stacks; Session 03 for containers and references. In your
+copy, replace:
 - `<title>` — update session name
 - `<meta name="description">` — describe the session
 - `.session-hero__eyebrow` — e.g., "Foundations · Session 02"
@@ -377,7 +448,7 @@ In `assets/js/core.js`, add an entry (or flip `status` from `planned` to
 `live`):
 
 ```js
-{ id: '07-gil', num: '07', title: 'The GIL & Concurrency', short: 'Threads, processes, asyncio', status: 'live' },
+{ id: '08-exceptions', num: '08', title: 'Exceptions, Tracebacks & Context Managers', short: 'raise, unwind, catch, with', status: 'live' },
 ```
 
 This is not optional. `PJ.COURSE` drives the "Session N of M" counter, the
@@ -560,7 +631,7 @@ This is a teaching diagram, not a claim that Python literally stores closures as
 
 For list and dict sessions, keep the model Python-level: containers are heap objects, and their slots/values point to other objects. Avoid claiming that the browser diagram is the literal CPython structure.
 
-The current visualizer displays collection items as values, not as clickable arrows. When teaching nested containers, use readable labels inside the parent container and render the nested objects separately on the heap:
+The current visualizer displays collection items as values, not as clickable arrows. When teaching nested containers, use readable labels inside the parent container, give them `type: 'ref'` so they render as addresses rather than as quoted strings, and render the nested objects separately on the heap:
 
 ```js
 {
@@ -589,7 +660,7 @@ The current visualizer displays collection items as values, not as clickable arr
       mutable: true,
       state: 'normal',
       items: [
-        { value: 'innerList -> 0x7f532010', type: 'str' },
+        { value: 'innerList -> 0x7f532010', type: 'ref' },
       ],
     },
     {
@@ -600,7 +671,7 @@ The current visualizer displays collection items as values, not as clickable arr
       mutable: true,
       state: 'normal',
       items: [
-        { value: 'innerList -> 0x7f532010', type: 'str' },
+        { value: 'innerList -> 0x7f532010', type: 'ref' },
       ],
     },
   ],
@@ -626,7 +697,7 @@ For dicts, use `pairs` and the same label convention when a value points to a ne
   mutable: true,
   pairs: [
     { key: 'name', value: 'Ada', type: 'str' },
-    { key: 'skills', value: 'list -> 0x7f580010', type: 'str' },
+    { key: 'skills', value: 'list -> 0x7f580010', type: 'ref' },
   ],
 }
 ```
@@ -683,7 +754,7 @@ labels a wrapper carries:
   dictLabel: 'function attributes',
   pairs: [
     { key: '__name__', value: 'greet', type: 'str' },
-    { key: '__wrapped__', value: 'greet @ 0x7f9200c8', type: 'str' },
+    { key: '__wrapped__', value: 'greet @ 0x7f9200c8', type: 'ref' },
   ],
 }
 ```
@@ -882,7 +953,7 @@ Delays: `delay-1` = 80ms, `delay-2` = 160ms, `delay-3` = 240ms, `delay-4` = 320m
 - ✅ Use `frame.state` and `frame.badge` when more than one frame is live at once, and keep frame order fixed across steps
 - ✅ Represent function definitions with `type: 'function'` heap objects
 - ✅ Represent list and dict aliases by pointing multiple names at the same heap object ID
-- ✅ For nested containers, render the nested object separately and label parent slots/values with `name -> 0x7f...`
+- ✅ For nested containers, render the nested object separately and label parent slots/values with `name -> 0x7f...` as `type: 'ref'`
 - ✅ Put the most important insight in the second-to-last step, and confirm/summarize on the last
 - ✅ Use callouts generously — they break up text and highlight key insights
 - ✅ Make `highlight` arrays specific — highlight only the objects currently being discussed
@@ -892,7 +963,8 @@ Delays: `delay-1` = 80ms, `delay-2` = 160ms, `delay-3` = 240ms, `delay-4` = 320m
 - ❌ Add a `<style>` block to a session page, or an `onclick` attribute anywhere
 - ❌ Re-implement anything `PJ.Core.init()` or `PJ.Session.mount()` already does
 - ❌ State a Python fact you have not run — especially about refcounts, identity or freeing
-- ❌ Draw a cached small int (−5 to 256) or a short string as garbage collected; they are immortal
+- ❌ Draw a cached small int (−5 to 256) or a short string as garbage collected; they are immortal — and draw their `refcount` as `'∞'`, never as a number that ticks up and down
+- ❌ Give a pointer label (`'list -> 0x…'`, `'fn @ 0x…'`) `type: 'str'` — it renders as a quoted string; use `type: 'ref'`
 - ❌ Hardcode hex colors or pixel values — use CSS variables
 - ❌ Add more than 10 steps to a demo — learners lose context
 - ❌ Skip the initial "empty state" step — learners need to see the baseline
@@ -933,6 +1005,11 @@ Before shipping a session, verify:
       snapshot shows two interpreters, as in Session 07's process demo)
 - [ ] Frame `badge` text does not wrap the frame header at 320px — keep badges
       under about 16 characters
+- [ ] The footer's two navigation labels read in full at 320px (they wrap and
+      stack; if you see them cut off, something has re-added `nowrap`)
+- [ ] The memory panel is still full width at 320px and half width at 1100px
+      with your longest code line on screen — a code line cannot widen the
+      stage any more, but check the first demo of a new session anyway
 - [ ] Compare your tallest memory snapshot against the existing ceiling
       (~1200px, set by Sessions 04 and 07). Measure it, do not guess:
       `document.getElementById('memPanel').scrollHeight` at your busiest step
@@ -996,7 +1073,7 @@ result = greet("Alice")`,
 
 document.addEventListener('DOMContentLoaded', () => {
   PJ.Session.mount({
-    sessionId: '08-your-topic',
+    sessionId: '09-your-topic',
     demos: DEMOS,
     defaultDemo: 'callStack',
     defaultSpeed: 900,
@@ -1010,7 +1087,7 @@ Run these. They are quick and they catch the mistakes that actually ship:
 
 ```bash
 # 1. The file parses.
-node --check sessions/08-your-topic/session.js
+node --check sessions/09-your-topic/session.js
 
 # 2. Every `lines:` number is a real line of that demo's own `code` string.
 #    (Off-by-one line references are the single most common session bug.)
@@ -1023,14 +1100,32 @@ fs.writeFileSync(tmp, src);
 let bad = 0;
 for (const [k, d] of Object.entries(require(tmp))) {
   const n = d.code.split("\n").length;
-  d.steps.forEach((s, i) => (s.lines || []).forEach(L => {
-    if (L < 1 || L > n) { console.log("BAD", k, "step", i + 1, "-> line", L, "(code has", n, "lines)"); bad++; }
-  }));
+  d.steps.forEach((s, i) => {
+    (s.lines || []).forEach(L => {
+      if (L < 1 || L > n) { console.log("BAD", k, "step", i + 1, "-> line", L, "(code has", n, "lines)"); bad++; }
+    });
+    const m = s.memory; if (!m) return;
+    // every `ref` on a var must name an object that is actually on the heap in that step
+    const ids = new Set((m.heap || []).map(o => o.id));
+    (m.frames || (m.frame ? [m.frame] : [])).forEach(f => (f.vars || []).forEach(v => {
+      if (v.ref && !ids.has(v.ref)) { console.log("BAD-REF", k, "step", i + 1, v.name, "->", v.ref); bad++; }
+    }));
+    // cached small ints are immortal: draw them with refcount "∞" and never as gc
+    (m.heap || []).forEach(o => {
+      if (o.type === "int" && typeof o.value === "number" && o.value >= -5 && o.value <= 256 && (o.refcount !== "∞" || o.state === "gc")) {
+        console.log("BAD-SMALLINT", k, "step", i + 1, "int", o.value, "refcount", o.refcount, "state", o.state); bad++;
+      }
+      // a pointer label typed as str renders as a quoted string
+      [...(o.items || []), ...(o.pairs || [])].forEach(cell => {
+        if (typeof cell.value === "string" && /(-> |@ )0x/.test(cell.value) && cell.type !== "ref") { console.log("BAD-LABEL", k, "step", i + 1, cell.value); bad++; }
+      });
+    });
+  });
   if ((d.steps[0].lines || []).length) { console.log("BAD", k, "step 1 should have lines: []"); bad++; }
   if (d.steps.length < 5 || d.steps.length > 10) console.log("WARN", k, "has", d.steps.length, "steps");
 }
-console.log(bad ? "FAILED: " + bad + " bad line reference(s)" : "line references: all clean");
-' sessions/08-your-topic/session.js
+console.log(bad ? "FAILED: " + bad + " problem(s)" : "line references, heap refs, small ints, labels: all clean");
+' sessions/09-your-topic/session.js
 
 # 3. Every factual claim is true in the Python you are targeting.
 python -c "import sys; print(sys.version)"

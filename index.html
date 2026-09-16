@@ -417,7 +417,7 @@
     <span class="topbar__brand">Py<span>Internals</span></span>
   </div>
   <div class="topbar__actions">
-    <span class="progress-chip" id="homeProgressChip">7 live sessions</span>
+    <span class="progress-chip" id="homeProgressChip">8 live sessions</span>
     <a href="glossary.html" class="btn btn--ghost btn--sm">Glossary</a>
     <a href="https://github.com/inboxpraveen/Py-Internals"
        target="_blank"
@@ -538,6 +538,11 @@
         <div class="course-path__num">07</div>
         <div class="course-path__title">Threads</div>
         <div class="course-path__idea">One interpreter lock. Waiting overlaps; computing does not.</div>
+      </a>
+      <a class="course-path__step" href="sessions/08-exceptions/">
+        <div class="course-path__num">08</div>
+        <div class="course-path__title">Exceptions</div>
+        <div class="course-path__idea">An object climbs the stack, clearing frames, until a handler stops it.</div>
       </a>
     </div>
   </section>
@@ -694,6 +699,30 @@
           <span class="session-card__tag">Lock</span>
           <span class="session-card__tag">multiprocessing</span>
           <span class="session-card__tag">asyncio</span>
+        </div>
+      </div>
+      <svg class="session-card__arrow" width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M7 10h6M10 7l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+
+    <a href="sessions/08-exceptions/" class="session-card animate-fade-up delay-5" data-session="08-exceptions">
+      <div class="session-card__num">08</div>
+      <div class="session-card__body">
+        <div class="session-card__title">Exceptions, Tracebacks &amp; Context Managers</div>
+        <div class="session-card__desc">
+          What <code>raise</code> really does: an exception object climbs the call stack,
+          clearing one frame at a time, until a handler stops it. Why <code>finally</code>
+          runs past a <code>return</code>, what <code>with</code> calls for you, and how one
+          error gets chained to another.
+        </div>
+        <div class="session-card__tags">
+          <span class="session-card__tag">raise</span>
+          <span class="session-card__tag">traceback</span>
+          <span class="session-card__tag">try / except / finally</span>
+          <span class="session-card__tag">with</span>
+          <span class="session-card__tag">__enter__ / __exit__</span>
+          <span class="session-card__tag">raise from</span>
         </div>
       </div>
       <svg class="session-card__arrow" width="20" height="20" viewBox="0 0 20 20" fill="none">

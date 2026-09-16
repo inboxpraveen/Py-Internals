@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Session 05: Iterators & Generators — Py Internals</title>
   <meta name="description" content="See how Python for-loops, iterators, yield, and lazy evaluation work in memory." />
+  <meta name="theme-color" content="#1A6B5C" />
   <link rel="icon" type="image/png" href="../../assets/images/Python-logo.png" />
   <link rel="apple-touch-icon" href="../../assets/images/Python-logo.png" />
   <link rel="stylesheet" href="../../assets/css/base.css" />
@@ -20,8 +21,8 @@
 
 <header class="topbar">
   <div class="topbar__logo">
-    <button class="menu-toggle" aria-label="Toggle menu">
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <button class="menu-toggle" aria-label="Open session menu">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none">
         <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
     </button>
@@ -32,7 +33,7 @@
   </div>
   <div class="topbar__actions">
     <a href="../../glossary.html" class="btn btn--ghost btn--sm">Glossary</a>
-    <span class="session-count" data-role="session-count">Session 05 of 07</span>
+    <span class="session-count" data-role="session-count">Session 05 of 08</span>
   </div>
 </header>
 
@@ -176,10 +177,10 @@
     </section>
 
     <div id="demo-basic">
-      <section class="stage-intro">
+      <section class="stage-intro" aria-labelledby="stage-title">
         <div>
           <div class="stage-intro__label">Interactive lab</div>
-          <h2>Watch the bookmark, not just the loop</h2>
+          <h2 id="stage-title">Watch the bookmark, not just the loop</h2>
           <p>
             The list does not walk itself. A second object remembers the place.
             Rows named <code>index</code>, <code>over</code> and <code>pending</code> are
@@ -222,26 +223,26 @@
         <div class="stage__code-panel">
           <div class="panel-header panel-header--dark">
             <span>python</span>
-            <div style="display:flex;align-items:center;gap:6px">
+            <div style="display:flex;align-items:center;gap:6px" aria-hidden="true">
               <div class="code-block__dot"></div>
               <div class="code-block__dot"></div>
               <div class="code-block__dot"></div>
             </div>
           </div>
           <div class="code-panel-body" id="codePanel"></div>
-          <div class="step-track" data-role="step-track" id="stepTrack"></div>
+          <div class="step-track" data-role="step-track" id="stepTrack" role="group" aria-label="Jump to a step"></div>
           <div class="playback-controls" id="controls">
             <div class="playback-controls__left">
-              <button class="step-btn" data-action="prev" title="Previous step" aria-label="Previous step" aria-label="Previous step" disabled>
+              <button class="step-btn" data-action="prev" title="Previous step" aria-label="Previous step" disabled>
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M8 2L4 6l4 4"/></svg>
               </button>
-              <button class="play-btn" data-action="play" title="Play / Pause" aria-label="Play the walkthrough" aria-label="Play the walkthrough">
+              <button class="play-btn" data-action="play" title="Play / Pause" aria-label="Play the walkthrough">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true"><path d="M3 2.5l8 4.5-8 4.5z"/></svg>
               </button>
-              <button class="step-btn" data-action="next" title="Next step" aria-label="Next step" aria-label="Next step">
+              <button class="step-btn" data-action="next" title="Next step" aria-label="Next step">
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M4 2l4 4-4 4"/></svg>
               </button>
-              <button class="btn btn--ghost btn--sm" data-action="reset" title="Reset" aria-label="Reset the walkthrough">
+              <button class="btn btn--ghost btn--sm" data-action="reset" title="Reset" aria-label="Reset to the first step">
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
                   <path d="M10 6A4 4 0 112 6" stroke-linecap="round"/>
                   <path d="M2 3v3h3" fill="currentColor" stroke="none"/>
@@ -254,8 +255,8 @@
                 <label for="speedSelect">Speed:</label>
                 <select class="speed-select" id="speedSelect" data-action="speed">
                   <option value="1700">0.5×</option>
-                  <option value="950" selected>1×</option>
-                  <option value="650">1.5×</option>
+                  <option value="900" selected>1×</option>
+                  <option value="600">1.5×</option>
                   <option value="400">2×</option>
                 </select>
               </div>
@@ -544,11 +545,26 @@
           Square brackets are eager. Parentheses make a generator expression. Memory cost is the difference.
         </div>
       </div>
+      <div class="quiz-card" data-answer="2">
+        <div class="quiz-card__q">5. <code>xs = [1, 2, 3, 4]</code>, and inside <code>for x in xs:</code> you call <code>xs.remove(x)</code> when <code>x == 1</code>. Which values does the loop visit?</div>
+        <button class="quiz-option" data-choice="0"><code>1, 2, 3, 4</code> — the iterator took a snapshot of the list first</button>
+        <button class="quiz-option" data-choice="1">It raises an error as soon as the list changes size</button>
+        <button class="quiz-option" data-choice="2"><code>1, 3, 4</code> — removing <code>1</code> slides <code>2</code> into the slot the cursor has already passed</button>
+        <div class="quiz-explain">The list iterator holds an index into a list it does not own. After the removal, index 1 holds <code>3</code>, so <code>2</code> is never visited and nothing complains. Loop over a copy, <code>for x in xs[:]</code>, when you need to remove while iterating.</div>
+      </div>
+
+      <div class="quiz-card" data-answer="1">
+        <div class="quiz-card__q">6. <code>g = (x for x in [1, 2, 3])</code>, then <code>sum(g)</code>, then <code>list(g)</code>. What does the second call return?</div>
+        <button class="quiz-option" data-choice="0"><code>[1, 2, 3]</code> — the generator restarts for each consumer</button>
+        <button class="quiz-option" data-choice="1"><code>[]</code> — <code>sum</code> drained the generator, and a generator does not rewind</button>
+        <button class="quiz-option" data-choice="2">A <code>StopIteration</code> error escapes to your code</button>
+        <div class="quiz-explain">A generator is its own iterator. <code>sum</code> pulled every value until <code>StopIteration</code>, which it handled quietly; <code>list</code> then asks the same exhausted object and gets nothing. Build a fresh generator, or materialise the values once with <code>list(...)</code>.</div>
+      </div>
     </section>
 
     <div class="session-footer">
       <a href="../04-classes/" class="btn btn--secondary">← Session 04: Classes</a>
-      <div style="text-align:center;font-size:var(--fs-xs);color:var(--clr-text-3)" data-role="session-count">Session 05 of 07</div>
+      <div style="text-align:center;font-size:var(--fs-xs);color:var(--clr-text-3)" data-role="session-count">Session 05 of 08</div>
       <a href="../06-decorators/" class="btn btn--primary">Session 06: Decorators →</a>
     </div>
   </main>

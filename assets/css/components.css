@@ -332,6 +332,9 @@ code {
   padding: 1px 5px;
   border-radius: var(--radius-sm);
   color: var(--clr-accent);
+  /* A dotted name like inc.__closure__[0].cell_contents has no break
+     opportunity and ran off a 320px screen. Break it rather than clip it. */
+  overflow-wrap: anywhere;
 }
 
 /* ── Code Block ───────────────────────────────────────────── */

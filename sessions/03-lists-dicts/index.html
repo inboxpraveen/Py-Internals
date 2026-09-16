@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Session 03: Lists, Dicts &amp; References — Py Internals</title>
   <meta name="description" content="Understand how Python lists and dictionaries store references, why aliases share mutations, and what shallow copies really copy." />
+  <meta name="theme-color" content="#1A6B5C" />
 
   <link rel="icon" type="image/png" href="../../assets/images/Python-logo.png" />
   <link rel="apple-touch-icon" href="../../assets/images/Python-logo.png" />
@@ -22,8 +23,8 @@
 
 <header class="topbar">
   <div class="topbar__logo">
-    <button class="menu-toggle" aria-label="Toggle menu">
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <button class="menu-toggle" aria-label="Open session menu">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none">
         <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
     </button>
@@ -34,7 +35,7 @@
   </div>
   <div class="topbar__actions">
     <a href="../../glossary.html" class="btn btn--ghost btn--sm">Glossary</a>
-    <span class="session-count" data-role="session-count">Session 03 of 07</span>
+    <span class="session-count" data-role="session-count">Session 03 of 08</span>
   </div>
 </header>
 
@@ -45,43 +46,49 @@
     <div class="sidebar__section">
       <div class="sidebar__label">Session 03</div>
       <a href="#intro" class="sidebar__item active">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="9" cy="9" r="7"/><path d="M9 6v4l2 2"/>
         </svg>
         Introduction
       </a>
       <a href="#demo-basic" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M2 9h14M9 2v14"/>
         </svg>
         Interactive Lab
       </a>
       <a href="#containers" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <rect x="3" y="4" width="12" height="10" rx="2"/><path d="M6 7h6M6 10h4"/>
         </svg>
         Containers
       </a>
       <a href="#copying" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <rect x="4" y="4" width="8" height="8" rx="1"/><path d="M7 7h7v7H7z"/>
         </svg>
         Copying
       </a>
       <a href="#functions" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M3 9h10M10 6l3 3-3 3"/><circle cx="4" cy="9" r="2"/>
         </svg>
         Functions
       </a>
       <a href="#dicts" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M4 5h10M4 9h10M4 13h10"/><path d="M6 5v8"/>
         </svg>
         Dicts
       </a>
+      <a href="#mistakes" class="sidebar__item">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M9 2.5l6.5 12h-13z" stroke-linejoin="round"/><path d="M9 7v3.5M9 12.5h.01"/>
+        </svg>
+        Common mistakes
+      </a>
       <a href="#quiz" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="9" cy="9" r="7"/><path d="M6 9l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         Check yourself
@@ -90,25 +97,25 @@
     <div class="sidebar__section">
       <div class="sidebar__label">Course</div>
       <a href="../02-functions/" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M11 5l-4 4 4 4"/>
         </svg>
         Previous Session
       </a>
       <a href="../04-classes/" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M7 5l4 4-4 4"/>
         </svg>
         Next Session
       </a>
       <a href="../../glossary.html" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M4 3h7a2 2 0 012 2v10H6a2 2 0 01-2-2z"/><path d="M4 12h9"/>
         </svg>
         Glossary
       </a>
       <a href="../../index.html" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M3 9L9 3l6 6M5 7v8h8V7"/>
         </svg>
         All Sessions
@@ -131,24 +138,9 @@
         containers, aliases, copies, and mutations that travel.
       </p>
       <div class="session-meta">
-        <div class="session-meta__item">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="7" cy="7" r="5.5"/><path d="M7 4v3l2 2"/>
-          </svg>
-          ~40 minutes
-        </div>
-        <div class="session-meta__item">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M2 7l3 3 7-7"/>
-          </svg>
-          5 interactive demos
-        </div>
-        <div class="session-meta__item">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="1" y="1" width="12" height="12" rx="2"/><path d="M4 4h6M4 7h4M4 10h3"/>
-          </svg>
-          Beginner friendly, practical depth
-        </div>
+        <div class="session-meta__item">~40 minutes</div>
+        <div class="session-meta__item">5 interactive demos</div>
+        <div class="session-meta__item">Builds on Sessions 01 and 02</div>
       </div>
     </div>
 
@@ -241,27 +233,27 @@
         <div class="stage__code-panel">
           <div class="panel-header panel-header--dark">
             <span>python</span>
-            <div style="display:flex;align-items:center;gap:6px">
+            <div style="display:flex;align-items:center;gap:6px" aria-hidden="true">
               <div class="code-block__dot"></div>
               <div class="code-block__dot"></div>
               <div class="code-block__dot"></div>
             </div>
           </div>
           <div class="code-panel-body" id="codePanel"></div>
-          <div class="step-track" data-role="step-track" id="stepTrack"></div>
+          <div class="step-track" data-role="step-track" id="stepTrack" role="group" aria-label="Jump to a step"></div>
           <div class="playback-controls" id="controls">
             <div class="playback-controls__left">
               <button class="step-btn" data-action="prev" title="Previous step" aria-label="Previous step" disabled>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M8 2L4 6l4 4"/></svg>
+                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M8 2L4 6l4 4"/></svg>
               </button>
               <button class="play-btn" data-action="play" title="Play / Pause" aria-label="Play the walkthrough">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M3 2.5l8 4.5-8 4.5z"/></svg>
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M3 2.5l8 4.5-8 4.5z"/></svg>
               </button>
               <button class="step-btn" data-action="next" title="Next step" aria-label="Next step">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M4 2l4 4-4 4"/></svg>
+                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M4 2l4 4-4 4"/></svg>
               </button>
               <button class="btn btn--ghost btn--sm" data-action="reset" title="Reset" aria-label="Reset to the first step">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
                   <path d="M10 6A4 4 0 112 6" stroke-linecap="round"/>
                   <path d="M2 3v3h3" fill="currentColor" stroke="none"/>
                 </svg>
@@ -272,10 +264,10 @@
               <div class="speed-control">
                 <label for="speedSelect">Speed:</label>
                 <select class="speed-select" id="speedSelect" data-action="speed">
-                  <option value="1700">0.5x</option>
-                  <option value="950" selected>1x</option>
-                  <option value="650">1.5x</option>
-                  <option value="400">2x</option>
+                  <option value="1700">0.5×</option>
+                  <option value="900" selected>1×</option>
+                  <option value="600">1.5×</option>
+                  <option value="400">2×</option>
                 </select>
               </div>
               <span class="step-counter" data-role="step-counter">1 / 1</span>
@@ -683,6 +675,71 @@
           </p>
         </div>
       </div>
+      <div id="mistakes">
+        <div class="section-divider"><div class="section-divider__label">Common mistakes</div></div>
+        <h2>Four ways this goes wrong</h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Containers hold arrows, and arrows are cheap to copy. Almost every container bug is
+          two arrows pointing at one tray when you pictured two trays — or a method quietly
+          returning nothing at all.
+        </p>
+
+        <div class="mistake-list">
+          <div class="mistake-item">
+            <h3><code>x = y = []</code> — one list, two names</h3>
+            <p>
+              Chained assignment builds the list <em>once</em> and sticks both nametags on it.
+              <code>x.append(1)</code> then shows up in <code>y</code>, and <code>x is y</code> is
+              <code>True</code>. Write two statements, <code>x = []</code> and <code>y = []</code>,
+              when you want two trays. The same trap wears a different costume in
+              <code>[[0] * 3] * 3</code>, which repeats one row three times.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3><code>nums = nums.sort()</code></h3>
+            <p>
+              <code>sort()</code> sorts the list in place and returns <code>None</code> — it is a
+              mutation, not a value. After that line, <code>nums</code> is <code>None</code> and the
+              sorted list has lost its only name. The same goes for <code>append</code>,
+              <code>reverse</code>, <code>extend</code> and <code>update</code>. When you want a new
+              object handed back, use the function form: <code>sorted(nums)</code>,
+              <code>reversed(nums)</code>.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Deleting keys from a dict while looping over it</h3>
+            <p>
+              <code>for k in d: del d[k]</code> raises <code>RuntimeError: dictionary changed size
+              during iteration</code>. The loop is walking the dict's own slots and you are moving
+              them underneath it. Loop over a snapshot instead — <code>for k in list(d):</code> —
+              or build a new dict with a comprehension and rebind the name.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Trusting a copy to go all the way down</h3>
+            <p>
+              <code>a.copy()</code>, <code>a[:]</code>, <code>list(a)</code> and <code>dict(d)</code>
+              all copy one level. Nested lists and dicts inside are still shared, so
+              <code>b[0].append(99)</code> changes <code>a[0]</code> too — Demo 2, exactly. Reach
+              for <code>copy.deepcopy</code> when the nested objects genuinely have to be yours,
+              and only then, because it walks the whole tree.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout callout--success">
+          <div class="callout__icon">Check</div>
+          <div>
+            <div class="callout__title">One question answers most container bugs</div>
+            <div class="callout__body">
+              &ldquo;Is this a new tray, or the same tray with another nametag?&rdquo; Compare the
+              addresses — <code>id(a) == id(b)</code>, or simply <code>a is b</code> — and the
+              surprise usually disappears on the spot.
+            </div>
+          </div>
+        </div>
+      </div>
     </article>
 
     <section class="quiz" id="quiz" data-session="03-lists-dicts">
@@ -713,6 +770,29 @@
         <button class="quiz-option" data-choice="2">Nothing. Function arguments are copies</button>
         <div class="quiz-explain">The parameter starts as an alias. <code>append</code> mutates the nested list. <code>scores = {}</code> only rebinds the local name.</div>
       </div>
+      <div class="quiz-card" data-answer="0">
+        <div class="quiz-card__q">4. <code>x = y = []</code>, then <code>x.append(1)</code>. What is <code>y</code>?</div>
+        <button class="quiz-option" data-choice="0"><code>[1]</code> — chained assignment made one list and gave it two names</button>
+        <button class="quiz-option" data-choice="1"><code>[]</code> — each name got its own empty list</button>
+        <button class="quiz-option" data-choice="2">An error, because a list cannot have two names</button>
+        <div class="quiz-explain">The <code>[]</code> is evaluated once. Both <code>x</code> and <code>y</code> point at that single object, so a mutation through one is visible through the other. <code>x is y</code> is <code>True</code>.</div>
+      </div>
+
+      <div class="quiz-card" data-answer="2">
+        <div class="quiz-card__q">5. <code>nums = [3, 1, 2]</code>, then <code>result = nums.sort()</code>. What are <code>result</code> and <code>nums</code>?</div>
+        <button class="quiz-option" data-choice="0"><code>result</code> is <code>[1, 2, 3]</code> and <code>nums</code> is unchanged</button>
+        <button class="quiz-option" data-choice="1">Both are <code>[1, 2, 3]</code> — the method returns the list it sorted</button>
+        <button class="quiz-option" data-choice="2"><code>result</code> is <code>None</code> and <code>nums</code> is <code>[1, 2, 3]</code> — <code>sort</code> mutates in place and returns nothing</button>
+        <div class="quiz-explain">In-place methods return <code>None</code> on purpose, so you cannot mistake them for the copying kind. <code>sorted(nums)</code> is the one that builds and returns a new list.</div>
+      </div>
+
+      <div class="quiz-card" data-answer="1">
+        <div class="quiz-card__q">6. <code>d = {"a": 1, "b": 2}</code>, then <code>for k in d: del d[k]</code>. What happens?</div>
+        <button class="quiz-option" data-choice="0">The dict ends up empty</button>
+        <button class="quiz-option" data-choice="1"><code>RuntimeError: dictionary changed size during iteration</code></button>
+        <button class="quiz-option" data-choice="2">Only <code>"a"</code> is deleted, then the loop stops quietly</button>
+        <div class="quiz-explain">The loop walks the dict's own storage, and deleting a key changes that storage under it. Iterate over a copy of the keys, <code>for k in list(d):</code>, or build the dict you want and rebind the name.</div>
+      </div>
     </section>
 
     <div class="session-footer">
@@ -720,7 +800,7 @@
         ← Session 02: Functions
       </a>
       <div style="text-align:center;font-size:var(--fs-xs);color:var(--clr-text-3)" data-role="session-count">
-        Session 03 of 07
+        Session 03 of 08
       </div>
       <a href="../04-classes/" class="btn btn--primary">
         Session 04: Classes & Objects →

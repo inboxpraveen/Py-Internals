@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Session 01: Variables &amp; Mutability — Py Internals</title>
   <meta name="description" content="Understand what Python variables really are, how memory works, and why some objects are mutable while others aren't." />
+  <meta name="theme-color" content="#1A6B5C" />
 
   <link rel="icon" type="image/png" href="../../assets/images/Python-logo.png" />
   <link rel="apple-touch-icon" href="../../assets/images/Python-logo.png" />
@@ -23,8 +24,8 @@
 <!-- ── Top Bar ─────────────────────────────────────────────── -->
 <header class="topbar">
   <div class="topbar__logo">
-    <button class="menu-toggle" aria-label="Toggle menu">
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <button class="menu-toggle" aria-label="Open session menu">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none">
         <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
     </button>
@@ -35,7 +36,7 @@
   </div>
   <div class="topbar__actions">
     <a href="../../glossary.html" class="btn btn--ghost btn--sm">Glossary</a>
-    <span class="session-count" data-role="session-count">Session 01 of 07</span>
+    <span class="session-count" data-role="session-count">Session 01 of 08</span>
   </div>
 </header>
 
@@ -50,44 +51,50 @@
     <div class="sidebar__section">
       <div class="sidebar__label">Session 01</div>
       <a href="#intro"        class="sidebar__item active">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="9" cy="9" r="7"/><path d="M9 6v4l2 2"/>
         </svg>
         Introduction
       </a>
       <a href="#demo-basic"   class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M2 9h14M9 2v14"/>
         </svg>
         Interactive Lab
       </a>
       <a href="#demo-mutability" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <rect x="2" y="5" width="14" height="9" rx="2"/>
           <path d="M6 5V4a3 3 0 016 0v1"/>
         </svg>
         Mutability
       </a>
       <a href="#refcount" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="9" cy="9" r="5"/><path d="M9 6v3l2 2"/>
         </svg>
         Ref Counting
       </a>
       <a href="#demo-rebind" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M4 9l3 3 7-7" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         Rebinding
       </a>
       <a href="#types" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M3 5h12M3 9h8M3 13h5"/>
         </svg>
         All Types
       </a>
+      <a href="#mistakes" class="sidebar__item">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M9 2.5l6.5 12h-13z" stroke-linejoin="round"/><path d="M9 7v3.5M9 12.5h.01"/>
+        </svg>
+        Common mistakes
+      </a>
       <a href="#quiz" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="9" cy="9" r="7"/><path d="M6.8 6.8a2.2 2.2 0 113 2v1.4" stroke-linecap="round"/><path d="M9.8 13h.01" stroke-linecap="round"/>
         </svg>
         Check yourself
@@ -96,19 +103,19 @@
     <div class="sidebar__section">
       <div class="sidebar__label">Course</div>
       <a href="../02-functions/" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M7 5l4 4-4 4" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         Next Session
       </a>
       <a href="../../glossary.html" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M4 3h8a2 2 0 012 2v10H6a2 2 0 01-2-2z"/><path d="M4 13h10"/>
         </svg>
         Glossary
       </a>
       <a href="../../index.html" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M3 9L9 3l6 6M5 7v8h8V7"/>
         </svg>
         All Sessions
@@ -134,25 +141,9 @@
         We will start there, then get precise about identity, mutation, and references.
       </p>
       <div class="session-meta">
-        <div class="session-meta__item">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="7" cy="7" r="5.5"/><path d="M7 4v3l2 2"/>
-          </svg>
-          ~25 minutes
-        </div>
-        <div class="session-meta__item">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M2 7l3 3 7-7"/>
-          </svg>
-          4 interactive demos
-        </div>
-        <div class="session-meta__item">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="1" y="1" width="12" height="12" rx="2"/>
-            <path d="M4 4h6M4 7h4M4 10h3"/>
-          </svg>
-          Beginner friendly
-        </div>
+        <div class="session-meta__item">~25 minutes</div>
+        <div class="session-meta__item">4 interactive demos</div>
+        <div class="session-meta__item">Start here — no prerequisites</div>
       </div>
     </div>
 
@@ -172,12 +163,12 @@
           are just names for things you can already see.
         </p>
         <div class="concept-chip-row" aria-label="Concepts covered">
-          <span class="type-chip type-chip--int" style="font-family:var(--font-body);text-transform:none">Names vs objects</span>
-          <span class="type-chip type-chip--str" style="font-family:var(--font-body);text-transform:none">Identity</span>
-          <span class="type-chip type-chip--bool" style="font-family:var(--font-body);text-transform:none">Rebinding</span>
-          <span class="type-chip type-chip--list" style="font-family:var(--font-body);text-transform:none">Mutation</span>
-          <span class="type-chip type-chip--dict" style="font-family:var(--font-body);text-transform:none">Aliasing</span>
-          <span class="type-chip type-chip--none" style="font-family:var(--font-body);text-transform:none">Refcount</span>
+          <span class="type-chip type-chip--int">Names vs objects</span>
+          <span class="type-chip type-chip--str">Identity</span>
+          <span class="type-chip type-chip--bool">Rebinding</span>
+          <span class="type-chip type-chip--list">Mutation</span>
+          <span class="type-chip type-chip--dict">Aliasing</span>
+          <span class="type-chip type-chip--none">Refcount</span>
         </div>
       </div>
 
@@ -274,7 +265,7 @@
         <div class="stage__code-panel">
           <div class="panel-header panel-header--dark">
             <span>python</span>
-            <div style="display:flex;align-items:center;gap:6px">
+            <div style="display:flex;align-items:center;gap:6px" aria-hidden="true">
               <div class="code-block__dot"></div>
               <div class="code-block__dot"></div>
               <div class="code-block__dot"></div>
@@ -283,28 +274,28 @@
           <div class="code-panel-body" id="codePanel"></div>
 
           <!-- Step track -->
-          <div class="step-track" data-role="step-track" id="stepTrack"></div>
+          <div class="step-track" data-role="step-track" id="stepTrack" role="group" aria-label="Jump to a step"></div>
 
           <!-- Playback controls -->
           <div class="playback-controls" id="controls">
             <div class="playback-controls__left">
               <button class="step-btn" data-action="prev" title="Previous step" aria-label="Previous step" disabled>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
                   <path d="M8 2L4 6l4 4"/>
                 </svg>
               </button>
               <button class="play-btn" data-action="play" title="Play / Pause" aria-label="Play the walkthrough">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
                   <path d="M3 2.5l8 4.5-8 4.5z"/>
                 </svg>
               </button>
               <button class="step-btn" data-action="next" title="Next step" aria-label="Next step">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
                   <path d="M4 2l4 4-4 4"/>
                 </svg>
               </button>
               <button class="btn btn--ghost btn--sm" data-action="reset" title="Reset" aria-label="Reset to the first step">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
                   <path d="M10 6A4 4 0 112 6" stroke-linecap="round"/>
                   <path d="M2 3v3h3" fill="currentColor" stroke="none"/>
                 </svg>
@@ -315,10 +306,10 @@
               <div class="speed-control">
                 <label for="speedSelect">Speed:</label>
                 <select class="speed-select" id="speedSelect" data-action="speed">
-                  <option value="1400">0.5×</option>
-                  <option value="800" selected>1×</option>
-                  <option value="500">1.5×</option>
-                  <option value="300">2×</option>
+                  <option value="1700">0.5×</option>
+                  <option value="900" selected>1×</option>
+                  <option value="600">1.5×</option>
+                  <option value="400">2×</option>
                 </select>
               </div>
               <span class="step-counter" data-role="step-counter">1 / 1</span>
@@ -987,6 +978,72 @@
         </div>
       </div>
 
+      <div id="mistakes">
+        <div class="section-divider"><div class="section-divider__label">Common mistakes</div></div>
+        <h2>Four ways this goes wrong</h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Every one of these is the same slip: treating a nametag as if it were the thing
+          it is stuck to. When code surprises you, find the object first, then count the
+          names on it.
+        </p>
+
+        <div class="mistake-list">
+          <div class="mistake-item">
+            <h3>Expecting <code>b = a</code> to make a copy</h3>
+            <p>
+              It adds a second nametag to the same object. If the object is a list or a dict,
+              a change through either name is a change both names see. When you want a separate
+              object, ask for one: <code>b = a.copy()</code> or <code>b = list(a)</code>.
+              (Session 03 shows why even that copies only one level.)
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Thinking <code>del x</code> deletes the object</h3>
+            <p>
+              <code>del</code> removes the <em>name</em>. The object loses one reference, and it
+              is freed only if that was the last one. After <code>a = [1, 2]; b = a; del a</code>,
+              the list is alive and well under <code>b</code>. Nothing you write ever destroys an
+              object directly — you only ever let go of it.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Reading <code>+=</code> as &ldquo;edit in place&rdquo; for every type</h3>
+            <p>
+              On an <code>int</code> or a <code>str</code>, <code>x += 1</code> builds a new object
+              and moves the name; other names keep the old value. On a <code>list</code>,
+              <code>x += [1]</code> edits the object, and every alias sees it. The same two
+              characters, two different operations. The famous trap: <code>t = ([1], 2)</code>
+              then <code>t[0] += [3]</code> raises <code>TypeError</code> — <em>and</em> the inner
+              list has already grown to <code>[1, 3]</code>, because the mutation happened
+              before the tuple refused the assignment.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Testing values with <code>is</code></h3>
+            <p>
+              <code>a is b</code> asks &ldquo;same object?&rdquo;, and for numbers and strings the
+              answer depends on how the objects were made — a cached small int says
+              <code>True</code>, two computed <code>1000</code>s say <code>False</code>, two
+              literals in one file often say <code>True</code>. None of that is a language promise.
+              Compare values with <code>==</code>; keep <code>is</code> for <code>None</code>,
+              <code>True</code> and <code>False</code>, and for checking aliasing while you learn.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout callout--success">
+          <div class="callout__icon">Check</div>
+          <div>
+            <div class="callout__title">One question answers most of these</div>
+            <div class="callout__body">
+              &ldquo;How many names are on this object right now?&rdquo; If the answer is more than
+              one, a mutation through any of them is visible through all of them, and a rebinding
+              of one of them changes nothing for the rest.
+            </div>
+          </div>
+        </div>
+      </div>
     </article>
 
     <section class="quiz" id="quiz" data-session="01-variables">
@@ -1017,6 +1074,29 @@
         <button class="quiz-option" data-choice="2">As soon as its reference count hits zero</button>
         <div class="quiz-explain">Reference counting frees the object immediately. The cyclic collector is only needed when objects point at each other.</div>
       </div>
+      <div class="quiz-card" data-answer="1">
+        <div class="quiz-card__q">4. <code>a = [1, 2]</code>, <code>b = a</code>, then <code>del a</code>. What happens to the list?</div>
+        <button class="quiz-option" data-choice="0">It is freed immediately — <code>del</code> destroys the object</button>
+        <button class="quiz-option" data-choice="1">Nothing — only the name <code>a</code> is gone; <code>b</code> still points at the list</button>
+        <button class="quiz-option" data-choice="2">Python raises an error because <code>b</code> still uses it</button>
+        <div class="quiz-explain"><code>del</code> removes a name and drops one reference. The list still has one name on it, so its count is 1, not 0, and it stays.</div>
+      </div>
+
+      <div class="quiz-card" data-answer="0">
+        <div class="quiz-card__q">5. <code>s = "hi"</code>, <code>t = s</code>, <code>s += "!"</code>. What is <code>t</code>?</div>
+        <button class="quiz-option" data-choice="0"><code>"hi"</code> — strings are immutable, so <code>+=</code> built a new string and moved only <code>s</code></button>
+        <button class="quiz-option" data-choice="1"><code>"hi!"</code> — <code>t</code> is an alias, so it sees the change</button>
+        <button class="quiz-option" data-choice="2">An error, because you cannot change a string</button>
+        <div class="quiz-explain">No string object was edited. <code>s += "!"</code> made a new object <code>"hi!"</code> and rebound <code>s</code>; <code>t</code> still wears its nametag on the old <code>"hi"</code>.</div>
+      </div>
+
+      <div class="quiz-card" data-answer="2">
+        <div class="quiz-card__q">6. <code>x = [1, 2]</code>, <code>y = x</code>, then <code>x = x + [3]</code>. What is <code>y</code>?</div>
+        <button class="quiz-option" data-choice="0"><code>[1, 2, 3]</code> — <code>y</code> is an alias of <code>x</code></button>
+        <button class="quiz-option" data-choice="1">An error, because <code>x</code> was reassigned while <code>y</code> used it</button>
+        <button class="quiz-option" data-choice="2"><code>[1, 2]</code> — <code>x + [3]</code> built a new list and rebound <code>x</code>; <code>y</code> stayed on the old one</button>
+        <div class="quiz-explain"><code>x + [3]</code> is rebinding: a third list appears and only <code>x</code> moves. Had the line been <code>x += [3]</code>, the shared list would have been mutated and <code>y</code> would show <code>[1, 2, 3]</code>.</div>
+      </div>
     </section>
 
     <!-- ── Session Footer ──────────────────────────────────── -->
@@ -1025,7 +1105,7 @@
         ← Back to Course
       </a>
       <div style="text-align:center;font-size:var(--fs-xs);color:var(--clr-text-3)" data-role="session-count">
-        Session 01 of 07
+        Session 01 of 08
       </div>
       <a href="../02-functions/" class="btn btn--primary">
         Session 02: Functions →

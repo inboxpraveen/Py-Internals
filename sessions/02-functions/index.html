@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Session 02: Functions, Scope &amp; the Call Stack — Py Internals</title>
   <meta name="description" content="Understand Python functions, call frames, local scope, argument passing, returns, and closures through interactive memory diagrams." />
+  <meta name="theme-color" content="#1A6B5C" />
 
   <link rel="icon" type="image/png" href="../../assets/images/Python-logo.png" />
   <link rel="apple-touch-icon" href="../../assets/images/Python-logo.png" />
@@ -22,8 +23,8 @@
 
 <header class="topbar">
   <div class="topbar__logo">
-    <button class="menu-toggle" aria-label="Toggle menu">
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <button class="menu-toggle" aria-label="Open session menu">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none">
         <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
     </button>
@@ -34,7 +35,7 @@
   </div>
   <div class="topbar__actions">
     <a href="../../glossary.html" class="btn btn--ghost btn--sm">Glossary</a>
-    <span class="session-count" data-role="session-count">Session 02 of 07</span>
+    <span class="session-count" data-role="session-count">Session 02 of 08</span>
   </div>
 </header>
 
@@ -45,49 +46,55 @@
     <div class="sidebar__section">
       <div class="sidebar__label">Session 02</div>
       <a href="#intro" class="sidebar__item active">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="9" cy="9" r="7"/><path d="M9 6v4l2 2"/>
         </svg>
         Introduction
       </a>
       <a href="#demo-basic" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M2 9h14M9 2v14"/>
         </svg>
         Interactive Lab
       </a>
       <a href="#call-stack" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M4 4h10M4 9h10M4 14h10"/>
         </svg>
         Call Stack
       </a>
       <a href="#scope" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <rect x="3" y="3" width="12" height="12" rx="2"/><path d="M6 7h6M6 11h4"/>
         </svg>
         Scope
       </a>
       <a href="#arguments" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M3 9h10M10 6l3 3-3 3"/><circle cx="4" cy="9" r="2"/>
         </svg>
         Arguments
       </a>
       <a href="#closures" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M6 8V6a3 3 0 016 0v2"/><rect x="4" y="8" width="10" height="7" rx="2"/>
         </svg>
         Closures
       </a>
       <a href="#defaults" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <rect x="3" y="6" width="12" height="8" rx="2"/><path d="M6 6V4h6v2"/>
         </svg>
         Defaults
       </a>
+      <a href="#mistakes" class="sidebar__item">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M9 2.5l6.5 12h-13z" stroke-linejoin="round"/><path d="M9 7v3.5M9 12.5h.01"/>
+        </svg>
+        Common mistakes
+      </a>
       <a href="#quiz" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="9" cy="9" r="7"/><path d="M7 7a2 2 0 113 1.7V10"/><path d="M9 13h.01"/>
         </svg>
         Check yourself
@@ -96,25 +103,25 @@
     <div class="sidebar__section">
       <div class="sidebar__label">Course</div>
       <a href="../01-variables/" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M11 5l-4 4 4 4"/>
         </svg>
         Previous Session
       </a>
       <a href="../03-lists-dicts/" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M7 5l4 4-4 4"/>
         </svg>
         Next Session
       </a>
       <a href="../../glossary.html" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M4 3h8a2 2 0 012 2v10H6a2 2 0 01-2-2z"/><path d="M4 13h10"/>
         </svg>
         Glossary
       </a>
       <a href="../../index.html" class="sidebar__item">
-        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg aria-hidden="true" class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M3 9L9 3l6 6M5 7v8h8V7"/>
         </svg>
         All Sessions
@@ -137,24 +144,9 @@
         arguments, returns, and closures.
       </p>
       <div class="session-meta">
-        <div class="session-meta__item">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="7" cy="7" r="5.5"/><path d="M7 4v3l2 2"/>
-          </svg>
-          ~35 minutes
-        </div>
-        <div class="session-meta__item">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M2 7l3 3 7-7"/>
-          </svg>
-          5 interactive demos
-        </div>
-        <div class="session-meta__item">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="1" y="1" width="12" height="12" rx="2"/><path d="M4 4h6M4 7h4M4 10h3"/>
-          </svg>
-          Beginner friendly, deeper model
-        </div>
+        <div class="session-meta__item">~35 minutes</div>
+        <div class="session-meta__item">5 interactive demos</div>
+        <div class="session-meta__item">Builds on Session 01</div>
       </div>
     </div>
 
@@ -247,27 +239,27 @@
         <div class="stage__code-panel">
           <div class="panel-header panel-header--dark">
             <span>python</span>
-            <div style="display:flex;align-items:center;gap:6px">
+            <div style="display:flex;align-items:center;gap:6px" aria-hidden="true">
               <div class="code-block__dot"></div>
               <div class="code-block__dot"></div>
               <div class="code-block__dot"></div>
             </div>
           </div>
           <div class="code-panel-body" id="codePanel"></div>
-          <div class="step-track" data-role="step-track" id="stepTrack"></div>
+          <div class="step-track" data-role="step-track" id="stepTrack" role="group" aria-label="Jump to a step"></div>
           <div class="playback-controls" id="controls">
             <div class="playback-controls__left">
               <button class="step-btn" data-action="prev" title="Previous step" aria-label="Previous step" disabled>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M8 2L4 6l4 4"/></svg>
+                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M8 2L4 6l4 4"/></svg>
               </button>
               <button class="play-btn" data-action="play" title="Play / Pause" aria-label="Play the walkthrough">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M3 2.5l8 4.5-8 4.5z"/></svg>
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M3 2.5l8 4.5-8 4.5z"/></svg>
               </button>
               <button class="step-btn" data-action="next" title="Next step" aria-label="Next step">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M4 2l4 4-4 4"/></svg>
+                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M4 2l4 4-4 4"/></svg>
               </button>
               <button class="btn btn--ghost btn--sm" data-action="reset" title="Reset" aria-label="Reset to the first step">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
                   <path d="M10 6A4 4 0 112 6" stroke-linecap="round"/>
                   <path d="M2 3v3h3" fill="currentColor" stroke="none"/>
                 </svg>
@@ -278,10 +270,10 @@
               <div class="speed-control">
                 <label for="speedSelect">Speed:</label>
                 <select class="speed-select" id="speedSelect" data-action="speed">
-                  <option value="1600">0.5×</option>
+                  <option value="1700">0.5×</option>
                   <option value="900" selected>1×</option>
                   <option value="600">1.5×</option>
-                  <option value="350">2×</option>
+                  <option value="400">2×</option>
                 </select>
               </div>
               <span class="step-counter" data-role="step-counter">1 / 1</span>
@@ -721,6 +713,83 @@
           </p>
         </div>
       </div>
+      <div id="mistakes">
+        <div class="section-divider"><div class="section-divider__label">Common mistakes</div></div>
+        <h2>Five ways this goes wrong</h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Each of these comes from forgetting one of the three desk rules: a call gets its own
+          desk, assignment writes on the desk you are at, and the desk is cleared on the way out.
+        </p>
+
+        <div class="mistake-list">
+          <div class="mistake-item">
+            <h3>Assigning to a global inside a function</h3>
+            <p>
+              <code>count = 0</code> at the top of the file, then <code>count += 1</code> inside a
+              function, fails with <code>UnboundLocalError: cannot access local variable 'count'
+              where it is not associated with a value</code> (Python 3.10 words it
+              <em>referenced before assignment</em>). Because the function <em>assigns</em>
+              to <code>count</code>, Python decided at compile time that <code>count</code> is local
+              to that desk — and the read on the right-hand side happens before anything was written
+              there. Declare <code>global count</code> if you really mean the module name, or, more
+              often, return the new value instead of reaching outside.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Forgetting <code>return</code></h3>
+            <p>
+              A function that only <code>print</code>s hands back <code>None</code>. The error
+              shows up one line later — <code>TypeError: 'NoneType' object is not subscriptable</code>
+              or <code>unsupported operand type(s) for +: 'NoneType' and 'int'</code> — when the
+              caller tries to use the result. If a variable is unexpectedly <code>None</code>, look at
+              the last line of the function that produced it.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>A mutable default argument</h3>
+            <p>
+              <code>def add_item(item, bag=[])</code> creates one list when the <code>def</code> runs
+              and hands it to every call that omits <code>bag</code>. Demo 5 shows it growing across
+              calls. The fix is the pattern above: default to <code>None</code> and build the list
+              inside the call.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Shadowing a built-in</h3>
+            <p>
+              <code>list = [1, 2]</code> at the top of a file, and every later <code>list(...)</code>
+              in that module raises <code>TypeError: 'list' object is not callable</code>. The
+              built-ins ring is the last one LEGB checks, so any module-level name with the same
+              spelling wins first. Names like <code>list</code>, <code>dict</code>, <code>id</code>,
+              <code>type</code> and <code>input</code> are the usual casualties.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Calling the function when you meant to pass it</h3>
+            <p>
+              <code>Thread(target=work())</code> runs <code>work</code> right now, on the current
+              desk, and passes its <em>return value</em> — usually <code>None</code> — as the target.
+              The thread then starts and does nothing. The same slip hides in
+              <code>button.on_click(save())</code> and <code>sorted(items, key=priority())</code>.
+              A function object is a value like any other; the parentheses are what run it.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout callout--success">
+          <div class="callout__icon">Check</div>
+          <div>
+            <div class="callout__title">Two questions catch nearly all of it</div>
+            <div class="callout__body">
+              <strong>Which desk is this name on?</strong> — that finds the shadowed global and the
+              <code>UnboundLocalError</code>. <strong>What object came back from the call?</strong> —
+              that finds the missing <code>return</code>, the shared default list and the
+              accidentally-called function.
+            </div>
+          </div>
+        </div>
+      </div>
     </article>
 
     <section class="quiz" id="quiz" data-session="02-functions">
@@ -751,6 +820,29 @@
         <button class="quiz-option" data-choice="2">Because the default object is created once at <code>def</code> time and reused</button>
         <div class="quiz-explain">The empty list lives on the function object. Each call that omits <code>bag</code> mutates that same list.</div>
       </div>
+      <div class="quiz-card" data-answer="2">
+        <div class="quiz-card__q">4. <code>count = 0</code> at module level, then <code>def bump(): count += 1</code>. What does <code>bump()</code> do?</div>
+        <button class="quiz-option" data-choice="0">Increments the global <code>count</code> to <code>1</code></button>
+        <button class="quiz-option" data-choice="1">Creates a local <code>count</code> equal to <code>1</code> and leaves the global alone</button>
+        <button class="quiz-option" data-choice="2">Raises <code>UnboundLocalError</code> — the assignment made <code>count</code> local, and it is read before it is written</button>
+        <div class="quiz-explain">Assignment anywhere in the body makes the name local to that desk for the whole call. The <code>count + 1</code> on the right then reads a local that has no value yet. <code>global count</code> changes the rule; returning a value avoids the question.</div>
+      </div>
+
+      <div class="quiz-card" data-answer="1">
+        <div class="quiz-card__q">5. <code>def greet(): print("hi")</code>, then <code>x = greet()</code>. What is <code>x</code>?</div>
+        <button class="quiz-option" data-choice="0"><code>"hi"</code> — the printed text is returned</button>
+        <button class="quiz-option" data-choice="1"><code>None</code> — a function with no <code>return</code> hands back <code>None</code></button>
+        <button class="quiz-option" data-choice="2">The function object <code>greet</code> itself</button>
+        <div class="quiz-explain"><code>print</code> writes to the screen and returns <code>None</code>; so does a function that falls off its last line. The value you see printed and the value handed back to the caller are two different things.</div>
+      </div>
+
+      <div class="quiz-card" data-answer="0">
+        <div class="quiz-card__q">6. <code>fs = [lambda: i for i in range(3)]</code>, then <code>[f() for f in fs]</code>. What comes out?</div>
+        <button class="quiz-option" data-choice="0"><code>[2, 2, 2]</code> — all three closures share one cell for <code>i</code>, and the loop finished on <code>2</code></button>
+        <button class="quiz-option" data-choice="1"><code>[0, 1, 2]</code> — each lambda captured the value of <code>i</code> when it was created</button>
+        <button class="quiz-option" data-choice="2">A <code>NameError</code>, because <code>i</code> no longer exists after the loop</button>
+        <div class="quiz-explain">A closure captures the cell, not the value. There is one <code>i</code> cell for the whole comprehension, and by the time any lambda is called it holds <code>2</code>. <code>lambda i=i: i</code> copies the value at definition time and gives <code>[0, 1, 2]</code>.</div>
+      </div>
     </section>
 
     <div class="session-footer">
@@ -758,7 +850,7 @@
         ← Session 01: Variables &amp; Mutability
       </a>
       <div style="text-align:center;font-size:var(--fs-xs);color:var(--clr-text-3)" data-role="session-count">
-        Session 02 of 07
+        Session 02 of 08
       </div>
       <a href="../03-lists-dicts/" class="btn btn--primary">
         Session 03: Lists, Dicts &amp; References →

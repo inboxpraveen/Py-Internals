@@ -130,7 +130,7 @@
     Short definitions for the words this course uses again and again.
     Search, then jump back into the session that shows the idea in memory.
   </p>
-  <input class="glossary__search" id="glossarySearch" type="search" placeholder="Search terms — alias, frame, yield, wrapper, MRO…" autocomplete="off" />
+  <input class="glossary__search" id="glossarySearch" type="search" placeholder="Search terms — alias, frame, yield, wrapper, MRO, traceback…" autocomplete="off" />
   <div class="glossary-filters" id="glossaryFilters" role="tablist" aria-label="Filter by topic">
     <button type="button" class="glossary-filter is-active" data-filter="all">All</button>
     <button type="button" class="glossary-filter" data-filter="objects">Objects</button>
@@ -140,6 +140,7 @@
     <button type="button" class="glossary-filter" data-filter="iteration">Iteration</button>
     <button type="button" class="glossary-filter" data-filter="decorators">Decorators</button>
     <button type="button" class="glossary-filter" data-filter="concurrency">Concurrency</button>
+    <button type="button" class="glossary-filter" data-filter="exceptions">Exceptions</button>
   </div>
   <p class="glossary-empty" id="glossaryEmpty">No terms match that search.</p>
 
@@ -424,6 +425,42 @@
     <article class="term" id="free-threading" data-terms="free threaded no-gil PEP 703 is_gil_enabled">
       <h3>Free-threaded build</h3>
       <p>An optional CPython build with no GIL, added by PEP&nbsp;703 &mdash; experimental in 3.13, officially supported in 3.14, and separate from the default build, which still has one. Check with <code>sys._is_gil_enabled()</code>, which exists from 3.13 onwards. It makes CPU-bound threads scale; it does not fix any race condition, and makes the ones you have easier to hit.</p>
+    </article>
+  </section>
+
+  <section class="glossary-group" data-group="exceptions">
+    <h2>Exceptions</h2>
+    <article class="term" id="exception" data-terms="exception error raise instance BaseException">
+      <h3>Exception</h3>
+      <p>An ordinary instance of a class that inherits from <code>BaseException</code>. <code>raise X</code> evaluates <code>X</code> &mdash; usually a constructor call &mdash; and then starts the object climbing the call stack. It carries <code>args</code>, a <code>__traceback__</code>, and links to related exceptions. See <a href="sessions/08-exceptions/">Session 08</a>.</p>
+    </article>
+    <article class="term" id="unwinding" data-terms="unwinding unwind propagate stack pop frames">
+      <h3>Unwinding</h3>
+      <p>What happens between <code>raise</code> and the handler: each frame without a matching <code>except</code> around the current line is popped &mdash; locals and all, exactly as on <code>return</code> &mdash; and the exception arrives in the caller at the line that made the call. If it runs out of frames, the traceback is printed and the process exits with status 1.</p>
+    </article>
+    <article class="term" id="traceback" data-terms="traceback tb_next tb_frame most recent call last stderr">
+      <h3>Traceback</h3>
+      <p>The record of frames an exception has passed through, outermost first, reachable as <code>exc.__traceback__</code> and walked with <code>tb_next</code>. The printed <em>Traceback (most recent call last)</em> is that chain written out one frame per entry; read it from the bottom, where the error and the raise site are.</p>
+    </article>
+    <article class="term" id="handler" data-terms="handler try except clause isinstance match as err">
+      <h3>Handler (<code>try</code> / <code>except</code>)</h3>
+      <p>An <code>except</code> clause covering the line an exception arrived on. Clauses are tested in order with <code>isinstance</code>, so a clause catches the class it names and every subclass. The frame that catches keeps its desk; the name bound by <code>as err</code> is deleted automatically when the block ends, to break the cycle between the exception, its traceback and the frame.</p>
+    </article>
+    <article class="term" id="finally-clause" data-terms="finally cleanup return break continue always runs">
+      <h3><code>finally</code></h3>
+      <p>A block that runs on every way out of a <code>try</code> &mdash; a clean finish, a handled exception, an unhandled one, or a <code>return</code>. The pending result is parked while it runs and resumed afterwards. A <code>return</code> inside <code>finally</code> replaces that result and silently discards an exception in flight; Python 3.14 warns about it.</p>
+    </article>
+    <article class="term" id="context-manager" data-terms="context manager with statement __enter__ __exit__ contextlib">
+      <h3>Context manager</h3>
+      <p>Any object whose class defines <code>__enter__</code> and <code>__exit__</code>. <code>with EXPR as name:</code> calls <code>__enter__</code> and binds its return value to <code>name</code>, runs the body inside an invisible <code>try</code>, and then calls <code>__exit__(exc_type, exc, tb)</code> &mdash; three <code>None</code>s on success. If <code>__exit__</code> returns a true value the exception is suppressed. <code>@contextlib.contextmanager</code> builds one from a generator: the code before <code>yield</code> is the enter half, after it the exit half.</p>
+    </article>
+    <article class="term" id="exception-chaining" data-terms="chaining __cause__ __context__ raise from during handling direct cause">
+      <h3>Exception chaining</h3>
+      <p>An exception raised while another is being handled gets <code>__context__</code> set to the one being handled; the traceback then says <em>During handling of the above exception, another exception occurred</em>. <code>raise New from old</code> also sets <code>__cause__</code>, and the sentence becomes <em>The above exception was the direct cause of the following exception</em>. <code>from None</code> hides the earlier one.</p>
+    </article>
+    <article class="term" id="exception-hierarchy" data-terms="hierarchy BaseException Exception LookupError KeyError KeyboardInterrupt SystemExit">
+      <h3>Exception hierarchy</h3>
+      <p>Exceptions are classes with parents: <code>KeyError</code> and <code>IndexError</code> are <code>LookupError</code>s, most things you raise yourself are <code>Exception</code>s, and <code>KeyboardInterrupt</code> and <code>SystemExit</code> sit directly under <code>BaseException</code> so that <code>except Exception</code> lets a program be interrupted. A bare <code>except:</code> catches those too, which is why it is almost always a mistake.</p>
     </article>
   </section>
 </main>

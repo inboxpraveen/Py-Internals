@@ -134,7 +134,7 @@ greet = shout(greet)`,
             { id: 'greetFn', pyId: ADDRS.greetFn, type: 'function', value: 'greet(name)', refcount: 3, mutable: false, state: 'normal' },
             { id: 'cellBox', pyId: ADDRS.cellBox, type: 'dict', refcount: 1, mutable: true, state: 'new',
               dictLabel: 'closure cell on wrapper', pairs: [
-                { key: 'func', value: 'greet @ 0x7f9100c8', type: 'str' },
+                { key: 'func', value: 'greet @ 0x7f9100c8', type: 'ref' },
               ] },
             { id: 'wrapperFn', pyId: ADDRS.wrapperFn, type: 'function', value: 'wrapper(text)', refcount: 1, mutable: false, state: 'new',
               note: 'carries the cell above' },
@@ -156,7 +156,7 @@ greet = shout(greet)`,
             { id: 'greetFn', pyId: ADDRS.greetFn, type: 'function', value: 'greet(name)', refcount: 2, mutable: false, state: 'normal' },
             { id: 'cellBox', pyId: ADDRS.cellBox, type: 'dict', refcount: 1, mutable: true, state: 'normal',
               dictLabel: 'closure cell on wrapper', pairs: [
-                { key: 'func', value: 'greet @ 0x7f9100c8', type: 'str' },
+                { key: 'func', value: 'greet @ 0x7f9100c8', type: 'ref' },
               ] },
             { id: 'wrapperFn', pyId: ADDRS.wrapperFn, type: 'function', value: 'wrapper(text)', refcount: 1, mutable: false, state: 'normal' },
           ],
@@ -178,7 +178,7 @@ greet = shout(greet)`,
               note: 'greet points here now' },
             { id: 'cellBox', pyId: ADDRS.cellBox, type: 'dict', refcount: 1, mutable: true, state: 'normal',
               dictLabel: 'closure cell on wrapper', pairs: [
-                { key: 'func', value: 'greet @ 0x7f9100c8', type: 'str' },
+                { key: 'func', value: 'greet @ 0x7f9100c8', type: 'ref' },
               ] },
             { id: 'greetFn', pyId: ADDRS.greetFn, type: 'function', value: 'greet(name)', refcount: 1, mutable: false, state: 'normal',
               note: 'reachable only through the cell — no name points here' },
@@ -258,7 +258,7 @@ def greet(name):
             { id: 'greetFn', pyId: ADDRS.greetFn, type: 'function', value: 'greet(name)', refcount: 2, mutable: false, state: 'normal' },
             { id: 'cellBox', pyId: ADDRS.cellBox, type: 'dict', refcount: 1, mutable: true, state: 'new',
               dictLabel: 'closure cell on wrapper', pairs: [
-                { key: 'func', value: 'greet @ 0x7f9100c8', type: 'str' },
+                { key: 'func', value: 'greet @ 0x7f9100c8', type: 'ref' },
               ] },
             { id: 'wrapperFn', pyId: ADDRS.wrapperFn, type: 'function', value: 'wrapper(text)', refcount: 1, mutable: false, state: 'new' },
           ],
@@ -279,7 +279,7 @@ def greet(name):
             { id: 'wrapperFn', pyId: ADDRS.wrapperFn, type: 'function', value: 'wrapper(text)', refcount: 1, mutable: false, state: 'mutated' },
             { id: 'cellBox', pyId: ADDRS.cellBox, type: 'dict', refcount: 1, mutable: true, state: 'normal',
               dictLabel: 'closure cell on wrapper', pairs: [
-                { key: 'func', value: 'greet @ 0x7f9100c8', type: 'str' },
+                { key: 'func', value: 'greet @ 0x7f9100c8', type: 'ref' },
               ] },
             { id: 'greetFn', pyId: ADDRS.greetFn, type: 'function', value: 'greet(name)', refcount: 1, mutable: false, state: 'normal',
               note: 'still there, reachable only through the cell' },
@@ -301,7 +301,7 @@ def greet(name):
             { id: 'wrapperFn', pyId: ADDRS.wrapperFn, type: 'function', value: 'wrapper(text)', refcount: 1, mutable: false, state: 'normal' },
             { id: 'cellBox', pyId: ADDRS.cellBox, type: 'dict', refcount: 1, mutable: true, state: 'normal',
               dictLabel: 'closure cell on wrapper', pairs: [
-                { key: 'func', value: 'greet @ 0x7f9100c8', type: 'str' },
+                { key: 'func', value: 'greet @ 0x7f9100c8', type: 'ref' },
               ] },
             { id: 'greetFn', pyId: ADDRS.greetFn, type: 'function', value: 'greet(name)', refcount: 1, mutable: false, state: 'normal' },
           ],
@@ -414,7 +414,7 @@ def greet(name):
               dictLabel: 'function attributes', pairs: [
                 { key: '__name__', value: 'greet', type: 'str' },
                 { key: '__doc__', value: 'Say hello.', type: 'str' },
-                { key: '__wrapped__', value: 'greet @ 0x7f9200c8', type: 'str' },
+                { key: '__wrapped__', value: 'greet @ 0x7f9200c8', type: 'ref' },
               ], note: 'labels copied — the behaviour is unchanged' },
           ],
           highlight: ['wrapper3'],
@@ -435,7 +435,7 @@ def greet(name):
               dictLabel: 'function attributes', pairs: [
                 { key: '__name__', value: 'greet', type: 'str' },
                 { key: '__doc__', value: 'Say hello.', type: 'str' },
-                { key: '__wrapped__', value: 'greet @ 0x7f9200c8', type: 'str' },
+                { key: '__wrapped__', value: 'greet @ 0x7f9200c8', type: 'ref' },
               ] },
             { id: 'greet3', pyId: ADDRS.greet3, type: 'function', value: 'greet(name)', refcount: 2, mutable: false, state: 'normal',
               dictLabel: 'function attributes', pairs: [
@@ -501,7 +501,8 @@ def ping():
           ],
           heap: [
             { id: 'repeatFn', pyId: ADDRS.repeatFn, type: 'function', value: 'repeat(times)', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'int2', pyId: ADDRS.int2, type: 'int', value: 2, refcount: 2, mutable: false, state: 'new' },
+            { id: 'int2', pyId: ADDRS.int2, type: 'int', value: 2, refcount: '∞', mutable: false, state: 'new',
+              note: 'cached small int — CPython pre-creates −5 to 256 and never frees them' },
             { id: 'cellDeco', pyId: ADDRS.cellDeco, type: 'dict', refcount: 1, mutable: true, state: 'new',
               dictLabel: 'closure cell on decorator', pairs: [
                 { key: 'times', value: 2, type: 'int' },
@@ -574,7 +575,7 @@ def ping():
             { id: 'pingFn', pyId: ADDRS.pingFn, type: 'function', value: 'ping()', refcount: 2, mutable: false, state: 'normal' },
             { id: 'cellWrap', pyId: ADDRS.cellWrap, type: 'dict', refcount: 1, mutable: true, state: 'new',
               dictLabel: 'closure cells on wrapper', pairs: [
-                { key: 'func', value: 'ping @ 0x7f9301c0', type: 'str' },
+                { key: 'func', value: 'ping @ 0x7f9301c0', type: 'ref' },
                 { key: 'times', value: 2, type: 'int' },
               ] },
             { id: 'wrapper4', pyId: ADDRS.wrapper4, type: 'function', value: 'wrapper()', refcount: 1, mutable: false, state: 'new' },
@@ -596,7 +597,7 @@ def ping():
             { id: 'wrapper4', pyId: ADDRS.wrapper4, type: 'function', value: 'wrapper()', refcount: 1, mutable: false, state: 'mutated' },
             { id: 'cellWrap', pyId: ADDRS.cellWrap, type: 'dict', refcount: 1, mutable: true, state: 'normal',
               dictLabel: 'closure cells on wrapper', pairs: [
-                { key: 'func', value: 'ping @ 0x7f9301c0', type: 'str' },
+                { key: 'func', value: 'ping @ 0x7f9301c0', type: 'ref' },
                 { key: 'times', value: 2, type: 'int' },
               ] },
             { id: 'pingFn', pyId: ADDRS.pingFn, type: 'function', value: 'ping()', refcount: 1, mutable: false, state: 'normal',
@@ -682,7 +683,7 @@ def text():
             { id: 'italicW', pyId: ADDRS.italicW, type: 'function', value: 'italic wrapper', refcount: 1, mutable: false, state: 'new' },
             { id: 'cellIt', pyId: ADDRS.cellIt, type: 'dict', refcount: 1, mutable: true, state: 'new',
               dictLabel: 'closure cell', pairs: [
-                { key: 'func', value: 'text @ 0x7f9401a0', type: 'str' },
+                { key: 'func', value: 'text @ 0x7f9401a0', type: 'ref' },
               ] },
             { id: 'textFn', pyId: ADDRS.textFn, type: 'function', value: 'text()', refcount: 1, mutable: false, state: 'normal' },
           ],
@@ -704,12 +705,12 @@ def text():
             { id: 'boldW', pyId: ADDRS.boldW, type: 'function', value: 'bold wrapper', refcount: 1, mutable: false, state: 'new' },
             { id: 'cellBd', pyId: ADDRS.cellBd, type: 'dict', refcount: 1, mutable: true, state: 'new',
               dictLabel: 'closure cell', pairs: [
-                { key: 'func', value: 'italic wrapper @ 0x7f940220', type: 'str' },
+                { key: 'func', value: 'italic wrapper @ 0x7f940220', type: 'ref' },
               ] },
             { id: 'italicW', pyId: ADDRS.italicW, type: 'function', value: 'italic wrapper', refcount: 1, mutable: false, state: 'normal' },
             { id: 'cellIt', pyId: ADDRS.cellIt, type: 'dict', refcount: 1, mutable: true, state: 'normal',
               dictLabel: 'closure cell', pairs: [
-                { key: 'func', value: 'text @ 0x7f9401a0', type: 'str' },
+                { key: 'func', value: 'text @ 0x7f9401a0', type: 'ref' },
               ] },
             { id: 'textFn', pyId: ADDRS.textFn, type: 'function', value: 'text()', refcount: 1, mutable: false, state: 'normal' },
           ],
