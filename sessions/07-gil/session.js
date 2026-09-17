@@ -1,5 +1,5 @@
 /* ============================================================
-   SESSION 07 — The GIL & Concurrency
+   SESSION 07: The GIL & Concurrency
    Demos: the 5 ms handoff, a lost deposit, the Lock that fixes it,
    what actually releases the GIL, a second process, one event loop
    ============================================================ */
@@ -7,8 +7,8 @@
 'use strict';
 
 /* Stable, made-up CPython-style addresses. Everything inside the parent
-   process uses the 0x7fa… family. The child process in demo 5 deliberately
-   uses 0x7fb… so a learner can see at a glance that it is a different
+   process uses the 0x7fa... family. The child process in demo 5 deliberately
+   uses 0x7fb... so a learner can see at a glance that it is a different
    address space, not a shared one. */
 const ADDRS = {
   /* 1 · handoff */
@@ -37,12 +37,12 @@ const ADDRS = {
   burnFn:    '0x7fa40120',
   napList:   '0x7fa401a0',
 
-  /* 5 · processes — parent */
+  /* 5 · processes, parent side */
   ProcessCls:'0x7fa50040',
   procObj:   '0x7fa500c0',
   childFn:   '0x7fa50140',
   parentList:'0x7fa501c0',
-  /* 5 · processes — child, a whole different interpreter */
+  /* 5 · processes, child side (a whole different interpreter) */
   childList: '0x7fb50880',
   childFnC:  '0x7fb50820',
 
@@ -60,7 +60,7 @@ const ADDRS = {
 };
 
 /* The interpreter itself, drawn as the bottom box of the stack.
-   It is not a call frame — it is the thing that decides which call frame is
+   It is not a call frame. It is the thing that decides which call frame is
    allowed to run. Keeping it in a fixed position means the reader only has to
    watch one row (`GIL`) to know who is executing. */
 function runtime(holder, opts) {
@@ -70,7 +70,7 @@ function runtime(holder, opts) {
     badge: o.badge || 'runtime',
     state: 'runtime',
     vars: [
-      { name: 'GIL', value: o.free ? 'free — nobody is running Python' : 'held by ' + holder,
+      { name: 'GIL', value: o.free ? 'free, nobody is running Python' : 'held by ' + holder,
         inline: true, state: o.moved ? 'rebound' : 'normal' },
       { name: 'hands over', value: o.check || 'after 5 ms, or when a thread starts waiting', inline: true },
     ],
@@ -116,7 +116,7 @@ const DEMOS = {
      1 · One interpreter, one lock, one runner at a time
      ────────────────────────────────────────────────────────── */
   handoff: {
-    watch: 'Watch one row: <code>GIL</code> in the grey box at the bottom. Every thread above it is ready to run — only the one named there actually is.',
+    watch: 'Watch one row: <code>GIL</code>, in the grey box at the bottom. Every thread above it is ready to run. Only the one named there actually is.',
     code: `import threading
 
 def work(name):
@@ -132,13 +132,13 @@ t2.join()`,
     steps: [
       {
         title: 'One thread, and it already holds the lock',
-        desc: 'Even a program with no threads in it is running <em>in</em> a thread — the one Python calls <code>MainThread</code>. The grey box at the bottom is not a call frame; it is the interpreter, and it shows who currently has permission to execute Python bytecode.',
+        desc: 'Even a program with no threads in it is running <em>in</em> a thread, the one Python calls <code>MainThread</code>. The grey box at the bottom isn\'t a call frame. It\'s the interpreter, and it shows who currently has permission to execute Python bytecode.',
         lines: [],
         memory: EMPTY,
       },
       {
         title: '<code>def work</code> builds a function object',
-        desc: 'Nothing concurrent yet. This is Session 02, unchanged: <code>def</code> makes an object on the heap and binds a name to it. The body will not run until somebody calls it.',
+        desc: 'Nothing concurrent yet. This is Session 02 unchanged: <code>def</code> makes an object on the heap and binds a name to it. The body won\'t run until somebody calls it.',
         lines: [3, 4, 5],
         memory: {
           frames: [
@@ -154,8 +154,8 @@ t2.join()`,
         },
       },
       {
-        title: 'Two <code>Thread</code> objects — and still one thread',
-        desc: '<code>threading.Thread(...)</code> is a constructor call like any other. It produces an instance with a <code>__dict__</code>, holding a reference to your function. Look at <code>ident</code>: it is <code>None</code>. The operating system has not been told about anything yet.',
+        title: 'Two <code>Thread</code> objects, and still one thread',
+        desc: '<code>threading.Thread(...)</code> is a constructor call like any other. It produces an instance with a <code>__dict__</code> that holds a reference to your function. Look at <code>ident</code>: it\'s <code>None</code>. The operating system hasn\'t been told about anything yet.',
         lines: [7, 8],
         memory: {
           frames: [
@@ -170,7 +170,7 @@ t2.join()`,
             { id: 'workFn', pyId: ADDRS.workFn, type: 'function', value: 'work(name)', refcount: 3, mutable: false, state: 'normal',
               note: 'three references now: the name work, and both Thread objects' },
             threadObj('t1Obj', ADDRS.t1Obj, 'Thread-1 (work)', { target: 'work @ 0x7fa100a0', state: 'new',
-              note: 'an object, not a thread — nothing is running' }),
+              note: 'an object, not a thread. Nothing is running' }),
             threadObj('t2Obj', ADDRS.t2Obj, 'Thread-2 (work)', { target: 'work @ 0x7fa100a0', state: 'new' }),
           ],
           highlight: ['t1Obj', 't2Obj'],
@@ -178,7 +178,7 @@ t2.join()`,
       },
       {
         title: '<code>t1.start()</code> asks the operating system for a real thread',
-        desc: 'Now <code>ident</code> has a number: an actual OS thread exists and is ready to run. But <code>start()</code> returns immediately to the main thread, which still holds the GIL — so Thread-1 is <strong>ready and not running</strong>. That gap is the whole idea.',
+        desc: 'Now <code>ident</code> has a number. An actual OS thread exists and is ready to run. But <code>start()</code> returns straight away to the main thread, which still holds the GIL, so Thread-1 is <strong>ready and not running</strong>. That gap is what this session is about.',
         lines: [9],
         memory: {
           frames: [
@@ -195,15 +195,15 @@ t2.join()`,
           heap: [
             { id: 'workFn', pyId: ADDRS.workFn, type: 'function', value: 'work(name)', refcount: 3, mutable: false, state: 'normal' },
             threadObj('t1Obj', ADDRS.t1Obj, 'Thread-1 (work)', { target: 'work @ 0x7fa100a0', ident: 18708, state: 'mutated',
-              note: 'a real OS thread exists now — it just cannot execute Python yet' }),
+              note: 'a real OS thread exists now, it just cannot execute Python yet' }),
             threadObj('t2Obj', ADDRS.t2Obj, 'Thread-2 (work)', { target: 'work @ 0x7fa100a0' }),
           ],
           highlight: ['t1Obj'],
         },
       },
       {
-        title: '<code>t2.start()</code> — three threads, still one GIL',
-        desc: 'Three OS threads now exist and all three are perfectly capable of running. The interpreter will let exactly one of them execute Python at a time. The other two are not paused by your code; they are parked by the runtime.',
+        title: '<code>t2.start()</code>: three threads, still one GIL',
+        desc: 'Three OS threads now exist and all three are perfectly capable of running. The interpreter will let one of them execute Python at a time. The other two aren\'t paused by your code. They\'re parked by the runtime.',
         lines: [10],
         memory: {
           frames: [
@@ -224,14 +224,14 @@ t2.join()`,
             { id: 'workFn', pyId: ADDRS.workFn, type: 'function', value: 'work(name)', refcount: 3, mutable: false, state: 'normal' },
             threadObj('t1Obj', ADDRS.t1Obj, 'Thread-1 (work)', { target: 'work @ 0x7fa100a0', ident: 18708 }),
             threadObj('t2Obj', ADDRS.t2Obj, 'Thread-2 (work)', { target: 'work @ 0x7fa100a0', ident: 18709, state: 'mutated',
-              note: 'ready too — and also not running' }),
+              note: 'ready too, and also not running' }),
           ],
           highlight: ['t2Obj'],
         },
       },
       {
-        title: '<code>t1.join()</code> — the main thread steps away and the GIL moves',
-        desc: '<code>join()</code> means &ldquo;wait here until that thread ends.&rdquo; Waiting is not computing, so the main thread hands the GIL back before it parks. The interpreter gives it to Thread-1, which finally starts running your loop.',
+        title: '<code>t1.join()</code>: the main thread steps aside and the GIL moves',
+        desc: '<code>join()</code> means "wait here until that thread ends". Waiting isn\'t computing, so the main thread hands the GIL back before it parks. The interpreter gives it to Thread-1, which finally starts running your loop.',
         lines: [11],
         memory: {
           frames: [
@@ -259,7 +259,7 @@ t2.join()`,
       },
       {
         title: 'Five milliseconds later, the GIL is taken away mid-loop',
-        desc: 'Thread-1 did not finish and did not ask to stop. The interpreter simply asked it to drop the lock at the next safe point — the jump back to the top of the <code>for</code> loop. Its frame is still there, with <code>i</code> frozen at <code>1</code>. Thread-2 starts from the beginning.',
+        desc: 'Thread-1 didn\'t finish and didn\'t ask to stop. The interpreter asked it to drop the lock at the next safe point, the jump back to the top of the <code>for</code> loop. Its frame is still there, with <code>i</code> frozen at <code>1</code>. Thread-2 starts from the beginning.',
         lines: [4, 5],
         memory: {
           frames: [
@@ -289,7 +289,7 @@ t2.join()`,
       },
       {
         title: 'The lock keeps changing hands until both loops are done',
-        desc: 'This is the whole mechanism. The two loops <em>interleave</em> — their output lines mix — but they never overlap: at no instant are two threads executing Python bytecode. The work took as long as doing it one after the other, plus the cost of all that swapping.',
+        desc: 'That is the mechanism, all of it. The two loops <em>interleave</em>, so their output lines mix, but they never overlap: at no instant are two threads executing Python bytecode. The work took as long as doing it one after the other, plus the cost of all that swapping.',
         lines: [4, 5],
         memory: {
           frames: [
@@ -318,7 +318,7 @@ t2.join()`,
       },
       {
         title: 'Both threads end, and the main thread gets the lock back',
-        desc: 'The two call frames are gone. The <code>Thread</code> objects are still in memory — they are ordinary objects, and <code>t1</code> and <code>t2</code> still name them — but the OS threads behind them have exited. <code>join()</code> returns and the main thread carries on.',
+        desc: 'The two call frames are gone. The <code>Thread</code> objects are still in memory, because they\'re ordinary objects and <code>t1</code> and <code>t2</code> still name them, but the OS threads behind them have exited. <code>join()</code> returns and the main thread carries on.',
         lines: [11, 12],
         memory: {
           frames: [
@@ -332,7 +332,7 @@ t2.join()`,
           heap: [
             { id: 'workFn', pyId: ADDRS.workFn, type: 'function', value: 'work(name)', refcount: 3, mutable: false, state: 'normal' },
             threadObj('t1Obj', ADDRS.t1Obj, 'Thread-1 (work)', { target: 'work @ 0x7fa100a0', ident: 18708,
-              note: 'object alive, OS thread finished — repr now says "stopped"' }),
+              note: 'object alive, OS thread finished, and repr now says "stopped"' }),
             threadObj('t2Obj', ADDRS.t2Obj, 'Thread-2 (work)', { target: 'work @ 0x7fa100a0', ident: 18709 }),
           ],
           highlight: [],
@@ -365,13 +365,13 @@ t1.join();  t2.join()`,
     steps: [
       {
         title: 'Two threads, one number, one expected answer',
-        desc: 'Each thread will add <code>1</code> to the same balance exactly once. Nobody would argue about what the answer should be. Hold on to that number: <strong>2</strong>.',
+        desc: 'Each thread will add <code>1</code> to the same balance once. Nobody would argue about what the answer should be: <strong>2</strong>. Keep that number in mind.',
         lines: [],
         memory: EMPTY,
       },
       {
         title: 'One account object, one attribute, value <code>0</code>',
-        desc: 'Session 04’s picture: an instance with a <code>__dict__</code>, and <code>balance</code> living inside it. There is one of these. Both threads are about to reach for it.',
+        desc: 'Session 04\'s picture: an instance with a <code>__dict__</code>, and <code>balance</code> living inside it. There\'s one of these, and both threads are about to reach for it.',
         lines: [7, 8],
         memory: {
           frames: [
@@ -390,8 +390,8 @@ t1.join();  t2.join()`,
         },
       },
       {
-        title: 'Both threads start; Thread-1 gets the lock first',
-        desc: 'Same picture as demo 1. Thread-2 is ready and waiting. Nothing has gone wrong yet — and nothing is about to go wrong with the <em>GIL</em>. What goes wrong is the shape of line 11.',
+        title: 'Both threads start, and Thread-1 gets the lock first',
+        desc: 'Same picture as demo 1. Thread-2 is ready and waiting. Nothing has gone wrong yet, and nothing is about to go wrong with the <em>GIL</em>. What goes wrong is the shape of line 11.',
         lines: [13, 14, 15],
         memory: {
           frames: [
@@ -414,8 +414,8 @@ t1.join();  t2.join()`,
         },
       },
       {
-        title: 'Thread-1 reads <code>0</code> — into its own private stack',
-        desc: 'Line 11 is not one action. Its first part, <code>acct.get()</code>, copies the value <code>0</code> out of the object and onto <em>Thread-1’s</em> evaluation stack, shown here as <code>value read</code>. From this instant on, Thread-1 is working from a snapshot.',
+        title: 'Thread-1 reads <code>0</code> into its own private stack',
+        desc: 'Line 11 isn\'t one action. Its first part, <code>acct.get()</code>, copies the value <code>0</code> out of the object and onto <em>Thread-1\'s</em> evaluation stack, shown here as <code>value read</code>. From this instant on, Thread-1 is working from a snapshot.',
         lines: [11, 4],
         memory: {
           frames: [
@@ -433,7 +433,7 @@ t1.join();  t2.join()`,
               classRef: { name: 'Account', pyId: ADDRS.AccountCls },
               dictLabel: 'instance __dict__',
               pairs: [{ key: 'balance', value: 0, type: 'int' }],
-              note: 'still 0 — the read did not change anything' },
+              note: 'still 0, the read did not change anything' },
             threadObj('t1Race', ADDRS.t1Race, 'Thread-1 (deposit)', { target: 'deposit @ 0x7fa20140', ident: 21440 }),
             threadObj('t2Race', ADDRS.t2Race, 'Thread-2 (deposit)', { target: 'deposit @ 0x7fa20140', ident: 21441 }),
           ],
@@ -442,7 +442,7 @@ t1.join();  t2.join()`,
       },
       {
         title: 'The handover lands <em>between</em> the read and the write',
-        desc: 'Calling a method is one of the moments the interpreter checks whether to switch threads. It switches here. Thread-1 is frozen holding a <code>0</code> that is about to stop being true — and it has no way to notice.',
+        desc: 'Calling a method is one of the moments the interpreter checks whether to switch threads. It switches here. Thread-1 is frozen holding a <code>0</code> that is about to stop being true, and it has no way to notice.',
         lines: [11],
         memory: {
           frames: [
@@ -469,7 +469,7 @@ t1.join();  t2.join()`,
       },
       {
         title: 'Thread-2 reads the same <code>0</code>, adds 1, and stores <code>1</code>',
-        desc: 'Thread-2 runs the whole line without interruption. It reads <code>0</code>, computes <code>1</code>, writes it back. From its point of view everything is perfect: the balance went from 0 to 1, exactly one deposit.',
+        desc: 'Thread-2 runs the whole line without interruption. It reads <code>0</code>, computes <code>1</code>, writes it back. From its point of view everything is fine: the balance went from 0 to 1, one deposit.',
         lines: [11, 5],
         memory: {
           frames: [
@@ -489,7 +489,7 @@ t1.join();  t2.join()`,
               classRef: { name: 'Account', pyId: ADDRS.AccountCls },
               dictLabel: 'instance __dict__',
               pairs: [{ key: 'balance', value: 1, type: 'int' }],
-              note: 'Thread-2 finished its deposit — balance is 1' },
+              note: 'Thread-2 finished its deposit, balance is 1' },
             threadObj('t1Race', ADDRS.t1Race, 'Thread-1 (deposit)', { target: 'deposit @ 0x7fa20140', ident: 21440 }),
             threadObj('t2Race', ADDRS.t2Race, 'Thread-2 (deposit)', { target: 'deposit @ 0x7fa20140', ident: 21441 }),
           ],
@@ -498,7 +498,7 @@ t1.join();  t2.join()`,
       },
       {
         title: 'Thread-1 wakes up and writes its stale answer over the top',
-        desc: 'Thread-1 resumes exactly where it stopped, still holding <code>0</code>. It computes <code>0 + 1</code> and stores <code>1</code>. The value it overwrites is also <code>1</code>, so nothing looks broken — but Thread-2’s deposit has just been erased.',
+        desc: 'Thread-1 resumes where it stopped, still holding <code>0</code>. It computes <code>0 + 1</code> and stores <code>1</code>. The value it overwrites is also <code>1</code>, so nothing looks broken, but Thread-2\'s deposit has just been erased.',
         lines: [11, 5],
         memory: {
           frames: [
@@ -516,7 +516,7 @@ t1.join();  t2.join()`,
               classRef: { name: 'Account', pyId: ADDRS.AccountCls },
               dictLabel: 'instance __dict__',
               pairs: [{ key: 'balance', value: 1, type: 'int' }],
-              note: 'overwritten with 0 + 1 — the same 1 it already held' },
+              note: 'overwritten with 0 + 1, the same 1 it already held' },
             threadObj('t1Race', ADDRS.t1Race, 'Thread-1 (deposit)', { target: 'deposit @ 0x7fa20140', ident: 21440 }),
             threadObj('t2Race', ADDRS.t2Race, 'Thread-2 (deposit)', { target: 'deposit @ 0x7fa20140', ident: 21441 }),
           ],
@@ -525,7 +525,7 @@ t1.join();  t2.join()`,
       },
       {
         title: 'Two deposits went in. The balance says <code>1</code>.',
-        desc: 'No exception, no warning, no corrupted memory — the interpreter did its job perfectly. It promised that one bytecode would finish before another began. It never promised your <em>line</em> would. <strong>The GIL protects the interpreter’s own data structures, not yours.</strong>',
+        desc: 'No exception, no warning, no corrupted memory. The interpreter did its job perfectly. It promised that one bytecode would finish before another began. It never promised your <em>line</em> would. <strong>The GIL protects the interpreter\'s own data structures, not yours.</strong>',
         lines: [16],
         memory: {
           frames: [
@@ -539,7 +539,7 @@ t1.join();  t2.join()`,
               classRef: { name: 'Account', pyId: ADDRS.AccountCls },
               dictLabel: 'instance __dict__',
               pairs: [{ key: 'balance', value: 1, type: 'int' }],
-              note: 'expected 2 — one update was lost' },
+              note: 'expected 2, one update was lost' },
             threadObj('t1Race', ADDRS.t1Race, 'Thread-1 (deposit)', { target: 'deposit @ 0x7fa20140', ident: 21440 }),
             threadObj('t2Race', ADDRS.t2Race, 'Thread-2 (deposit)', { target: 'deposit @ 0x7fa20140', ident: 21441 }),
           ],
@@ -553,7 +553,7 @@ t1.join();  t2.join()`,
      3 · A Lock turns three steps into one indivisible step
      ────────────────────────────────────────────────────────── */
   lock: {
-    watch: 'Two different queues appear. One thread waits for the <strong>GIL</strong>; the other waits for the <strong>Lock</strong>. They are not the same queue.',
+    watch: 'Two different queues appear. One thread waits for the <strong>GIL</strong>, the other waits for the <strong>Lock</strong>. They aren\'t the same queue.',
     code: `import threading
 
 class Account:
@@ -575,7 +575,7 @@ t1.join();  t2.join()`,
     steps: [
       {
         title: 'Same program, one extra object',
-        desc: 'The same <code>Account</code> as Demo 2, and the same two threads. Nothing about the GIL changes. What changes is that <em>you</em> add a lock of your own, covering exactly the three operations that must not be split.',
+        desc: 'The same <code>Account</code> as in demo 2, and the same two threads. Nothing about the GIL changes. What changes is that <em>you</em> add a lock of your own, covering the three operations that must not be split.',
         lines: [],
         memory: EMPTY,
       },
@@ -635,7 +635,7 @@ t1.join();  t2.join()`,
       },
       {
         title: 'Thread-2 reaches the same line and is turned away at the door',
-        desc: 'The GIL moved to Thread-2, which immediately hit <code>with lock:</code>. The lock is taken, so <code>acquire()</code> blocks — and blocking is waiting, so Thread-2 hands the GIL straight back. It is now in a <em>different</em> queue.',
+        desc: 'The GIL moved to Thread-2, which immediately hit <code>with lock:</code>. The lock is taken, so <code>acquire()</code> blocks. Blocking is waiting, so Thread-2 hands the GIL straight back. It\'s now in a <em>different</em> queue.',
         lines: [12],
         memory: {
           frames: [
@@ -662,8 +662,8 @@ t1.join();  t2.join()`,
         },
       },
       {
-        title: 'Thread-1 reads <code>0</code> — and the 5 ms tick no longer matters',
-        desc: 'The interpreter is still free to take the GIL away from Thread-1. It just has nobody useful to give it to: Thread-2 is not asking for the GIL, it is asking for the lock. So Thread-1 keeps going.',
+        title: 'Thread-1 reads <code>0</code>, and the 5 ms tick no longer matters',
+        desc: 'The interpreter is still free to take the GIL away from Thread-1. It just has nobody useful to give it to. Thread-2 isn\'t asking for the GIL, it\'s asking for the lock. So Thread-1 keeps going.',
         lines: [13],
         memory: {
           frames: [
@@ -693,7 +693,7 @@ t1.join();  t2.join()`,
       },
       {
         title: 'Thread-1 writes <code>1</code> and leaves the block',
-        desc: 'The read, the add and the write all happened with the lock held, so no other thread could slip between them. Leaving the <code>with</code> block calls <code>release()</code> — and because it is a <code>with</code> block, that happens even if the body raises.',
+        desc: 'The read, the add and the write all happened with the lock held, so no other thread could slip in between them. Leaving the <code>with</code> block calls <code>release()</code>, and because it\'s a <code>with</code> block, that happens even if the body raises.',
         lines: [13, 12],
         memory: {
           frames: [
@@ -710,7 +710,7 @@ t1.join();  t2.join()`,
               classRef: { name: 'lock', pyId: ADDRS.LockCls },
               dictLabel: 'lock state',
               pairs: [{ key: 'locked()', value: false, type: 'bool' }],
-              note: 'released — Thread-2 can stop waiting' },
+              note: 'released, Thread-2 can stop waiting' },
             { id: 'acctLk', pyId: ADDRS.acctLk, type: 'instance', value: 'Account()', refcount: 3, mutable: true, state: 'mutated',
               classRef: { name: 'Account', pyId: ADDRS.AccountCls },
               dictLabel: 'instance __dict__',
@@ -721,7 +721,7 @@ t1.join();  t2.join()`,
       },
       {
         title: 'Thread-2 takes the lock and does its whole deposit',
-        desc: 'It reads <code>1</code>, not the stale <code>0</code> from the racy version, because it was not allowed to read until Thread-1 had finished writing. Same three operations, this time genuinely one after the other.',
+        desc: 'It reads <code>1</code>, not the stale <code>0</code> from the racy version, because it wasn\'t allowed to read until Thread-1 had finished writing. Same three operations, this time one after the other.',
         lines: [12, 13],
         memory: {
           frames: [
@@ -750,8 +750,8 @@ t1.join();  t2.join()`,
         },
       },
       {
-        title: 'The balance is <code>2</code> — and it will be <code>2</code> every single run',
-        desc: 'That last part is what you were really buying. The racy version is not always wrong; it is <em>sometimes</em> wrong, which is far harder to find. A lock makes the outcome the same every time, on every machine, at every thread count.',
+        title: 'The balance is <code>2</code>, and it will be <code>2</code> every single run',
+        desc: 'That last part is what you were really buying. The racy version isn\'t always wrong. It\'s <em>sometimes</em> wrong, which is far harder to find. A lock makes the outcome the same every time, on every machine, at every thread count.',
         lines: [18],
         memory: {
           frames: [
@@ -805,7 +805,7 @@ for t in naps: t.join()`,
       },
       {
         title: '<code>time.sleep</code> gives the GIL back <em>before</em> it waits',
-        desc: 'This is the deal every blocking call in the standard library keeps: the moment it is going to sit and wait — for a timer, a socket, a file, a database — it releases the GIL first, and reacquires it when the answer comes back.',
+        desc: 'This is the deal every blocking call in the standard library keeps. The moment it\'s going to sit and wait, for a timer, a socket, a file or a database, it releases the GIL first, and takes it back when the answer arrives.',
         lines: [3, 4],
         memory: {
           frames: [
@@ -823,7 +823,7 @@ for t in naps: t.join()`,
       },
       {
         title: '<code>burn</code> never waits, so it never volunteers the lock',
-        desc: 'There is no point in this loop where the thread has nothing to do. It only ever loses the GIL because the interpreter takes it — after 5 ms, at the jump back to the top of the loop. It then has to queue up and get it again.',
+        desc: 'There\'s no point in this loop where the thread has nothing to do. It only ever loses the GIL because the interpreter takes it, after 5 ms, at the jump back to the top of the loop. Then it has to queue up and get it again.',
         lines: [6, 7, 8, 9],
         memory: {
           frames: [
@@ -836,14 +836,14 @@ for t in naps: t.join()`,
           heap: [
             { id: 'napFn', pyId: ADDRS.napFn, type: 'function', value: 'nap()', refcount: 1, mutable: false, state: 'normal' },
             { id: 'burnFn', pyId: ADDRS.burnFn, type: 'function', value: 'burn()', refcount: 1, mutable: false, state: 'new',
-              note: 'pure Python work — it needs the GIL for every single bytecode' },
+              note: 'pure Python work, it needs the GIL for every single bytecode' },
           ],
           highlight: ['burnFn'],
         },
       },
       {
-        title: 'Four nap threads start; the first one reaches <code>sleep</code>',
-        desc: 'Thread-1 gets the GIL, calls <code>time.sleep(1)</code>, and immediately hands the lock back. Its frame stays alive — it is waiting, not finished — but it is out of the interpreter’s way.',
+        title: 'Four nap threads start, and the first one reaches <code>sleep</code>',
+        desc: 'Thread-1 gets the GIL, calls <code>time.sleep(1)</code>, and immediately hands the lock back. Its frame stays alive, because it\'s waiting rather than finished, but it\'s out of the interpreter\'s way.',
         lines: [11, 12, 4],
         memory: {
           frames: [
@@ -869,8 +869,8 @@ for t in naps: t.join()`,
         },
       },
       {
-        title: 'The second thread does not have to wait its turn',
-        desc: 'The GIL was free, so Thread-2 took it, called <code>sleep</code>, and gave it up as well. Two threads are now waiting <em>at the same time</em>. Their two one-second waits are overlapping — that is the entire benefit of threads.',
+        title: 'The second thread doesn\'t have to wait its turn',
+        desc: 'The GIL was free, so Thread-2 took it, called <code>sleep</code>, and gave it up as well. Two threads are now waiting <em>at the same time</em>. Their two one-second waits overlap, and that is the benefit threads give you.',
         lines: [12, 4],
         memory: {
           frames: [
@@ -899,8 +899,8 @@ for t in naps: t.join()`,
         },
       },
       {
-        title: 'All four are asleep — and nobody holds the GIL at all',
-        desc: 'Look at the bottom box. The lock everybody was fighting over is simply <strong>free</strong>, because there is no Python left to run. Four threads, four waits, all happening at once. Nothing is being computed, so nothing is contended.',
+        title: 'All four are asleep, and nobody holds the GIL at all',
+        desc: 'Look at the bottom box. The lock everybody was fighting over is <strong>free</strong>, because there\'s no Python left to run. Four threads, four waits, all happening at once. Nothing is being computed, so nothing is contended.',
         lines: [12],
         memory: {
           frames: [
@@ -956,11 +956,11 @@ for t in naps: t.join()`,
       },
       {
         title: 'Now swap in <code>burn</code>, and the GIL is never free',
-        desc: 'Two compute threads never step aside, so the interpreter has to prise the lock away from each in turn. Only one runs at any instant, and all that swapping costs real time: on the same machine, <code>1.81 s</code> serial became <code>2.49 s</code> across two threads. Threads made CPU work <em>slower</em>.',
+        desc: 'Two compute threads never step aside, so the interpreter has to prise the lock away from each in turn. Only one runs at any instant, and all that swapping costs real time. On the same machine, <code>1.81 s</code> serial became <code>2.49 s</code> across two threads. Threads made the CPU work <em>slower</em>.',
         lines: [8, 9],
         memory: {
           frames: [
-            runtime('Thread-1', { moved: true, check: 'taken back after 5 ms — never volunteered' }),
+            runtime('Thread-1', { moved: true, check: 'taken back after 5 ms, never volunteered' }),
             { name: 'global', badge: 'blocked on join', state: 'blocked', vars: [
               { name: 'burn', ref: 'burnFn', pyId: ADDRS.burnFn, type: 'function', state: 'normal' },
             ]},
@@ -973,14 +973,14 @@ for t in naps: t.join()`,
           ],
           heap: [
             { id: 'burnFn', pyId: ADDRS.burnFn, type: 'function', value: 'burn()', refcount: 3, mutable: false, state: 'normal',
-              note: 'both threads need the GIL for every bytecode — they take turns, they do not overlap' },
+              note: 'both threads need the GIL for every bytecode, so they take turns and never overlap' },
           ],
           highlight: ['burnFn'],
         },
       },
       {
         title: 'The rule that decides everything: threads overlap waiting, never computing',
-        desc: 'Ask one question about your slow code — <em>is it waiting, or is it thinking?</em> Waiting on a network, a disk, a database, a subprocess: threads help, a lot. Thinking in Python: threads cannot help, because thinking needs the lock.',
+        desc: 'Ask one question about your slow code: <em>is it waiting, or is it thinking?</em> Waiting on a network, a disk, a database, a subprocess: threads help, a lot. Thinking in Python: threads can\'t help, because thinking needs the lock.',
         lines: [],
         memory: {
           frames: [
@@ -992,9 +992,9 @@ for t in naps: t.join()`,
           ],
           heap: [
             { id: 'napFn', pyId: ADDRS.napFn, type: 'function', value: 'nap()', refcount: 1, mutable: false, state: 'normal',
-              note: 'I/O-bound — 4 threads finished 4x faster' },
+              note: 'I/O-bound: 4 threads finished 4x faster' },
             { id: 'burnFn', pyId: ADDRS.burnFn, type: 'function', value: 'burn()', refcount: 1, mutable: false, state: 'normal',
-              note: 'CPU-bound — 2 threads finished slower than 1' },
+              note: 'CPU-bound: 2 threads finished slower than 1' },
           ],
           highlight: ['napFn', 'burnFn'],
         },
@@ -1003,7 +1003,7 @@ for t in naps: t.join()`,
   },
 
   /* ──────────────────────────────────────────────────────────
-     5 · A second process brings its own GIL — and its own memory
+     5 · A second process brings its own GIL, and its own memory
      ────────────────────────────────────────────────────────── */
   processes: {
     watch: 'Two grey interpreter boxes appear, each with its own GIL. The memory panel is showing two <em>separate</em> address spaces side by side.',
@@ -1022,12 +1022,12 @@ if __name__ == "__main__":
     steps: [
       {
         title: 'If the lock is the problem, stop sharing the lock',
-        desc: 'A thread shares everything with its siblings, including the one GIL. A process shares nothing: its own interpreter, its own GIL, its own heap. Two processes really do run Python at the same instant.',
+        desc: 'A thread shares everything with its siblings, including the one GIL. A process shares nothing. It has its own interpreter, its own GIL, its own heap. Two processes really do run Python at the same instant.',
         lines: [],
         memory: EMPTY,
       },
       {
-        title: 'One list, in the parent’s memory',
+        title: 'One list, in the parent\'s memory',
         desc: 'An ordinary list at an ordinary address. Everything so far is the single-process world you already know.',
         lines: [8],
         memory: {
@@ -1048,8 +1048,8 @@ if __name__ == "__main__":
         },
       },
       {
-        title: '<code>mp.Process(...)</code> builds an object — still one process',
-        desc: 'Exactly like <code>Thread</code>: this is a constructor, not a fork. It records what to run and what to run it with. The operating system has not been asked for anything yet.',
+        title: '<code>mp.Process(...)</code> builds an object, and it\'s still one process',
+        desc: 'Just like <code>Thread</code>, this is a constructor, not a fork. It records what to run and what to run it with. The operating system hasn\'t been asked for anything yet.',
         lines: [9],
         memory: {
           frames: [
@@ -1080,7 +1080,7 @@ if __name__ == "__main__":
       },
       {
         title: '<code>p.start()</code> launches a whole second Python',
-        desc: 'Two interpreter boxes now. Two GILs. The child re-imports your module to get at <code>child</code> — which is exactly why the <code>if __name__ == "__main__":</code> guard on line 7 is not optional. Without it, the child re-runs <code>p.start()</code> and spawns forever.',
+        desc: 'Two interpreter boxes now, and two GILs. The child re-imports your module to get at <code>child</code>, which is why the <code>if __name__ == "__main__":</code> guard on line 7 is not optional. Without it the child re-runs <code>p.start()</code> and spawns forever.',
         lines: [10, 7],
         memory: {
           frames: [
@@ -1107,14 +1107,14 @@ if __name__ == "__main__":
                 { key: 'pid', value: 9932, type: 'int' },
               ] },
             { id: 'childFnC', pyId: ADDRS.childFnC, type: 'function', value: 'child(data)', refcount: 1, mutable: false, state: 'new',
-              note: 'child memory — a fresh function object at a fresh address' },
+              note: 'child memory, a fresh function object at a fresh address' },
           ],
           highlight: ['childFnC'],
         },
       },
       {
-        title: 'The argument is pickled across — a copy, not a link',
-        desc: 'The list cannot be handed over, because the child cannot reach the parent’s memory. So it is <strong>pickled</strong> to bytes, sent, and rebuilt. Same three values. Different object, at an address in a different address space.',
+        title: 'The argument is pickled across: a copy, not a link',
+        desc: 'The list can\'t be handed over, because the child can\'t reach the parent\'s memory. So it\'s <strong>pickled</strong> to bytes, sent, and rebuilt. Same three values. Different object, at an address in a different address space.',
         lines: [9, 3],
         memory: {
           frames: [
@@ -1133,19 +1133,19 @@ if __name__ == "__main__":
               { value: 1, type: 'int' },
               { value: 2, type: 'int' },
               { value: 3, type: 'int' },
-            ], note: 'parent memory — 0x7fa5…' },
+            ], note: 'parent memory, 0x7fa5...' },
             { id: 'childList', pyId: ADDRS.childList, type: 'list', refcount: 1, mutable: true, state: 'new', items: [
               { value: 1, type: 'int' },
               { value: 2, type: 'int' },
               { value: 3, type: 'int' },
-            ], note: 'child memory — 0x7fb5… a rebuilt copy, equal but not identical' },
+            ], note: 'child memory, 0x7fb5... a rebuilt copy, equal but not identical' },
           ],
           highlight: ['parentList', 'childList'],
         },
       },
       {
         title: 'The child appends to <em>its</em> list',
-        desc: 'Session 01 said mutation changes the object in place and every name pointing at it sees the change. That is still true — but only for names in this process. There is no name in the parent pointing here.',
+        desc: 'Session 01 said mutation changes the object in place and every name pointing at it sees the change. That\'s still true, but only for names in this process. No name in the parent points here.',
         lines: [4, 5],
         memory: {
           frames: [
@@ -1164,20 +1164,20 @@ if __name__ == "__main__":
               { value: 1, type: 'int' },
               { value: 2, type: 'int' },
               { value: 3, type: 'int' },
-            ], note: 'parent memory — untouched' },
+            ], note: 'parent memory, untouched' },
             { id: 'childList', pyId: ADDRS.childList, type: 'list', refcount: 1, mutable: true, state: 'mutated', items: [
               { value: 1, type: 'int' },
               { value: 2, type: 'int' },
               { value: 3, type: 'int' },
               { value: 'from child', type: 'str' },
-            ], note: 'child memory — prints [1, 2, 3, \'from child\']' },
+            ], note: 'child memory, prints [1, 2, 3, \'from child\']' },
           ],
           highlight: ['childList'],
         },
       },
       {
         title: 'The child exits and takes everything with it',
-        desc: 'When a process ends, its whole address space goes — its heap, its objects, its GIL. Nothing is written back. <code>p.join()</code> returns, and the parent has no idea what the child changed.',
+        desc: 'When a process ends, its whole address space goes with it: its heap, its objects, its GIL. Nothing is written back. <code>p.join()</code> returns, and the parent has no idea what the child changed.',
         lines: [11],
         memory: {
           frames: [
@@ -1212,7 +1212,7 @@ if __name__ == "__main__":
       },
       {
         title: 'The parent prints <code>[1, 2, 3]</code>',
-        desc: 'This surprises almost everybody once. The mental model that makes it obvious: a <code>Thread</code> shares your objects, a <code>Process</code> shares your <em>values</em>. To get something back, it has to travel — a return value from a <code>Pool</code>, a <code>Queue</code>, a <code>Pipe</code>, or shared memory.',
+        desc: 'This catches almost everybody once. The model that makes it obvious: a <code>Thread</code> shares your objects, a <code>Process</code> shares your <em>values</em>. To get something back, it has to travel, as a return value from a <code>Pool</code>, through a <code>Queue</code> or a <code>Pipe</code>, or in shared memory.',
         lines: [12],
         memory: {
           frames: [
@@ -1234,7 +1234,7 @@ if __name__ == "__main__":
       },
       {
         title: 'And this is why processes fix CPU-bound work',
-        desc: 'Two interpreters means two GILs means two cores genuinely running Python at once. The same benchmark from demo 4: <code>1.81 s</code> serial, <code>2.49 s</code> on two threads, <code>1.08 s</code> on two processes. You pay for it in startup time and in copying everything you send.',
+        desc: 'Two interpreters means two GILs, which means two cores really running Python at once. The same benchmark as in demo 4: <code>1.81 s</code> serial, <code>2.49 s</code> on two threads, <code>1.08 s</code> on two processes. You pay for it in startup time and in copying everything you send.',
         lines: [],
         memory: {
           frames: [
@@ -1248,7 +1248,7 @@ if __name__ == "__main__":
               { value: 1, type: 'int' },
               { value: 2, type: 'int' },
               { value: 3, type: 'int' },
-            ], note: 'two GILs — both boxes can execute Python in the same instant' },
+            ], note: 'two GILs, so both boxes can execute Python in the same instant' },
           ],
           highlight: [],
         },
@@ -1260,7 +1260,7 @@ if __name__ == "__main__":
      6 · One thread, one event loop, many suspended coroutines
      ────────────────────────────────────────────────────────── */
   asyncio: {
-    watch: 'Count the threads: there is one, the whole way through. The overlapping happens between <em>objects</em>, not between threads.',
+    watch: 'Count the threads: there\'s one, the whole way through. The overlapping happens between <em>objects</em>, not between threads.',
     code: `import asyncio
 
 async def fetch(name):
@@ -1280,8 +1280,8 @@ asyncio.run(main())`,
         memory: EMPTY,
       },
       {
-        title: '<code>async def</code> does not make a function that runs',
-        desc: 'It makes a function that, when called, hands you a <strong>coroutine object</strong> and runs nothing. Session 05’s generators behaved identically: calling the function built an object, and the body waited to be driven.',
+        title: '<code>async def</code> doesn\'t make a function that runs',
+        desc: 'It makes a function that, when called, hands you a <strong>coroutine object</strong> and runs nothing. Session 05\'s generators behaved the same way: calling the function built an object, and the body waited to be driven.',
         lines: [3, 4, 5],
         memory: {
           frames: [
@@ -1301,11 +1301,11 @@ asyncio.run(main())`,
       },
       {
         title: '<code>asyncio.run</code> starts one event loop',
-        desc: 'The loop is an ordinary object living on the heap of the thread you are already in. Its job is small and boring: keep a list of things that are ready, run one of them until it pauses, repeat.',
+        desc: 'The loop is an ordinary object living on the heap of the thread you\'re already in. Its job is small and boring: keep a list of things that are ready, run one of them until it pauses, repeat.',
         lines: [11],
         memory: {
           frames: [
-            runtime('MainThread', { check: 'no second thread is created — check threading.enumerate()' }),
+            runtime('MainThread', { check: 'no second thread is created, check threading.enumerate()' }),
             { name: 'global', badge: 'inside asyncio.run()', state: 'waiting', vars: [
               { name: 'fetch', ref: 'fetchFn', pyId: ADDRS.fetchFn, type: 'function', state: 'normal' },
               { name: 'main', ref: 'mainFn', pyId: ADDRS.mainFn, type: 'function', state: 'normal' },
@@ -1328,7 +1328,7 @@ asyncio.run(main())`,
       },
       {
         title: 'Two coroutine objects appear, and not one line of <code>fetch</code> has run',
-        desc: 'The two calls inside <code>gather(...)</code> are evaluated first, as arguments always are. Each produces a coroutine in state <code>CORO_CREATED</code>. Forget to await one and Python will tell you: <code>RuntimeWarning: coroutine \'fetch\' was never awaited</code>.',
+        desc: 'The two calls inside <code>gather(...)</code> are evaluated first, as arguments always are. Each produces a coroutine in the state <code>CORO_CREATED</code>. Forget to await one and Python will tell you: <code>RuntimeWarning: coroutine \'fetch\' was never awaited</code>.',
         lines: [8],
         memory: {
           frames: [
@@ -1364,7 +1364,7 @@ asyncio.run(main())`,
       },
       {
         title: '<code>gather</code> wraps each coroutine in a <code>Task</code> and gives it to the loop',
-        desc: 'A coroutine on its own does nothing; something has to drive it. A <code>Task</code> is that driver — an object that holds a coroutine and asks the loop to keep stepping it. Both tasks are now in the loop’s ready list.',
+        desc: 'A coroutine on its own does nothing. Something has to drive it. A <code>Task</code> is that driver, an object that holds a coroutine and asks the loop to keep stepping it. Both tasks are now in the loop\'s ready list.',
         lines: [8],
         memory: {
           frames: [
@@ -1423,7 +1423,7 @@ asyncio.run(main())`,
             { id: 'coroA', pyId: ADDRS.coroA, type: 'coroutine', value: "fetch('one')", refcount: 2, mutable: true, state: 'mutated',
               pairs: [
                 { key: 'state', value: 'CORO_SUSPENDED', type: 'str' },
-                { key: 'paused at', value: 'line 4 — await asyncio.sleep(1)', type: 'str' },
+                { key: 'paused at', value: 'line 4, await asyncio.sleep(1)', type: 'str' },
                 { key: 'name', value: 'one', type: 'str' },
               ],
               note: 'its frame is kept alive, exactly like a paused generator' },
@@ -1434,12 +1434,12 @@ asyncio.run(main())`,
         },
       },
       {
-        title: 'The loop does not wait for it — it starts Task-2 immediately',
-        desc: 'That is the whole trick, and it is nothing like a thread switch. Nobody was pre-empted; Task-1 <em>chose</em> to pause at a point you can see in the source. Now two coroutines are suspended, both timers running, still one thread.',
+        title: 'The loop doesn\'t wait for it. It starts Task-2 straight away',
+        desc: 'This is the trick, and it\'s nothing like a thread switch. Nobody was pre-empted. Task-1 <em>chose</em> to pause at a point you can see in the source. Now two coroutines are suspended, both timers are running, and there\'s still one thread.',
         lines: [4],
         memory: {
           frames: [
-            runtime('MainThread', { free: true, check: 'one thread, no contention — nothing is computing' }),
+            runtime('MainThread', { free: true, check: 'one thread, no contention, nothing is computing' }),
             { name: 'global', badge: 'parked in select()', state: 'blocked', vars: [
               { name: 'fetch', ref: 'fetchFn', pyId: ADDRS.fetchFn, type: 'function', state: 'normal' },
               { name: 'main', ref: 'mainFn', pyId: ADDRS.mainFn, type: 'function', state: 'normal' },
@@ -1496,7 +1496,7 @@ asyncio.run(main())`,
             { id: 'strOne', pyId: ADDRS.strOne, type: 'str', value: 'ONE', refcount: 1, mutable: false, state: 'new' },
             { id: 'coroA', pyId: ADDRS.coroA, type: 'coroutine', value: "fetch('one')", refcount: 2, mutable: true, state: 'mutated',
               pairs: [{ key: 'state', value: 'CORO_CLOSED', type: 'str' }],
-              note: 'finished — its frame is released now' },
+              note: 'finished, its frame is released now' },
             { id: 'coroB', pyId: ADDRS.coroB, type: 'coroutine', value: "fetch('two')", refcount: 2, mutable: true, state: 'normal',
               pairs: [{ key: 'state', value: 'CORO_SUSPENDED', type: 'str' }] },
           ],
@@ -1505,7 +1505,7 @@ asyncio.run(main())`,
       },
       {
         title: 'Two one-second waits took one second, on one thread',
-        desc: 'Measured: <code>1.01 s</code> awaiting them one after the other, <code>0.50 s</code> through <code>gather</code>. Same win as threads on I/O, with no GIL hand-off and no locking — because nothing ever ran at the same time as anything else.',
+        desc: 'Measured: <code>1.01 s</code> awaiting them one after the other, <code>0.50 s</code> through <code>gather</code>. The same win as threads on I/O, with no GIL hand-off and no locking, because nothing ever ran at the same time as anything else.',
         lines: [8, 9],
         memory: {
           frames: [

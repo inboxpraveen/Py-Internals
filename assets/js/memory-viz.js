@@ -1,5 +1,5 @@
 /* ============================================================
-   PY INTERNALS — MEMORY-VIZ.JS
+   PY INTERNALS: MEMORY-VIZ.JS
    Renders Python's memory model:
    - Named bindings (stack / namespace)
    - Heap objects with id(), type, value, refcount
@@ -107,8 +107,8 @@ PJ.MemoryViz = class {
     const displayFrames = [...frames].reverse();
 
     // Most sessions have one obvious active frame: the deepest call. A
-    // concurrency session does not — several threads have live frames and only
-    // one of them holds the GIL — so a frame may declare its own state instead.
+    // concurrency session does not: several threads have live frames and only
+    // one of them holds the GIL. So a frame may declare its own state instead.
     const anyExplicitState = frames.some((f) => f.state);
 
     displayFrames.forEach((frame, index) => {
@@ -383,7 +383,7 @@ PJ.MemoryViz = class {
   _renderValueHTML(rawValue, type) {
     const value = typeof rawValue === 'boolean' ? rawValue : this._esc(rawValue);
     // A slot, dict value or attribute that points at another object. Drawn in
-    // the same amber as a name's address in the frame, never in quotes — a
+    // the same amber as a name's address in the frame, never in quotes. A
     // learner must be able to tell "this slot holds a string" from "this slot
     // refers to another box on this panel" at a glance.
     if (type === 'ref')   return `<span class="mem-ref-inline">${String(value).replace(/-&gt;/g, '→')}</span>`;

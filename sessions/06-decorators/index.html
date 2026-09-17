@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Session 06: Decorators — Py Internals</title>
-  <meta name="description" content="See what @decorator really does: a function goes in, a wrapper comes out, and the name is rebound. Closure cells, functools.wraps, decorator factories and stacking, shown in memory." />
+  <title>Python Decorators Explained: @ Means f = deco(f)</title>
+  <meta name="description" content="A decorator is one line of assignment. See the wrapper, the closure cell that keeps your function alive, functools.wraps, decorator factories and stacking." />
   <meta name="theme-color" content="#1A6B5C" />
   <link rel="icon" type="image/png" href="../../assets/images/Python-logo.png" />
   <link rel="apple-touch-icon" href="../../assets/images/Python-logo.png" />
@@ -14,6 +14,116 @@
   <link rel="stylesheet" href="../../assets/css/memory-viz.css" />
   <link rel="stylesheet" href="../../assets/css/animations.css" />
   <link rel="stylesheet" href="../../assets/css/session.css" />
+  <!-- seo:head -->
+  <link rel="canonical" href="https://inboxpraveen.github.io/Py-Internals/sessions/06-decorators/" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Praveen Kumar" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="Py Internals" />
+  <meta property="og:locale" content="en_GB" />
+  <meta property="og:url" content="https://inboxpraveen.github.io/Py-Internals/sessions/06-decorators/" />
+  <meta property="og:title" content="Python Decorators Explained: @ Means f = deco(f)" />
+  <meta property="og:description" content="A decorator is one line of assignment. See the wrapper, the closure cell that keeps your function alive, functools.wraps, decorator factories and stacking." />
+  <meta property="og:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/06-decorators.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Python Decorators Explained: @ Means f = deco(f) on Py Internals" />
+  <meta property="article:published_time" content="2026-09-03" />
+  <meta property="article:modified_time" content="2026-09-17" />
+  <meta property="article:section" content="Functions" />
+  <meta property="article:author" content="https://github.com/inboxpraveen" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Python Decorators Explained: @ Means f = deco(f)" />
+  <meta name="twitter:description" content="A decorator is one line of assignment. See the wrapper, the closure cell that keeps your function alive, functools.wraps, decorator factories and stacking." />
+  <meta name="twitter:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/06-decorators.png" />
+  <link rel="alternate" type="application/atom+xml" title="Py Internals sessions" href="https://inboxpraveen.github.io/Py-Internals/feed.xml" />
+  <link rel="manifest" href="https://inboxpraveen.github.io/Py-Internals/manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" />
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": [
+        "Article",
+        "LearningResource"
+      ],
+      "@id": "https://inboxpraveen.github.io/Py-Internals/sessions/06-decorators/#lesson",
+      "mainEntityOfPage": "https://inboxpraveen.github.io/Py-Internals/sessions/06-decorators/",
+      "headline": "Session 06: Decorators",
+      "name": "Session 06: Decorators",
+      "description": "A decorator is one line of assignment. See the wrapper, the closure cell that keeps your function alive, functools.wraps, decorator factories and stacking.",
+      "image": "https://inboxpraveen.github.io/Py-Internals/assets/images/og/06-decorators.png",
+      "author": {
+        "@type": "Person",
+        "name": "Praveen Kumar",
+        "url": "https://github.com/inboxpraveen"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Py Internals",
+        "url": "https://inboxpraveen.github.io/Py-Internals/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://inboxpraveen.github.io/Py-Internals/assets/images/Python-logo.png",
+          "width": 1024,
+          "height": 1024
+        },
+        "sameAs": [
+          "https://github.com/inboxpraveen/Py-Internals"
+        ]
+      },
+      "datePublished": "2026-09-03",
+      "dateModified": "2026-09-17",
+      "inLanguage": "en",
+      "isAccessibleForFree": true,
+      "license": "https://github.com/inboxpraveen/Py-Internals/blob/main/LICENSE",
+      "isPartOf": {
+        "@type": "Course",
+        "@id": "https://inboxpraveen.github.io/Py-Internals/#course",
+        "name": "Py Internals",
+        "url": "https://inboxpraveen.github.io/Py-Internals/"
+      },
+      "position": 6,
+      "learningResourceType": "Interactive lesson",
+      "educationalLevel": "Beginner",
+      "timeRequired": "PT40M",
+      "teaches": [
+        "decorators as f = deco(f)",
+        "wrapper functions",
+        "closure cells",
+        "functools.wraps and __wrapped__",
+        "decorator factories",
+        "stacking decorators"
+      ],
+      "about": [
+        "Python (programming language)"
+      ],
+      "keywords": "decorators as f = deco(f), wrapper functions, closure cells, functools.wraps and __wrapped__, decorator factories, stacking decorators"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://inboxpraveen.github.io/Py-Internals/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Session 06: Decorators",
+          "item": "https://inboxpraveen.github.io/Py-Internals/sessions/06-decorators/"
+        }
+      ]
+    }
+  ]
+}
+  </script>
+  <!-- /seo:head -->
 </head>
 <body>
 
@@ -138,10 +248,7 @@
       <div class="session-hero__eyebrow">Functions · Session 06</div>
       <h1 class="session-hero__title">Decorators</h1>
       <p class="session-hero__subtitle">
-        A decorator looks like magic and is actually one line of assignment.
-        You hand your function to another function, it hands back a replacement,
-        and your old name gets pointed at the replacement. The original does not
-        vanish — it is tucked inside, still doing the real work.
+        A decorator looks like magic and is actually one line of assignment. You hand your function to another function, it hands back a replacement, and your old name gets pointed at the replacement. The original doesn't vanish. It's tucked inside, still doing the real work.
       </p>
       <div class="session-meta">
         <div class="session-meta__item">~40 minutes</div>
@@ -157,10 +264,7 @@
         <div class="learning-card__label">Learning goal</div>
         <h2 class="learning-card__title"><code>@deco</code> means <code>f = deco(f)</code>.</h2>
         <p class="learning-card__body">
-          That is the entire feature. Session 01 taught that assignment moves a nametag;
-          Session 02 taught that a function can remember an outer name. Put those two
-          together and you have decorators. Everything else — arguments, stacking,
-          the lost docstring — is a consequence of that one line.
+          That's the whole feature. Session 01 taught that assignment moves a nametag, and Session 02 taught that a function can remember an outer name. Put those two together and you have decorators. Everything else (arguments, stacking, the lost docstring) follows from that one line.
         </p>
         <div class="concept-chip-row">
           <span class="type-chip type-chip--function">function</span>
@@ -175,7 +279,7 @@
         <div class="learning-path">
           <div class="learning-path__step">
             <span class="learning-path__num">1</span>
-            <span><strong>Do it by hand first.</strong> Demo 1 has no <code>@</code> at all — just an assignment.</span>
+            <span><strong>Do it by hand first.</strong> Demo 1 has no <code>@</code> at all, just an assignment.</span>
           </div>
           <div class="learning-path__step">
             <span class="learning-path__num">2</span>
@@ -195,14 +299,11 @@
           <div class="stage-intro__label">Interactive lab</div>
           <h2 id="stage-title">Follow the nametag, not the <code>@</code></h2>
           <p>
-            Two things happen in every demo: a new function object appears, and an
-            existing name is pointed somewhere new. If you can spot those two events,
-            you can read any decorator you ever meet.
+            Two things happen in every demo: a new function object appears, and an existing name is pointed somewhere new. If you can spot those two events, you can read any decorator you'll ever meet.
           </p>
         </div>
         <div class="stage-intro__hint">
-          Tip: at the last step of each demo, ask &ldquo;which object does the name point at,
-          and what is keeping the original alive?&rdquo;
+          Tip: at the last step of each demo, ask which object the name points at, and what is keeping the original alive.
         </div>
       </section>
 
@@ -304,23 +405,17 @@
       <h2 id="sugar">What the <code>@</code> line actually means</h2>
       <p class="in-plain">
         <span class="in-plain__label">In plain words</span>
-        You wrote a function. Someone hands it to a helper and says &ldquo;give me back a
-        better version.&rdquo; The better version goes under the old name, and your
-        original goes in the helper's pocket. That is a decorator. The <code>@</code>
-        symbol is just a shorter way to write the handover.
+        You wrote a function. Someone hands it to a helper and says "give me back a better version". The better version goes under the old name, and your original goes in the helper's pocket. That's a decorator. The <code>@</code> symbol is just a shorter way to write the handover.
       </p>
       <p class="narrative-lede then-precise">
-        Precisely: <code>@deco</code> above <code>def f</code> compiles to
-        <code>f = deco(f)</code>. The <code>def</code> runs first and produces a
-        function object, that object is passed to <code>deco</code>, and the name
-        <code>f</code> is bound to whatever comes back.
+        To be precise, <code>@deco</code> above <code>def f</code> compiles to <code>f = deco(f)</code>. The <code>def</code> runs first and produces a function object, that object is passed to <code>deco</code>, and the name <code>f</code> is bound to whatever comes back.
       </p>
 
       <div class="flow-grid">
         <div class="flow-card">
           <div class="section-label">1 · Build</div>
           <h3>The <code>def</code> runs</h3>
-          <p>A function object appears on the heap. It has no name yet — the decorator line has not finished.</p>
+          <p>A function object appears on the heap. It has no name yet, because the decorator line hasn't finished.</p>
         </div>
         <div class="flow-card">
           <div class="section-label">2 · Hand over</div>
@@ -339,9 +434,7 @@
         <div>
           <div class="callout__title">A decorator is not a keyword</div>
           <div class="callout__body">
-            There is no <code>decorator</code> type in Python. Anything callable that
-            accepts one argument works — a function, a class, an object with
-            <code>__call__</code>. The <code>@</code> is punctuation, not machinery.
+            There's no <code>decorator</code> type in Python. Anything callable that accepts one argument works: a function, a class, an object with <code>__call__</code>. The <code>@</code> is punctuation, not machinery.
           </div>
         </div>
       </div>
@@ -360,15 +453,10 @@
         <h2>Where your original function goes</h2>
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
-          Nothing is thrown away. Your function is still there, holding the same
-          address it always had. What changed is that no <em>name</em> points at it
-          any more. It is reachable only through the wrapper that swallowed it.
+          Nothing is thrown away. Your function is still there, at the same address it always had. What changed is that no <em>name</em> points at it any more. It's reachable only through the wrapper that swallowed it.
         </p>
         <p class="then-precise">
-          The wrapper uses <code>func</code>, a name from the enclosing call. That makes
-          <code>func</code> a free variable, so Python attaches a <strong>closure cell</strong>
-          to the wrapper holding a reference to your function. The decorator's frame is
-          discarded when it returns; the cell survives because it belongs to the wrapper.
+          The wrapper uses <code>func</code>, a name from the enclosing call. That makes <code>func</code> a free variable, so Python attaches a <strong>closure cell</strong> to the wrapper holding a reference to your function. The decorator's frame is discarded when it returns. The cell survives because it belongs to the wrapper.
         </p>
 
         <div class="reference-map" aria-label="Reference diagram after decorating">
@@ -400,8 +488,7 @@
           <div>
             <div class="callout__title">This is Session 02's closure, doing a job</div>
             <div class="callout__body">
-              In Session 02 a closure remembered a counter. Here it remembers a function.
-              Same mechanism, same diagram — only the thing being remembered has changed.
+              In Session 02 a closure remembered a counter. Here it remembers a function. Same mechanism, same diagram. Only the thing being remembered has changed.
             </div>
           </div>
         </div>
@@ -413,8 +500,7 @@
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
           You asked for a coat and got the coat back with someone else's name sewn in.
-          Your function still runs, but every tool that reads its label — <code>help()</code>,
-          a traceback, a log line — now reports the wrapper's name instead of yours.
+          Your function still runs, but every tool that reads its label (<code>help()</code>, a traceback, a log line) now reports the wrapper's name instead of yours.
         </p>
         <p class="then-precise">
           <code>functools.wraps(original)</code> is a decorator you apply to the wrapper.
@@ -452,7 +538,7 @@
               <tr>
                 <td><code>greet("ada")</code></td>
                 <td><code>'HI ADA'</code></td>
-                <td><code>'HI ADA'</code> — behaviour is identical</td>
+                <td><code>'HI ADA'</code>, the behaviour is identical</td>
               </tr>
             </tbody>
           </table>
@@ -463,9 +549,7 @@
           <div>
             <div class="callout__title">Skipping <code>wraps</code> is a debugging tax you pay later</div>
             <div class="callout__body">
-              It costs one line and never changes behaviour. Without it, a stack trace three
-              months from now points at <code>wrapper</code> in every decorated function in
-              your codebase, and they all look the same.
+              It costs one line and never changes behaviour. Without it, a stack trace three months from now points at <code>wrapper</code> in every decorated function in your codebase, and they all look the same.
             </div>
           </div>
         </div>
@@ -473,9 +557,7 @@
         <div class="try-this">
           <div class="try-this__label">Try this in a REPL</div>
           <p>
-            Decorate a function twice — once with <code>@functools.wraps(func)</code> on the
-            wrapper and once without — then compare <code>help()</code> on each. The difference
-            is what your future self will be reading.
+            Decorate a function twice, once with <code>@functools.wraps(func)</code> on the wrapper and once without, then compare <code>help()</code> on each. The difference is what your future self will be reading.
           </p>
         </div>
       </div>
@@ -485,15 +567,10 @@
         <h2>Why <code>@repeat(2)</code> needs one more <code>def</code></h2>
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
-          The <code>@</code> line only ever passes your function to one thing. If you also
-          want to pass a number, you need something that takes the number first and gives
-          back the thing that will take your function. That is the third layer.
+          The <code>@</code> line only ever passes your function to one thing. If you also want to pass a number, you need something that takes the number first and gives back the thing that will take your function. That's the third layer.
         </p>
         <p class="then-precise">
-          <code>@repeat(2)</code> evaluates <code>repeat(2)</code> immediately — before any
-          decorating happens — and the result is what gets applied to your function.
-          <code>repeat</code> is therefore a <strong>decorator factory</strong>, not a decorator.
-          Two calls happen at import time; your function body still runs zero times.
+          <code>@repeat(2)</code> evaluates <code>repeat(2)</code> immediately, before any decorating happens, and the result is what gets applied to your function. So <code>repeat</code> is a <strong>decorator factory</strong>, not a decorator. Two calls happen at import time, and your function body still runs zero times.
         </p>
 
         <div class="lookup-path" aria-label="Order of calls for a decorator factory">
@@ -521,9 +598,7 @@
             <div class="callout__body">
               <code>@deco</code> means <code>deco</code> receives your function.
               <code>@deco()</code> means <code>deco()</code> is called first and <em>its result</em>
-              receives your function. Mixing these up is the single most common decorator bug —
-              and the error message is usually a baffling <code>TypeError</code> about the wrong
-              number of arguments.
+              receives your function. Mixing these up is the most common decorator bug there is, and the error message is usually a baffling <code>TypeError</code> about the wrong number of arguments.
             </div>
           </div>
         </div>
@@ -534,9 +609,7 @@
         <h2>Two decorators, two different orders</h2>
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
-          Think of wrapping a parcel. The layer you put on first ends up innermost;
-          the last layer you add is the one someone opens first. Decorators are applied
-          from the bottom up and entered from the top down, for exactly that reason.
+          Think of wrapping a parcel. The layer you put on first ends up innermost, and the last layer you add is the one someone opens first. Decorators are applied from the bottom up and entered from the top down, for the same reason.
         </p>
         <p class="then-precise">
           <code>@bold</code> above <code>@italic</code> above <code>def text</code> compiles to
@@ -566,9 +639,7 @@
           <div class="recap-box__label">What you should be able to draw</div>
           <p>
             A name, an outermost wrapper, a closure cell inside it holding the next wrapper,
-            and your original function at the bottom of the chain. If you can draw that,
-            you can predict what any stack of decorators does — and where to look when one
-            of them breaks.
+            and your original function at the bottom of the chain. If you can draw that, you can predict what any stack of decorators does, and where to look when one of them breaks.
           </p>
         </div>
       </div>
@@ -607,10 +678,7 @@
             <h3>Writing <code>@deco()</code> when the decorator takes no arguments</h3>
             <p>
               That calls <code>deco</code> with nothing, then applies whatever it returned
-              to your function. If <code>deco</code> expected a function, you get a
-              <code>TypeError</code> at import time — before any of your code runs.
-              The reverse, <code>@repeat</code> without <code>(2)</code>, silently binds your
-              function to the wrong layer.
+              to your function. If <code>deco</code> expected a function, you get a <code>TypeError</code> at import time, before any of your code runs. The reverse, <code>@repeat</code> without <code>(2)</code>, binds your function to the wrong layer without a word.
             </p>
           </div>
         </div>
@@ -620,10 +688,7 @@
           <div>
             <div class="callout__title">One question answers most decorator bugs</div>
             <div class="callout__body">
-              &ldquo;After this line runs, what object does the name point at?&rdquo;
-              If the answer is <code>None</code>, you forgot a <code>return</code>. If it is
-              your original function, the decorator did not wrap. If it is a wrapper with the
-              wrong signature, the <code>*args</code> are missing.
+              "After this line runs, what object does the name point at?" If the answer is <code>None</code>, you forgot a <code>return</code>. If it's your original function, the decorator didn't wrap. If it's a wrapper with the wrong signature, the <code>*args</code> are missing.
             </div>
           </div>
         </div>
@@ -633,27 +698,25 @@
     <section class="quiz" id="quiz" data-session="06-decorators">
       <div class="section-divider"><div class="section-divider__label">Check your understanding</div></div>
       <h2>Can you predict the memory?</h2>
-      <p class="quiz__lede">Every question is the same question: after this runs, what does the name point at?</p>
+      <p class="quiz__lede">Every question here is really the same question: after this runs, what does the name point at?</p>
 
       <div class="quiz-card" data-answer="1">
         <div class="quiz-card__q">1. What does <code>@shout</code> above <code>def greet</code> compile to?</div>
         <button class="quiz-option" data-choice="0">It edits the body of <code>greet</code> in place</button>
-        <button class="quiz-option" data-choice="1"><code>greet = shout(greet)</code> — the name is rebound to whatever <code>shout</code> returns</button>
+        <button class="quiz-option" data-choice="1"><code>greet = shout(greet)</code>, so the name is rebound to whatever <code>shout</code> returns</button>
         <button class="quiz-option" data-choice="2">It registers <code>greet</code> so <code>shout</code> runs before every call, without changing any name</button>
         <div class="quiz-explain">
-          A decorator never modifies your function. It calls something with it and rebinds the name to the result.
-          If that result is not callable, the next call fails.
+          A decorator never modifies your function. It calls something with it and rebinds the name to the result. If that result isn't callable, the next call fails.
         </div>
       </div>
 
       <div class="quiz-card" data-answer="2">
         <div class="quiz-card__q">2. After decorating, what keeps the original undecorated function alive in memory?</div>
-        <button class="quiz-option" data-choice="0">Nothing — it is garbage collected, and the wrapper holds a copy of its code</button>
+        <button class="quiz-option" data-choice="0">Nothing. It's garbage collected, and the wrapper holds a copy of its code</button>
         <button class="quiz-option" data-choice="1">The module keeps a hidden second name for it</button>
         <button class="quiz-option" data-choice="2">The wrapper's closure cell holds a reference to it</button>
         <div class="quiz-explain">
-          No name points at it any more, but its reference count is not zero: the wrapper's closure cell
-          still refers to it. That is the only reason calling the wrapper still works.
+          No name points at it any more, but its reference count isn't zero, because the wrapper's closure cell still refers to it. That's the only reason calling the wrapper still works.
         </div>
       </div>
 
@@ -671,7 +734,7 @@
       <div class="quiz-card" data-answer="1">
         <div class="quiz-card__q">4. In <code>@repeat(2)</code>, when does <code>repeat(2)</code> actually run?</div>
         <button class="quiz-option" data-choice="0">Every time the decorated function is called</button>
-        <button class="quiz-option" data-choice="1">Once, while the file is being read — before the function is decorated</button>
+        <button class="quiz-option" data-choice="1">Once, while the file is being read, before the function is decorated</button>
         <button class="quiz-option" data-choice="2">Never; <code>@</code> passes the <code>2</code> straight through to the wrapper</button>
         <div class="quiz-explain">
           <code>repeat(2)</code> is evaluated first and must return a decorator. That decorator is then
@@ -696,11 +759,26 @@
         <button class="quiz-option" data-choice="1">Python falls back to the undecorated function</button>
         <button class="quiz-option" data-choice="2">A <code>SyntaxError</code> at the <code>@</code> line</button>
         <div class="quiz-explain">
-          A function with no <code>return</code> returns <code>None</code>, and <code>f = deco(f)</code> binds <code>f</code> to that.
-          The failure shows up at the first call, not at the decorator.
+          A function with no <code>return</code> returns <code>None</code>, and <code>f = deco(f)</code> binds <code>f</code> to that. The failure shows up at the first call, not at the decorator.
         </div>
       </div>
     </section>
+
+    <!-- seo:sessions-nav -->
+    <nav class="sessions-nav" aria-label="All sessions">
+      <div class="sessions-nav__label">All sessions</div>
+      <ul>
+        <li><a href="../01-variables/"><span>01</span> Variables &amp; Mutability</a></li>
+        <li><a href="../02-functions/"><span>02</span> Functions, Scope &amp; the Call Stack</a></li>
+        <li><a href="../03-lists-dicts/"><span>03</span> Lists, Dicts &amp; References</a></li>
+        <li><a href="../04-classes/"><span>04</span> Classes &amp; Objects</a></li>
+        <li><a href="../05-iterators/"><span>05</span> Iterators &amp; Generators</a></li>
+        <li class="is-current"><a href="../06-decorators/"><span>06</span> Decorators</a></li>
+        <li><a href="../07-gil/"><span>07</span> The GIL &amp; Concurrency</a></li>
+        <li><a href="../08-exceptions/"><span>08</span> Exceptions, Tracebacks &amp; Context Managers</a></li>
+      </ul>
+    </nav>
+    <!-- /seo:sessions-nav -->
 
     <div class="session-footer">
       <a href="../05-iterators/" class="btn btn--secondary">← Session 05: Iterators</a>

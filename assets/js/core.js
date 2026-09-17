@@ -1,5 +1,5 @@
 /* ============================================================
-   PY INTERNALS — CORE.JS
+   PY INTERNALS: CORE.JS
    App state, navigation, progress, quizzes, session boot
    ============================================================ */
 
@@ -90,7 +90,7 @@ PJ.Core = (function () {
     }
 
     // On a phone the sidebar covers the page, so tapping a section link has to
-    // dismiss it — otherwise you scroll to a heading you cannot see.
+    // dismiss it, otherwise you scroll to a heading you cannot see.
     sidebar.addEventListener('click', (e) => {
       if (e.target.closest('.sidebar__item') && state.sidebarOpen) closeSidebar();
     });
@@ -172,7 +172,7 @@ PJ.Core = (function () {
       state.completedSessions.push(sessionId);
       try {
         localStorage.setItem('pj_completed', JSON.stringify(state.completedSessions));
-      } catch (err) { /* private browsing — progress just won't persist */ }
+      } catch (err) { /* private browsing, so progress just won't persist */ }
     }
   }
 
@@ -209,7 +209,7 @@ PJ.Core = (function () {
       const last = PJ.COURSE.find((s) => s.id === lastId);
       if (last) {
         lastNote.hidden = false;
-        lastNote.innerHTML = `Last opened: <a href="${sessionHref(last.id)}">Session ${last.num} — ${last.title}</a>`;
+        lastNote.innerHTML = `Last opened: <a href="${sessionHref(last.id)}">Session ${last.num}: ${last.title}</a>`;
       }
     }
 
@@ -298,8 +298,8 @@ PJ.Core = (function () {
 
         const explain = card.querySelector('.quiz-explain');
         if (explain) {
-          // Without this the verdict and the explanation — the part that actually
-          // teaches — are visible only to people who can see them.
+          // Without this the verdict and the explanation (the part that actually
+          // teaches) are visible only to people who can see them.
           explain.setAttribute('role', 'status');
           explain.setAttribute('aria-live', 'polite');
         }
@@ -412,7 +412,7 @@ PJ.Core = (function () {
     });
 
     // Completion is earned by finishing the quiz (see _initQuizzes), not by
-    // scrolling to the bottom — otherwise the Done badge means nothing.
+    // scrolling to the bottom, otherwise the Done badge means nothing.
   }
 
   function scrollToSection(selector) {

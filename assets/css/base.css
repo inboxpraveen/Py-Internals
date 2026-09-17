@@ -1,10 +1,12 @@
 /* ============================================================
-   PY INTERNALS — BASE CSS
+   PY INTERNALS: BASE CSS
    Design tokens, reset, typography, global utilities
    ============================================================ */
 
 /* ── Google Fonts ─────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
+/* Lora, DM Sans and JetBrains Mono are linked from each page's <head>
+   (see tools/build_seo.py) so they download alongside this file rather
+   than after it. The font tokens below only name them. */
 
 /* ── Design Tokens ────────────────────────────────────────── */
 :root {
@@ -24,7 +26,7 @@
 
   --clr-accent:      #1A6B5C;   /* deep teal */
   --clr-accent-lt:   #E6F4F1;   /* teal tint */
-  --clr-accent-2:    #A85315;   /* amber — for warnings/highlights (AA on its tint) */
+  --clr-accent-2:    #A85315;   /* amber, for warnings and highlights (AA on its tint) */
   --clr-accent-2lt:  #FDF0E6;
 
   /* Memory visualization colors */

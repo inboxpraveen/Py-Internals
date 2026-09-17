@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Session 07: The GIL &amp; Concurrency — Py Internals</title>
-  <meta name="description" content="Why CPython keeps one interpreter lock, what it does and does not protect, and how threads, processes and asyncio each get around it — shown step by step in memory." />
+  <title>Python&#x27;s GIL and Concurrency: Threads, Processes, asyncio</title>
+  <meta name="description" content="Why CPython has a global interpreter lock, why it doesn&#x27;t make your code thread-safe, and when threads, multiprocessing or asyncio actually help." />
   <meta name="theme-color" content="#1A6B5C" />
   <link rel="icon" type="image/png" href="../../assets/images/Python-logo.png" />
   <link rel="apple-touch-icon" href="../../assets/images/Python-logo.png" />
@@ -14,6 +14,118 @@
   <link rel="stylesheet" href="../../assets/css/memory-viz.css" />
   <link rel="stylesheet" href="../../assets/css/animations.css" />
   <link rel="stylesheet" href="../../assets/css/session.css" />
+  <!-- seo:head -->
+  <link rel="canonical" href="https://inboxpraveen.github.io/Py-Internals/sessions/07-gil/" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Praveen Kumar" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="Py Internals" />
+  <meta property="og:locale" content="en_GB" />
+  <meta property="og:url" content="https://inboxpraveen.github.io/Py-Internals/sessions/07-gil/" />
+  <meta property="og:title" content="Python&#x27;s GIL and Concurrency: Threads, Processes, asyncio" />
+  <meta property="og:description" content="Why CPython has a global interpreter lock, why it doesn&#x27;t make your code thread-safe, and when threads, multiprocessing or asyncio actually help." />
+  <meta property="og:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/07-gil.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Python&#x27;s GIL and Concurrency: Threads, Processes, asyncio on Py Internals" />
+  <meta property="article:published_time" content="2026-09-12" />
+  <meta property="article:modified_time" content="2026-09-17" />
+  <meta property="article:section" content="Runtime" />
+  <meta property="article:author" content="https://github.com/inboxpraveen" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Python&#x27;s GIL and Concurrency: Threads, Processes, asyncio" />
+  <meta name="twitter:description" content="Why CPython has a global interpreter lock, why it doesn&#x27;t make your code thread-safe, and when threads, multiprocessing or asyncio actually help." />
+  <meta name="twitter:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/07-gil.png" />
+  <link rel="alternate" type="application/atom+xml" title="Py Internals sessions" href="https://inboxpraveen.github.io/Py-Internals/feed.xml" />
+  <link rel="manifest" href="https://inboxpraveen.github.io/Py-Internals/manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" />
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": [
+        "Article",
+        "LearningResource"
+      ],
+      "@id": "https://inboxpraveen.github.io/Py-Internals/sessions/07-gil/#lesson",
+      "mainEntityOfPage": "https://inboxpraveen.github.io/Py-Internals/sessions/07-gil/",
+      "headline": "Session 07: The GIL & Concurrency",
+      "name": "Session 07: The GIL & Concurrency",
+      "description": "Why CPython has a global interpreter lock, why it doesn't make your code thread-safe, and when threads, multiprocessing or asyncio actually help.",
+      "image": "https://inboxpraveen.github.io/Py-Internals/assets/images/og/07-gil.png",
+      "author": {
+        "@type": "Person",
+        "name": "Praveen Kumar",
+        "url": "https://github.com/inboxpraveen"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Py Internals",
+        "url": "https://inboxpraveen.github.io/Py-Internals/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://inboxpraveen.github.io/Py-Internals/assets/images/Python-logo.png",
+          "width": 1024,
+          "height": 1024
+        },
+        "sameAs": [
+          "https://github.com/inboxpraveen/Py-Internals"
+        ]
+      },
+      "datePublished": "2026-09-12",
+      "dateModified": "2026-09-17",
+      "inLanguage": "en",
+      "isAccessibleForFree": true,
+      "license": "https://github.com/inboxpraveen/Py-Internals/blob/main/LICENSE",
+      "isPartOf": {
+        "@type": "Course",
+        "@id": "https://inboxpraveen.github.io/Py-Internals/#course",
+        "name": "Py Internals",
+        "url": "https://inboxpraveen.github.io/Py-Internals/"
+      },
+      "position": 7,
+      "learningResourceType": "Interactive lesson",
+      "educationalLevel": "Beginner",
+      "timeRequired": "PT50M",
+      "teaches": [
+        "the Global Interpreter Lock",
+        "thread switching and the switch interval",
+        "race conditions",
+        "threading.Lock",
+        "I/O-bound versus CPU-bound work",
+        "multiprocessing",
+        "asyncio and the event loop",
+        "free-threaded Python"
+      ],
+      "about": [
+        "Python (programming language)"
+      ],
+      "keywords": "the Global Interpreter Lock, thread switching and the switch interval, race conditions, threading.Lock, I/O-bound versus CPU-bound work, multiprocessing, asyncio and the event loop, free-threaded Python"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://inboxpraveen.github.io/Py-Internals/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Session 07: The GIL & Concurrency",
+          "item": "https://inboxpraveen.github.io/Py-Internals/sessions/07-gil/"
+        }
+      ]
+    }
+  ]
+}
+  </script>
+  <!-- /seo:head -->
 </head>
 <body>
 
@@ -150,11 +262,7 @@
       <div class="session-hero__eyebrow">Runtime &middot; Session 07</div>
       <h1 class="session-hero__title">The GIL &amp; Concurrency</h1>
       <p class="session-hero__subtitle">
-        Python can start as many threads as you like, and will run exactly one of
-        them at a time. That single sentence explains why your threaded program
-        got slower, why your counter came out one short, and why the fix is
-        sometimes a lock, sometimes a second process, and sometimes neither.
-        Here is the lock itself, and what it is actually protecting.
+        Python can start as many threads as you like, and will run one of them at a time. That single sentence explains why your threaded program got slower, why your counter came out one short, and why the fix is sometimes a lock, sometimes a second process, and sometimes neither. Here's the lock itself, and what it's actually protecting.
       </p>
       <div class="session-meta">
         <div class="session-meta__item">~50 minutes</div>
@@ -171,11 +279,7 @@
         <h2 class="learning-card__title">The GIL exists because of <code>refcount</code>.</h2>
         <p class="learning-card__body">
           Session 01 showed that every object carries a count of how many names
-          point at it. That count is a plain number in memory. Let two threads
-          change it at the same instant and it silently goes wrong &mdash; too high
-          and the object never gets freed, too low and it gets freed while you are
-          still using it. CPython&rsquo;s answer is one lock around the whole
-          interpreter. Everything else in this session is a consequence.
+          point at it. That count is a plain number in memory. Let two threads change it at the same instant and it goes wrong without a sound. Too high and the object never gets freed, too low and it gets freed while you're still using it. CPython's answer is one lock around the whole interpreter. Everything else in this session follows from that.
         </p>
         <div class="concept-chip-row">
           <span class="type-chip type-chip--instance">Thread</span>
@@ -198,7 +302,7 @@
           </div>
           <div class="learning-path__step">
             <span class="learning-path__num">3</span>
-            <span><strong>Then pick a tool.</strong> Demos 4&ndash;6 are three different escapes: release the lock, own a second one, or never contend for it at all.</span>
+            <span><strong>Then pick a tool.</strong> Demos 4 to 6 are three different escapes: release the lock, own a second one, or never contend for it at all.</span>
           </div>
         </div>
       </div>
@@ -211,15 +315,11 @@
           <h2 id="stage-title">The memory panel gained a new box</h2>
           <p>
             Below the call frames there is now a grey box labelled
-            <strong>CPython interpreter</strong>. It is not a call frame &mdash; it is
-            the runtime itself, and its <code>GIL</code> row names whichever thread
-            currently has permission to execute Python. Every frame above it that is
-            not that thread is alive, ready, and not running.
+            <strong>CPython interpreter</strong>. It isn't a call frame. It's the runtime itself, and its <code>GIL</code> row names whichever thread currently has permission to execute Python. Every frame above it that isn't that thread is alive, ready, and not running.
           </p>
         </div>
         <div class="stage-intro__hint">
-          Tip: at every step, read the <code>GIL</code> row first, then find the frame
-          whose badge says <em>running</em>. They always agree.
+          Tip: at every step, read the <code>GIL</code> row first, then find the frame whose badge says <em>running</em>. They always agree.
         </div>
       </section>
 
@@ -234,7 +334,7 @@
       </div>
 
       <div class="mem-legend" aria-label="How to read the memory diagram">
-        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--stack"></span> One frame per live thread &mdash; solid means running, dashed means waiting</div>
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--stack"></span> One frame per live thread: solid means running, dashed means waiting</div>
         <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--heap"></span> Thread, Lock, Process and coroutine objects</div>
         <div class="mem-legend__item"><kbd>&rarr;</kbd> next <kbd>&larr;</kbd> back <kbd>Space</kbd> play <kbd>R</kbd> reset</div>
       </div>
@@ -324,14 +424,10 @@
         <span class="in-plain__label">In plain words</span>
         Imagine a room full of people and one microphone. Anyone can be in the room,
         but only the person holding the microphone may speak. It looks like a strange
-        rule until you hear the room with four people talking at once. Python&rsquo;s
-        microphone is called the <strong>Global Interpreter Lock</strong>, and the noise
-        it prevents is not people talking &mdash; it is threads editing the same numbers.
+        rule until you hear the room with four people talking at once. Python's microphone is called the <strong>Global Interpreter Lock</strong>, and the noise it prevents isn't people talking. It's threads editing the same numbers.
       </p>
       <p class="narrative-lede then-precise">
-        Precisely: every object in CPython carries a reference count, and Session 01
-        showed you it moving. Incrementing a count is not one indivisible machine
-        operation &mdash; it is read, add, write. Two threads doing that at the same
+        Every object in CPython carries a reference count, and Session 01 showed you it moving. Incrementing that count isn't one indivisible machine operation. It's a read, an add and a write. Two threads doing that at the same
         instant can both read <code>4</code> and both write <code>5</code>, so one
         increment is lost. A count that ends up too high leaks the object forever.
         A count that ends up too low frees it while your code is still holding it,
@@ -351,16 +447,14 @@
           <div class="section-label">2 &middot; The obvious fix</div>
           <h3>A lock on every object</h3>
           <p>
-            Correct, and expensive. You would pay for locking on every operation in
-            every program &mdash; including the single-threaded ones, which is most of them.
+            Correct, and expensive. You'd pay for locking on every operation in every program, including the single-threaded ones, which is most of them.
           </p>
         </div>
         <div class="flow-card">
           <div class="section-label">3 &middot; The choice made</div>
           <h3>One lock, held by one thread</h3>
           <p>
-            Nearly free when one thread runs, and it makes the whole interpreter safe
-            at a stroke. The bill arrives only when you want two threads computing.
+            Nearly free when one thread runs, and it makes the whole interpreter safe in one go. The bill only arrives when you want two threads computing.
           </p>
         </div>
       </div>
@@ -370,11 +464,7 @@
         <div>
           <div class="callout__title">The GIL is a property of CPython, not of Python</div>
           <div class="callout__body">
-            The language does not require it. Jython and IronPython never had one,
-            PyPy has one for the same reasons CPython does, and CPython itself can now
-            be built without it (see <a href="#future">A future without it</a>).
-            &ldquo;Python is single-threaded&rdquo; is wrong twice over: the threads are
-            real OS threads, and the restriction belongs to one implementation.
+            The language doesn't require it. Jython and IronPython never had one, PyPy has one for the same reasons CPython does, and CPython itself can now be built without it (see <a href="#future">A future without it</a>). "Python is single-threaded" is wrong twice over. The threads are real OS threads, and the restriction belongs to one implementation.
           </div>
         </div>
       </div>
@@ -384,8 +474,7 @@
         <p>
           <code>import sys</code>, then <code>a = [1, 2, 3]</code> and
           <code>sys.getrefcount(a)</code>. Bind a second name, <code>b = a</code>, and
-          look again. That number is the thing the GIL protects &mdash; and it changes
-          on almost every line you write.
+          look again. That number is the thing the GIL protects, and it changes on almost every line you write.
         </p>
       </div>
 
@@ -395,25 +484,16 @@
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
           Nobody gets to hold the microphone forever. A timer runs, and when it goes
-          off the current speaker is asked to hand it over. They do not stop
-          mid-syllable &mdash; they finish the word they are on. And if they walk off
-          to fetch something, they hand it over immediately without being asked.
+          off the current speaker is asked to hand it over. They don't stop mid-syllable. They finish the word they're on. And if they walk off to fetch something, they hand it over straight away without being asked.
         </p>
         <p class="then-precise">
-          Precisely: the interpreter sets a flag when a thread has held the GIL for
-          <code>sys.getswitchinterval()</code> seconds &mdash; <strong>5&nbsp;ms</strong> by
-          default. The running thread only notices that flag at certain points in the
-          bytecode, chiefly a jump back to the top of a loop and a call into a
-          function. It is never checked in the middle of a short straight run of
-          bytecodes. A thread that instead calls something that waits &mdash;
-          <code>time.sleep</code>, a socket read, a disk write &mdash; releases the GIL
-          itself, before it starts waiting.
+          The interpreter sets a flag when a thread has held the GIL for <code>sys.getswitchinterval()</code> seconds, which is <strong>5&nbsp;ms</strong> by default. The running thread only notices that flag at certain points in the bytecode, chiefly a jump back to the top of a loop and a call into a function. It's never checked in the middle of a short straight run of bytecodes. A thread that instead calls something that waits (<code>time.sleep</code>, a socket read, a disk write) releases the GIL itself, before it starts waiting.
         </p>
 
         <div class="lookup-path" aria-label="The steps of a GIL handover">
           <div class="lookup-path__step is-hit">
             <span class="lookup-path__where">Tick</span>
-            <span>5&nbsp;ms have passed. Another thread is waiting, so the interpreter raises a &ldquo;please drop it&rdquo; flag.</span>
+            <span>5&nbsp;ms have passed. Another thread is waiting, so the interpreter raises a "please drop it" flag.</span>
             <span class="lookup-path__result">requested</span>
           </div>
           <div class="lookup-path__step is-hit">
@@ -440,9 +520,7 @@
             <div class="callout__body">
               A C extension that goes away for two seconds without releasing the GIL
               freezes every other Python thread for two seconds, and there is no timer
-              that can help. This is why a well-behaved extension releases the lock
-              around its own long computations &mdash; and why a badly-behaved one makes
-              a whole web server stutter.
+              that can help. This is why a well-behaved extension releases the lock around its own long computations, and why a badly-behaved one makes a whole web server stutter.
             </div>
           </div>
         </div>
@@ -453,15 +531,14 @@
             <code>sys.getswitchinterval()</code> prints <code>0.005</code>.
             <code>sys.setswitchinterval(0.05)</code> makes threads swap ten times less
             often, and <code>sys.setswitchinterval(0.0001)</code> ten times more. Time a
-            two-thread CPU loop at each setting. Faster swapping does not buy you
-            throughput &mdash; it buys you overhead.
+            two-thread CPU loop at each setting. Faster swapping doesn't buy you throughput. It buys you overhead.
           </p>
         </div>
       </div>
 
       <div id="atomic">
         <div class="section-divider"><div class="section-divider__label">The dangerous half-truth</div></div>
-        <h2>&ldquo;The GIL makes Python thread-safe&rdquo; is false</h2>
+        <h2>"The GIL makes Python thread-safe" is false</h2>
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
           The microphone rule stops two people speaking over each other. It does not
@@ -470,11 +547,7 @@
           number they wrote is arithmetically correct and completely wrong.
         </p>
         <p class="then-precise">
-          Precisely: the GIL guarantees that one <em>bytecode</em> completes before
-          another begins. It makes no promise about one <em>line</em> of your source,
-          which is almost always several bytecodes. <code>acct.set(acct.get() + 1)</code>
-          compiles to a load, a call, an add and another call &mdash; and a call is
-          exactly one of the places the interpreter checks whether to switch threads.
+          The GIL guarantees that one <em>bytecode</em> completes before another begins. It makes no promise about one <em>line</em> of your source, which is almost always several bytecodes. <code>acct.set(acct.get() + 1)</code> compiles to a load, a call, an add and another call, and a call is one of the places the interpreter checks whether to switch threads.
         </p>
 
         <div style="overflow-x:auto">
@@ -511,10 +584,7 @@
             <div class="rule-card__label">Why it is easy to miss</div>
             <h3>It usually works</h3>
             <p>
-              Run <code>count += 1</code> in a tight loop across four threads on
-              CPython 3.13 and you will very likely get the right total &mdash; six runs
-              out of six while writing this session. The whole read-add-write sits
-              between two safe points, so nothing gets in.
+              Run <code>count += 1</code> in a tight loop across four threads on CPython 3.13 and you'll very likely get the right total. It did six runs out of six while I was writing this session. The whole read-add-write sits between two safe points, so nothing gets in.
             </p>
           </div>
           <div class="rule-card rule-card--mutate">
@@ -522,8 +592,7 @@
             <h3>Until it does not</h3>
             <p>
               Move the same logic into a getter and a setter and the calls open a gap.
-              The same script, on the same machine, lost <strong>139,004</strong> of a
-              million increments on one run &mdash; and lost none on the next.
+              The same script, on the same machine, lost <strong>139,004</strong> of a million increments on one run, and lost none on the next.
             </p>
           </div>
         </div>
@@ -533,20 +602,14 @@
           <div>
             <div class="callout__title">A bug that appears one run in three is worse than one that appears every time</div>
             <div class="callout__body">
-              It passes your tests. It passes code review. It shows up as a support
-              ticket six weeks later, on a busier machine, and it will not reproduce
-              on yours. Do not reason about whether a switch <em>will</em> land in your
-              gap. Remove the gap.
+              It passes your tests. It passes code review. It shows up as a support ticket six weeks later, on a busier machine, and it won't reproduce on yours. Don't reason about whether a switch <em>will</em> land in your gap. Remove the gap.
             </div>
           </div>
         </div>
 
         <h3>Removing the gap</h3>
         <p>
-          A <code>threading.Lock</code> is a plain object with two states. One thread
-          at a time may hold it; anybody else asking is parked until it is released.
-          Always take it with <code>with</code>, so it is released even when the body
-          raises.
+          A <code>threading.Lock</code> is a plain object with two states. One thread at a time may hold it, and anybody else asking is parked until it's released. Always take it with <code>with</code>, so it's released even when the body raises.
         </p>
 
         <div class="code-block">
@@ -580,7 +643,7 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
             <div class="reference-map__arrow">-&gt;</div>
             <div class="reference-map__object">
               waiting on the Lock @ 0x7fa300c0
-              <span class="reference-map__slot">not in the GIL queue at all &mdash; a different wait</span>
+              <span class="reference-map__slot">not in the GIL queue at all, a different wait</span>
             </div>
           </div>
           <div class="reference-map__row">
@@ -594,9 +657,7 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
         </div>
 
         <p>
-          Those are two genuinely different queues, and Demo&nbsp;3 shows both at once.
-          Getting them confused is how people conclude that &ldquo;locks do nothing in
-          Python because there is already a lock&rdquo;.
+          Those are two different queues, and demo 3 shows both at once. Getting them confused is how people conclude that "locks do nothing in Python because there's already a lock".
         </p>
 
         <div class="callout callout--success">
@@ -607,8 +668,7 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
               <code>queue.Queue</code> is already correct: producers <code>put</code>,
               consumers <code>get</code>, and no shared variable exists for anyone to
               race on. <code>concurrent.futures</code> hands results back as return
-              values. Shared mutable state plus hand-written locking is the option of
-              last resort, not the default.
+              values. Shared mutable state plus hand-written locking is the last resort, not the default.
             </div>
           </div>
         </div>
@@ -618,8 +678,7 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
           <p>
             Write the <code>Account</code> class from Demo&nbsp;2, run it across four
             threads doing 100,000 deposits each, and print the total. Run it ten times.
-            Then wrap the line in <code>with lock:</code> and run it ten more. The first
-            set of numbers is the lesson.
+            Then wrap the line in <code>with lock:</code> and run it ten more times. The first set of numbers is the lesson.
           </p>
         </div>
       </div>
@@ -629,13 +688,10 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
         <h2>Is your code waiting, or is it thinking?</h2>
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
-          If your program is slow because it keeps waiting for other people &mdash; a
-          website, a database, a disk &mdash; then doing the waiting all at once helps
-          enormously, and threads do exactly that. If it is slow because it is genuinely
-          thinking hard, threads cannot help, because thinking needs the microphone.
+          If your program is slow because it keeps waiting for other people (a website, a database, a disk), then doing all the waiting at once helps enormously, and that's what threads do. If it's slow because it's thinking hard, threads can't help, because thinking needs the microphone.
         </p>
         <p class="then-precise">
-          Precisely: a thread that blocks on I/O has released the GIL, so every other
+          A thread that blocks on I/O has released the GIL, so every other
           thread is free to run. Four one-second sleeps across four threads finished in
           <strong>0.50&nbsp;s</strong> instead of <strong>2.01&nbsp;s</strong>. A thread
           that computes never releases it voluntarily, so two of them simply take turns
@@ -664,7 +720,7 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
                 <td>Thousands of simultaneous network waits</td>
                 <td><code>asyncio</code></td>
                 <td>One thread, one loop, no OS thread per connection</td>
-                <td>Async all the way down &mdash; one blocking call stalls everything</td>
+                <td>Async all the way down, since one blocking call stalls everything</td>
               </tr>
               <tr>
                 <td>Heavy computation in pure Python</td>
@@ -689,8 +745,7 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
             <div class="callout__body">
               <code>concurrent.futures</code> gives you <code>ThreadPoolExecutor</code>
               and <code>ProcessPoolExecutor</code> with an identical API. Write the code
-              against one, swap the class name, and time both. That measurement beats
-              any argument about what your bottleneck &ldquo;should&rdquo; be.
+              against one, swap the class name, and time both. That measurement beats any argument about what your bottleneck "should" be.
             </div>
           </div>
         </div>
@@ -720,20 +775,13 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
 
       <div id="processes">
         <div class="section-divider"><div class="section-divider__label">Separate rooms</div></div>
-        <h2>A second process brings its own lock &mdash; and its own memory</h2>
+        <h2>A second process brings its own lock, and its own memory</h2>
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
-          If the trouble is that everyone is sharing one microphone, build a second
-          room with its own. The catch is immediate and total: nothing said in one room
-          is heard in the other. Anything you want the other room to know has to be
-          written down, carried across, and read out again.
+          If the trouble is that everyone is sharing one microphone, build a second room with its own. The catch is immediate and total: nothing said in one room is heard in the other. Anything you want the other room to know has to be written down, carried across, and read out again.
         </p>
         <p class="then-precise">
-          Precisely: <code>multiprocessing.Process</code> starts a second operating-system
-          process running a second CPython interpreter, with its own heap and its own
-          GIL. The two really do execute Python at the same instant &mdash; the benchmark
-          that took <strong>1.81&nbsp;s</strong> serially and <strong>2.49&nbsp;s</strong>
-          across two threads took <strong>1.08&nbsp;s</strong> across two processes.
+          <code>multiprocessing.Process</code> starts a second operating-system process running a second CPython interpreter, with its own heap and its own GIL. The two really do execute Python at the same instant. The benchmark that took <strong>1.81&nbsp;s</strong> serially and <strong>2.49&nbsp;s</strong> across two threads took <strong>1.08&nbsp;s</strong> across two processes.
           Arguments and results are <strong>pickled</strong> to bytes and rebuilt on the
           other side, so the child gets equal values at different addresses, never the
           same objects.
@@ -743,25 +791,20 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
           <div class="diagram-card">
             <h3>A thread shares your objects</h3>
             <p>
-              Same heap, same addresses, same <code>id()</code>. Mutate a list in one
-              thread and every other thread sees it &mdash; which is convenient, and is
-              also the entire source of the bugs in the section above.
+              Same heap, same addresses, same <code>id()</code>. Mutate a list in one thread and every other thread sees it, which is convenient, and is also where every bug in the section above comes from.
             </p>
           </div>
           <div class="diagram-card">
             <h3>A process shares your values</h3>
             <p>
-              Different heap, different addresses. Mutate the copy in the child and the
-              parent never finds out. No locking needed, because there is nothing shared
-              left to lock.
+              Different heap, different addresses. Mutate the copy in the child and the parent never finds out. No locking needed, because there's nothing shared left to lock.
             </p>
           </div>
         </div>
 
         <h3>The guard is not optional</h3>
         <p>
-          To reach your <code>child</code> function, the new process has to import your
-          module &mdash; which re-runs every line at the top level of it. Without the
+          To reach your <code>child</code> function, the new process has to import your module, which re-runs every line at the top level of it. Without the
           guard, that includes the line that starts a process, so the child starts a
           grandchild, and so on until something gives out.
         </p>
@@ -791,8 +834,7 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
           <div>
             <div class="callout__title">Run this from a file, never from the REPL</div>
             <div class="callout__body">
-              Where the start method is <code>spawn</code>, the child imports
-              <code>__main__</code> &mdash; and an interactive session is not importable.
+              Where the start method is <code>spawn</code>, the child imports <code>__main__</code>, and an interactive session isn't importable.
               Every <code>multiprocessing</code> example in this session belongs in a
               <code>.py</code> file. Check what your platform does with
               <code>mp.get_start_method()</code> before you assume.
@@ -824,7 +866,7 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
           </div>
           <div class="lookup-path__step is-miss">
             <span class="lookup-path__where">Never</span>
-            <span>Mutating a global and hoping. It works in your fork-based test on Linux and silently stops working elsewhere.</span>
+            <span>Mutating a global and hoping. It works in your fork-based test on Linux and stops working elsewhere without telling you.</span>
             <span class="lookup-path__result">no</span>
           </div>
         </div>
@@ -836,9 +878,7 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
             <div class="callout__body">
               Lambdas, nested functions, open file handles, database connections and
               locks cannot be pickled, and you find out when you submit the job. Even
-              when it works, a process pool over a large array can spend more time
-              copying than computing &mdash; which is why the benchmark above used a task
-              big enough to be worth the postage.
+              when it works, a process pool over a large array can spend more time copying than computing, which is why the benchmark above used a task big enough to be worth the postage.
             </div>
           </div>
         </div>
@@ -850,22 +890,15 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
           Think of one person cooking dinner. They put the kettle on and, instead of
-          standing there, go and chop onions. They are not two people and they never do
-          two things at once &mdash; they simply never stand still while something else
-          is boiling. <code>asyncio</code> is that, and the <code>await</code> keyword is
+          standing there, go and chop onions. They aren't two people and they never do two things at once. They just never stand still while something else is boiling. <code>asyncio</code> is that, and the <code>await</code> keyword is
           where they put a job down.
         </p>
         <p class="then-precise">
-          Precisely: an <code>async def</code> function returns a <strong>coroutine
-          object</strong> when called and runs none of its body &mdash; exactly like a
-          generator in Session 05. The <strong>event loop</strong> drives those objects,
+          An <code>async def</code> function returns a <strong>coroutine object</strong> when called and runs none of its body, just like a generator in Session 05. The <strong>event loop</strong> drives those objects,
           running one until it hits an <code>await</code> that cannot complete
           immediately. At that point the coroutine suspends, keeping its frame, and the
           loop picks up the next ready one. Two one-second waits took
-          <strong>0.50&nbsp;s</strong> under <code>gather</code>, against
-          <strong>1.01&nbsp;s</strong> awaited one after the other &mdash; on a single
-          thread, with <code>threading.enumerate()</code> reporting only
-          <code>MainThread</code>.
+          <strong>0.50&nbsp;s</strong> under <code>gather</code>, against <strong>1.01&nbsp;s</strong> awaited one after the other, on a single thread, with <code>threading.enumerate()</code> reporting only <code>MainThread</code>.
         </p>
 
         <div class="diagram-grid">
@@ -880,8 +913,7 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
           <div class="diagram-card">
             <h3>Coroutines are cooperative</h3>
             <p>
-              A coroutine is only ever suspended at an <code>await</code> &mdash; a word
-              you typed. Between two <code>await</code>s nothing else can run, so plain
+              A coroutine is only ever suspended at an <code>await</code>, a word you typed. Between two <code>await</code>s nothing else can run, so plain
               read-modify-write of a local structure is safe without a lock.
             </p>
           </div>
@@ -894,19 +926,14 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
             <div class="callout__body">
               A generator suspends at <code>yield</code> and someone calls
               <code>next()</code> to resume it. A coroutine suspends at
-              <code>await</code> and the event loop resumes it. Same paused frame, same
-              kept locals &mdash; the only new idea is <em>who</em> decides when to
-              continue, and what they were waiting for.
+              <code>await</code> and the event loop resumes it. Same paused frame, same kept locals. The only new idea is <em>who</em> decides when to continue, and what they were waiting for.
             </div>
           </div>
         </div>
 
         <h3>The one mistake that undoes all of it</h3>
         <p>
-          There is exactly one thread. A synchronous call that blocks it blocks the loop,
-          and every other coroutine stops &mdash; including the ones that were just about
-          to finish. This is not a subtle performance issue; it turns a concurrent
-          program back into a sequential one.
+          There is one thread. A synchronous call that blocks it blocks the loop, and every other coroutine stops, including the ones that were just about to finish. This isn't a subtle performance issue. It turns a concurrent program back into a sequential one.
         </p>
 
         <div style="overflow-x:auto">
@@ -945,8 +972,7 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
             <div class="callout__body">
               Calling <code>fetch(url)</code> without awaiting it builds a coroutine
               object and throws it away. Nothing runs, no exception is raised, and you
-              get <code>RuntimeWarning: coroutine 'fetch' was never awaited</code> on
-              stderr &mdash; which is easy to miss in a busy log. If an async function
+              get <code>RuntimeWarning: coroutine 'fetch' was never awaited</code> on stderr, which is easy to miss in a busy log. If an async function
               seems to do nothing at all, look for the missing keyword first.
             </div>
           </div>
@@ -957,24 +983,21 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
           <p>
             One thread. One event loop object holding a list of ready tasks and a list of
             timers. Several coroutine objects on the heap, each with a paused frame and a
-            line number it stopped at. No second stack, no GIL contention, and not one
-            lock &mdash; because nothing ever ran at the same time as anything else.
+            line number it stopped at. No second stack, no GIL contention, and not one lock, because nothing ever ran at the same time as anything else.
           </p>
         </div>
       </div>
 
       <div id="future">
         <div class="section-divider"><div class="section-divider__label">What happens next</div></div>
-        <h2>A future without it &mdash; and why your bugs survive</h2>
+        <h2>A future without it, and why your bugs survive</h2>
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
           The microphone rule is finally being lifted. There is now a build of CPython
-          with no GIL at all, where threads really can compute at the same time. It is a
-          genuinely big change &mdash; and it makes the mistakes in this session
-          <em>more</em> likely to bite, not less.
+          with no GIL at all, where threads really can compute at the same time. It's a big change, and it makes the mistakes in this session <em>more</em> likely to bite, not less.
         </p>
         <p class="then-precise">
-          Precisely: <a href="https://peps.python.org/pep-0703/" target="_blank" rel="noopener">PEP&nbsp;703</a>
+          <a href="https://peps.python.org/pep-0703/" target="_blank" rel="noopener">PEP&nbsp;703</a>
           added an optional free-threaded build. Python&nbsp;3.13 shipped it as
           experimental and Python&nbsp;3.14 made it officially supported, alongside the
           ordinary build, which still has the GIL and remains the default. On 3.13 or
@@ -989,15 +1012,14 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
             <p>
               Four threads on four cores computing at once, sharing objects directly,
               with none of the pickling that <code>multiprocessing</code> charges you.
-              That is the whole point of the work.
+              That is what all the work was for.
             </p>
           </div>
           <div class="rule-card rule-card--rebind">
             <div class="rule-card__label">What does not</div>
             <h3>Every race in this session</h3>
             <p>
-              The lost deposit in Demo&nbsp;2 is not caused by the GIL &mdash; it happens
-              <em>despite</em> it. Remove the lock and the two threads no longer take
+              The lost deposit in demo 2 isn't caused by the GIL. It happens <em>despite</em> it. Remove the lock and the two threads no longer take
               turns at all, so the gap you were relying on getting away with is wide open.
             </p>
           </div>
@@ -1008,10 +1030,7 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
           <div>
             <div class="callout__title">Code that was already correct stays correct</div>
             <div class="callout__body">
-              If your shared state is behind a <code>Lock</code>, or lives in a
-              <code>queue.Queue</code>, or simply does not exist because every task returns
-              a value, then free-threaded Python is pure upside. The work you did to make
-              threads safe is exactly the work that makes them fast later.
+              If your shared state is behind a <code>Lock</code>, or lives in a <code>queue.Queue</code>, or doesn't exist at all because every task returns a value, then free-threaded Python is pure upside. The work you did to make threads safe is the same work that makes them fast later.
             </div>
           </div>
         </div>
@@ -1019,11 +1038,7 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
         <div class="try-this">
           <div class="try-this__label">Try this in a REPL</div>
           <p>
-            <code>import sys; sys._is_gil_enabled()</code> &mdash; it exists from
-            Python&nbsp;3.13 onwards, and raises <code>AttributeError</code> before that.
-            On a normal build it prints <code>True</code>. Free-threaded builds are installed separately &mdash; on
-            most platforms the executable has a <code>t</code> suffix, such as
-            <code>python3.14t</code> &mdash; and print <code>False</code>. The same
+            <code>import sys; sys._is_gil_enabled()</code> exists from Python&nbsp;3.13 onwards, and raises <code>AttributeError</code> before that. On a normal build it prints <code>True</code>. Free-threaded builds are installed separately (on most platforms the executable has a <code>t</code> suffix, such as <code>python3.14t</code>) and print <code>False</code>. The same
             script, two answers, and only one of them runs your threads in parallel.
           </p>
         </div>
@@ -1038,18 +1053,14 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
             <h3>Adding threads to speed up a computation</h3>
             <p>
               The classic. The work is pure Python, so every thread needs the GIL for
-              every bytecode, so they take turns and pay for the swapping on top. Measure
-              before and after &mdash; you will usually find it got slower. Use processes,
+              every bytecode, so they take turns and pay for the swapping on top. Measure before and after, and you'll usually find it got slower. Use processes,
               or a library that releases the GIL, or a better algorithm.
             </p>
           </div>
           <div class="mistake-item">
             <h3>Trusting the GIL to protect your data</h3>
             <p>
-              &ldquo;Only one thread runs at a time, so I do not need a lock.&rdquo; Only
-              one thread runs <em>one bytecode</em> at a time. Anything you write as one
-              line and think of as one action &mdash; read-add-write, check-then-act,
-              append-if-missing &mdash; is several, and a switch can land in the middle.
+              "Only one thread runs at a time, so I don't need a lock." Only one thread runs <em>one bytecode</em> at a time. Anything you write as one line and think of as one action (read-add-write, check-then-act, append-if-missing) is several, and a switch can land in the middle.
             </p>
           </div>
           <div class="mistake-item">
@@ -1074,10 +1085,7 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
           <div class="mistake-item">
             <h3>Never joining, or never awaiting</h3>
             <p>
-              A thread you do not <code>join()</code> may not have finished when you read
-              its results. A coroutine you do not <code>await</code> never runs at all and
-              only whispers a <code>RuntimeWarning</code>. In both cases the program
-              produces an answer, which is why the bug survives so long.
+              A thread you don't <code>join()</code> may not have finished when you read its results. A coroutine you don't <code>await</code> never runs at all and only whispers a <code>RuntimeWarning</code>. In both cases the program produces an answer, which is why the bug survives so long.
             </p>
           </div>
           <div class="mistake-item">
@@ -1096,11 +1104,7 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
           <div>
             <div class="callout__title">Two questions catch nearly all of it</div>
             <div class="callout__body">
-              <strong>Is this code waiting or thinking?</strong> &mdash; that picks
-              threads, processes or <code>asyncio</code>.
-              <strong>Between which two lines could another thread run?</strong> &mdash;
-              that finds the race. If the answer to the second is &ldquo;anywhere&rdquo;,
-              you need a lock, a queue, or no sharing at all.
+              <strong>Is this code waiting or thinking?</strong> That picks threads, processes or <code>asyncio</code>. <strong>Between which two lines could another thread run?</strong> That finds the race. If the answer to the second is "anywhere", you need a lock, a queue, or no sharing at all.
             </div>
           </div>
         </div>
@@ -1118,50 +1122,45 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
         <button class="quiz-option" data-choice="1">Because the language specification requires programs to be deterministic</button>
         <button class="quiz-option" data-choice="2">Because interpreter bookkeeping such as reference counts would be corrupted by unsynchronised threads</button>
         <div class="quiz-explain">
-          The threads are genuine OS threads, and the language says nothing about this. The GIL is CPython's
-          way of keeping its own shared structures &mdash; refcounts first among them &mdash; correct without
-          putting a lock on every object.
+          The threads are genuine OS threads, and the language says nothing about this. The GIL is CPython's way of keeping its own shared structures, refcounts first among them, correct without putting a lock on every object.
         </div>
       </div>
 
       <div class="quiz-card" data-answer="1">
         <div class="quiz-card__q">2. Four threads each run a tight loop of pure-Python arithmetic on a four-core machine. What happens?</div>
-        <button class="quiz-option" data-choice="0">Roughly four times faster &mdash; one thread per core</button>
+        <button class="quiz-option" data-choice="0">Roughly four times faster, one thread per core</button>
         <button class="quiz-option" data-choice="1">No faster, and usually slower, because only one thread can execute bytecode at a time</button>
         <button class="quiz-option" data-choice="2">Exactly the same speed, since the interpreter runs them in turn at no cost</button>
         <div class="quiz-explain">
-          They interleave rather than overlap, and every handover costs something. Measured while writing this
-          session: 1.81&nbsp;s serially became 2.49&nbsp;s across two threads. Processes are the fix.
+          They interleave rather than overlap, and every handover costs something. Measured while writing this session, 1.81&nbsp;s serially became 2.49&nbsp;s across two threads. Processes are the fix.
         </div>
       </div>
 
       <div class="quiz-card" data-answer="0">
         <div class="quiz-card__q">3. Two threads run <code>acct.set(acct.get() + 1)</code> once each, starting from <code>0</code>. What can the balance be?</div>
         <button class="quiz-option" data-choice="0">Either <code>1</code> or <code>2</code>, depending on where the thread switch lands</button>
-        <button class="quiz-option" data-choice="1">Always <code>2</code> &mdash; the GIL makes the line atomic</button>
-        <button class="quiz-option" data-choice="2">Always <code>1</code> &mdash; the second write always overwrites the first</button>
+        <button class="quiz-option" data-choice="1">Always <code>2</code>, because the GIL makes the line atomic</button>
+        <button class="quiz-option" data-choice="2">Always <code>1</code>, because the second write always overwrites the first</button>
         <div class="quiz-explain">
           The GIL keeps one bytecode indivisible, not one line. A switch at the call boundary lets both threads
-          read <code>0</code>, and the second write lands on top of the first. Sometimes it does, sometimes it
-          does not &mdash; which is exactly what makes it dangerous.
+          read <code>0</code>, and the second write lands on top of the first. Sometimes it does, sometimes it doesn't, and that's what makes it dangerous.
         </div>
       </div>
 
       <div class="quiz-card" data-answer="2">
         <div class="quiz-card__q">4. Four threads each call <code>time.sleep(1)</code>. Roughly how long does the whole thing take?</div>
-        <button class="quiz-option" data-choice="0">About four seconds &mdash; the GIL serialises them</button>
-        <button class="quiz-option" data-choice="1">About two seconds &mdash; they overlap in pairs</button>
-        <button class="quiz-option" data-choice="2">About one second &mdash; <code>sleep</code> releases the GIL, so the four waits overlap</button>
+        <button class="quiz-option" data-choice="0">About four seconds, because the GIL serialises them</button>
+        <button class="quiz-option" data-choice="1">About two seconds, because they overlap in pairs</button>
+        <button class="quiz-option" data-choice="2">About one second, because <code>sleep</code> releases the GIL, so the four waits overlap</button>
         <div class="quiz-explain">
-          Blocking calls hand the GIL back before they wait. All four threads sit outside the interpreter at the
-          same time and nobody holds the lock at all. Measured: 2.01&nbsp;s serially, 0.50&nbsp;s across four threads.
+          Blocking calls hand the GIL back before they wait. All four threads sit outside the interpreter at the same time and nobody holds the lock at all. Measured: 2.01&nbsp;s serially, 0.50&nbsp;s across four threads.
         </div>
       </div>
 
       <div class="quiz-card" data-answer="1">
         <div class="quiz-card__q">5. A child process appends to a list it was given as an argument. What does the parent see afterwards?</div>
         <button class="quiz-option" data-choice="0">The appended item, because lists are mutable and mutation is shared</button>
-        <button class="quiz-option" data-choice="1">The original list, unchanged &mdash; the child mutated a pickled copy in its own memory</button>
+        <button class="quiz-option" data-choice="1">The original list, unchanged, because the child mutated a pickled copy in its own memory</button>
         <button class="quiz-option" data-choice="2">An error, because mutable objects cannot be passed to a process</button>
         <div class="quiz-explain">
           Processes do not share a heap. The argument was pickled and rebuilt at a different address in a
@@ -1171,27 +1170,42 @@ acct.set(acct.get() + <span class="tok-num">1</span>)
 
       <div class="quiz-card" data-answer="0">
         <div class="quiz-card__q">6. Inside a coroutine you call <code>time.sleep(2)</code> instead of <code>await asyncio.sleep(2)</code>. What happens?</div>
-        <button class="quiz-option" data-choice="0">The whole event loop stops for two seconds &mdash; every other coroutine is frozen</button>
+        <button class="quiz-option" data-choice="0">The whole event loop stops for two seconds, and every other coroutine is frozen</button>
         <button class="quiz-option" data-choice="1">Only this coroutine pauses; the loop carries on with the others</button>
         <button class="quiz-option" data-choice="2"><code>asyncio</code> detects it and moves the call to a worker thread</button>
         <div class="quiz-explain">
-          There is one thread and the loop is running on it. A synchronous block holds that thread, so nothing
-          else can be resumed. <code>await</code> is what hands control back; a blocking call never does.
+          There is one thread and the loop is running on it. A synchronous block holds that thread, so nothing else can be resumed. <code>await</code> is what hands control back, and a blocking call never does.
         </div>
       </div>
 
       <div class="quiz-card" data-answer="2">
         <div class="quiz-card__q">7. On a free-threaded build (Python&nbsp;3.13+, where <code>sys._is_gil_enabled()</code> returns <code>False</code>), what happens to the lost-deposit bug from Demo&nbsp;2?</div>
-        <button class="quiz-option" data-choice="0">It disappears &mdash; without a GIL there are no thread switches to interrupt the line</button>
+        <button class="quiz-option" data-choice="0">It disappears, because without a GIL there are no thread switches to interrupt the line</button>
         <button class="quiz-option" data-choice="1">It is unchanged, because it was caused by the GIL in the first place</button>
-        <button class="quiz-option" data-choice="2">It gets easier to hit &mdash; the threads now genuinely run at once, so the gap is wide open</button>
+        <button class="quiz-option" data-choice="2">It gets easier to hit, because the threads now really run at once, so the gap is wide open</button>
         <div class="quiz-explain">
-          The race was never caused by the GIL; it survived despite it. Removing the lock removes the accidental
-          protection of &ldquo;only one thread at a time&rdquo;, so code that happened to get away with it stops
+          The race was never caused by the GIL. It survived despite it. Removing the lock removes the accidental
+          protection of "only one thread at a time", so code that happened to get away with it stops
           getting away with it. Your own <code>Lock</code> still works, and is still the answer.
         </div>
       </div>
     </section>
+
+    <!-- seo:sessions-nav -->
+    <nav class="sessions-nav" aria-label="All sessions">
+      <div class="sessions-nav__label">All sessions</div>
+      <ul>
+        <li><a href="../01-variables/"><span>01</span> Variables &amp; Mutability</a></li>
+        <li><a href="../02-functions/"><span>02</span> Functions, Scope &amp; the Call Stack</a></li>
+        <li><a href="../03-lists-dicts/"><span>03</span> Lists, Dicts &amp; References</a></li>
+        <li><a href="../04-classes/"><span>04</span> Classes &amp; Objects</a></li>
+        <li><a href="../05-iterators/"><span>05</span> Iterators &amp; Generators</a></li>
+        <li><a href="../06-decorators/"><span>06</span> Decorators</a></li>
+        <li class="is-current"><a href="../07-gil/"><span>07</span> The GIL &amp; Concurrency</a></li>
+        <li><a href="../08-exceptions/"><span>08</span> Exceptions, Tracebacks &amp; Context Managers</a></li>
+      </ul>
+    </nav>
+    <!-- /seo:sessions-nav -->
 
     <div class="session-footer">
       <a href="../06-decorators/" class="btn btn--secondary">&larr; Session 06: Decorators</a>

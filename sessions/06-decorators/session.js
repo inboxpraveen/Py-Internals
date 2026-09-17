@@ -1,5 +1,5 @@
 /* ============================================================
-   SESSION 06 — Decorators
+   SESSION 06: Decorators
    Demos: f = deco(f), the @ shorthand, the name-tag problem,
    decorator factories, stacking
    ============================================================ */
@@ -45,7 +45,7 @@ const DEMOS = {
      1 · The whole idea, without any @ at all
      ────────────────────────────────────────────────────────── */
   manual: {
-    watch: 'Watch the name <code>greet</code> move. It ends up pointing at a <em>different</em> function than the one you wrote.',
+    watch: 'Watch the name <code>greet</code> move. It ends up pointing at a <em>different</em> function from the one you wrote.',
     code: `def shout(func):
     def wrapper(text):
         return func(text).upper()
@@ -58,7 +58,7 @@ greet = shout(greet)`,
     steps: [
       {
         title: 'Nothing has run yet',
-        desc: 'A decorator is not new machinery. It is one line you already know how to read: take a function, hand it to another function, and give the result the old name.',
+        desc: 'A decorator isn\'t new machinery. It\'s one line you already know how to read: take a function, hand it to another function, and give the result the old name.',
         lines: [],
         memory: EMPTY,
       },
@@ -78,7 +78,7 @@ greet = shout(greet)`,
       },
       {
         title: '<code>def greet</code> makes a second function object',
-        desc: 'Two ordinary functions, two objects, two names. Nothing special so far — <code>shout</code> just happens to expect a function as its argument.',
+        desc: 'Two ordinary functions, two objects, two names. Nothing special so far. <code>shout</code> just happens to expect a function as its argument.',
         lines: [6, 7],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -93,8 +93,8 @@ greet = shout(greet)`,
         },
       },
       {
-        title: '<code>shout(greet)</code> opens a frame — <code>func</code> is a second name for your function',
-        desc: 'Calling <code>shout</code> creates a frame. The parameter <code>func</code> binds to the <em>same object</em> that <code>greet</code> points at — same address, so the reference count goes from 1 to 2. This is Session 02&rsquo;s rule, unchanged.',
+        title: '<code>shout(greet)</code> opens a frame, and <code>func</code> is a second name for your function',
+        desc: 'Calling <code>shout</code> creates a frame. The parameter <code>func</code> binds to the <em>same object</em> that <code>greet</code> points at. Same address, so the reference count goes from 1 to 2. This is Session 02\'s rule, unchanged.',
         lines: [9, 1],
         memory: {
           frames: [
@@ -116,7 +116,7 @@ greet = shout(greet)`,
       },
       {
         title: '<code>def wrapper</code> builds a third function that remembers <code>func</code>',
-        desc: 'This <code>def</code> runs <em>during the call</em>. Because <code>wrapper</code> uses <code>func</code>, Python attaches a closure cell to it — the same remembered-state box from Session 02. The cell holds your original function.',
+        desc: 'This <code>def</code> runs <em>during the call</em>. Because <code>wrapper</code> uses <code>func</code>, Python attaches a closure cell to it, the same remembered-state box from Session 02. The cell holds your original function.',
         lines: [2, 3],
         memory: {
           frames: [
@@ -143,8 +143,8 @@ greet = shout(greet)`,
         },
       },
       {
-        title: '<code>return wrapper</code> — the frame goes, the wrapper stays',
-        desc: 'The <code>shout</code> frame is thrown away, so the local name <code>func</code> disappears. The closure cell does not: it is part of the wrapper object, and the wrapper is being returned.',
+        title: '<code>return wrapper</code>: the frame goes, the wrapper stays',
+        desc: 'The <code>shout</code> frame is thrown away, so the local name <code>func</code> disappears. The closure cell doesn\'t. It\'s part of the wrapper object, and the wrapper is being returned.',
         lines: [4],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -164,8 +164,8 @@ greet = shout(greet)`,
         },
       },
       {
-        title: 'The name <code>greet</code> rebinds — this is the whole trick',
-        desc: 'Assignment moves a nametag, exactly as in Session 01. <code>greet</code> now points at the wrapper. <strong>No name points at your original function any more</strong> — the only thing keeping it alive is the closure cell inside the wrapper. Call <code>greet("ada")</code> and you get <code>"HI ADA"</code>.',
+        title: 'The name <code>greet</code> is rebound, and that\'s the trick',
+        desc: 'Assignment moves a nametag, just as in Session 01. <code>greet</code> now points at the wrapper. <strong>No name points at your original function any more.</strong> The only thing keeping it alive is the closure cell inside the wrapper. Call <code>greet("ada")</code> and you get <code>"HI ADA"</code>.',
         lines: [9],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -181,7 +181,7 @@ greet = shout(greet)`,
                 { key: 'func', value: 'greet @ 0x7f9100c8', type: 'ref' },
               ] },
             { id: 'greetFn', pyId: ADDRS.greetFn, type: 'function', value: 'greet(name)', refcount: 1, mutable: false, state: 'normal',
-              note: 'reachable only through the cell — no name points here' },
+              note: 'reachable only through the cell, no name points here' },
           ],
           highlight: ['wrapperFn', 'greetFn'],
         },
@@ -193,7 +193,7 @@ greet = shout(greet)`,
      2 · The @ line is shorthand for that same assignment
      ────────────────────────────────────────────────────────── */
   sugar: {
-    watch: 'Same ending as demo 1 — watch the <em>order</em>. The function is built first, decorated second, named last.',
+    watch: 'Same ending as demo 1, so watch the <em>order</em> instead. The function is built first, decorated second, named last.',
     code: `def shout(func):
     def wrapper(text):
         return func(text).upper()
@@ -204,14 +204,14 @@ def greet(name):
     return "hi " + name`,
     steps: [
       {
-        title: 'This finishes in exactly the same place as demo 1',
+        title: 'This ends in the same place as demo 1',
         desc: 'Nothing new happens here. The only difference is that Python writes the <code>greet = shout(greet)</code> line for you. Watch the order of the three moments.',
         lines: [],
         memory: EMPTY,
       },
       {
-        title: '<code>def shout</code> — a decorator is just a function',
-        desc: 'Anything callable that takes one function and returns something can sit after an <code>@</code>. There is no special &ldquo;decorator type&rdquo; in Python.',
+        title: '<code>def shout</code>: a decorator is just a function',
+        desc: 'Anything callable that takes one function and returns something can sit after an <code>@</code>. There\'s no special "decorator type" in Python.',
         lines: [1, 4],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -224,8 +224,8 @@ def greet(name):
         },
       },
       {
-        title: 'Moment 1 — the body under <code>@</code> is built first',
-        desc: 'Python reads the <code>def</code> and creates the function object. Notice what is <em>not</em> on the screen: no name yet. The object exists before anything is called it.',
+        title: 'Moment 1: the body under <code>@</code> is built first',
+        desc: 'Python reads the <code>def</code> and creates the function object. Notice what\'s <em>not</em> on the screen: a name. The object exists before anything is called with it.',
         lines: [7, 8],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -240,8 +240,8 @@ def greet(name):
         },
       },
       {
-        title: 'Moment 2 — that object is passed straight to <code>shout</code>',
-        desc: 'The <code>@shout</code> line means &ldquo;call <code>shout</code> with whatever this <code>def</code> just made&rdquo;. Same frame, same closure cell, same wrapper as demo 1.',
+        title: 'Moment 2: that object is passed straight to <code>shout</code>',
+        desc: 'The <code>@shout</code> line means "call <code>shout</code> with whatever this <code>def</code> just made". Same frame, same closure cell, same wrapper as in demo 1.',
         lines: [6, 1, 2],
         memory: {
           frames: [
@@ -266,8 +266,8 @@ def greet(name):
         },
       },
       {
-        title: 'Moment 3 — the name <code>greet</code> is bound to the result',
-        desc: 'Only now does the name appear, and it points at the wrapper. Compare this picture with the last step of demo 1: identical. <code>@shout</code> saved you one line and changed nothing else.',
+        title: 'Moment 3: the name <code>greet</code> is bound to the result',
+        desc: 'Only now does the name appear, and it points at the wrapper. Compare this picture with the last step of demo 1. They\'re identical. <code>@shout</code> saved you one line and changed nothing else.',
         lines: [6, 7],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -289,7 +289,7 @@ def greet(name):
       },
       {
         title: 'Say it in one sentence',
-        desc: '<code>@deco</code> above a <code>def</code> means <code>name = deco(name)</code>. Every later question — arguments, stacking, lost docstrings — is a question about that one line.',
+        desc: '<code>@deco</code> above a <code>def</code> means <code>name = deco(name)</code>. Every later question (arguments, stacking, lost docstrings) is a question about that one line.',
         lines: [6],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -315,7 +315,7 @@ def greet(name):
      3 · The wrapper wears the wrong name tag
      ────────────────────────────────────────────────────────── */
   identity: {
-    watch: 'Read the <code>__name__</code> row on the function object. It is wrong until <code>functools.wraps</code> fixes it.',
+    watch: 'Read the <code>__name__</code> row on the function object. It\'s wrong until <code>functools.wraps</code> fixes it.',
     code: `import functools
 
 def shout(func):
@@ -331,13 +331,13 @@ def greet(name):
     steps: [
       {
         title: 'A wrapper is a different object, so it has different labels',
-        desc: 'Your original function carries a name, a docstring and a module. The wrapper is a brand new object and carries its own — which say <code>wrapper</code> and nothing else.',
+        desc: 'Your original function carries a name, a docstring and a module. The wrapper is a brand new object and carries its own, which say <code>wrapper</code> and nothing else.',
         lines: [],
         memory: EMPTY,
       },
       {
-        title: 'Without help, the wrapper introduces itself as &ldquo;wrapper&rdquo;',
-        desc: 'Here is the plain wrapper before <code>wraps</code> runs. <code>help()</code>, tracebacks, log lines and debuggers all read these labels — so all of them would now say the wrong thing.',
+        title: 'Without help, the wrapper introduces itself as "wrapper"',
+        desc: 'Here is the plain wrapper before <code>wraps</code> runs. <code>help()</code>, tracebacks, log lines and debuggers all read these labels, so all of them would now say the wrong thing.',
         lines: [5, 6],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -354,14 +354,14 @@ def greet(name):
               dictLabel: 'function attributes', pairs: [
                 { key: '__name__', value: 'wrapper', type: 'str' },
                 { key: '__doc__', value: 'None', type: 'str' },
-              ], note: 'wrong labels — and this is the object greet will name' },
+              ], note: 'wrong labels, and this is the object greet will name' },
           ],
           highlight: ['wrapper3'],
         },
       },
       {
         title: '<code>@functools.wraps(func)</code> is itself a decorator',
-        desc: 'It is applied to <code>wrapper</code> the same way <code>@shout</code> is applied to <code>greet</code>. <code>wraps(func)</code> is a factory: it returns a small decorator that already knows which function to copy labels <em>from</em>.',
+        desc: 'It\'s applied to <code>wrapper</code> the same way <code>@shout</code> is applied to <code>greet</code>. <code>wraps(func)</code> is a factory: it returns a small decorator that already knows which function to copy the labels <em>from</em>.',
         lines: [4],
         memory: {
           frames: [
@@ -391,7 +391,7 @@ def greet(name):
         },
       },
       {
-        title: 'It copies the labels across — and leaves a trail back',
+        title: 'It copies the labels across, and leaves a trail back',
         desc: 'Five labels are copied: <code>__name__</code>, <code>__qualname__</code>, <code>__doc__</code>, <code>__module__</code> and <code>__annotations__</code>. It also sets <code>__wrapped__</code>, a direct reference to the function underneath, so tools can still find the real thing.',
         lines: [4, 5],
         memory: {
@@ -415,14 +415,14 @@ def greet(name):
                 { key: '__name__', value: 'greet', type: 'str' },
                 { key: '__doc__', value: 'Say hello.', type: 'str' },
                 { key: '__wrapped__', value: 'greet @ 0x7f9200c8', type: 'ref' },
-              ], note: 'labels copied — the behaviour is unchanged' },
+              ], note: 'labels copied, the behaviour is unchanged' },
           ],
           highlight: ['wrapper3'],
         },
       },
       {
         title: 'Same wrapper, honest name tag',
-        desc: '<code>greet</code> still points at the wrapper, so you still get <code>"HI ADA"</code>. But <code>greet.__name__</code> is now <code>&#39;greet&#39;</code>, <code>help(greet)</code> shows the real docstring, and <code>greet.__wrapped__</code> hands you the undecorated function back.',
+        desc: '<code>greet</code> still points at the wrapper, so you still get <code>"HI ADA"</code>. But <code>greet.__name__</code> is now <code>\'greet\'</code>, <code>help(greet)</code> shows the real docstring, and <code>greet.__wrapped__</code> hands you the undecorated function back.',
         lines: [9, 10],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -453,7 +453,7 @@ def greet(name):
      4 · A decorator that takes an argument
      ────────────────────────────────────────────────────────── */
   factory: {
-    watch: 'Count the calls. <code>repeat(2)</code> runs <em>first</em> and returns a decorator; only then is anything decorated.',
+    watch: 'Count the calls. <code>repeat(2)</code> runs <em>first</em> and returns a decorator. Only then is anything decorated.',
     code: `def repeat(times):
     def decorator(func):
         def wrapper():
@@ -467,13 +467,13 @@ def ping():
     steps: [
       {
         title: 'Why three levels of <code>def</code>?',
-        desc: 'Because <code>@</code> only ever calls <em>one</em> thing with your function. If you also want to pass a <code>2</code>, something has to accept the <code>2</code> first and hand back a decorator. That is the extra layer — nothing more.',
+        desc: 'Because <code>@</code> only ever calls <em>one</em> thing with your function. If you also want to pass a <code>2</code>, something has to accept the <code>2</code> first and hand back a decorator. That\'s the extra layer, and nothing more.',
         lines: [],
         memory: EMPTY,
       },
       {
-        title: '<code>def repeat</code> — this is not the decorator yet',
-        desc: '<code>repeat</code> is a <em>decorator factory</em>: a function whose job is to produce a decorator. What goes after <code>@</code> is whatever <code>repeat(...)</code> returns.',
+        title: '<code>def repeat</code>: this isn\'t the decorator yet',
+        desc: '<code>repeat</code> is a <em>decorator factory</em>, a function whose job is to produce a decorator. What goes after <code>@</code> is whatever <code>repeat(...)</code> returns.',
         lines: [1, 6],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -486,7 +486,7 @@ def ping():
         },
       },
       {
-        title: 'Call 1 — <code>repeat(2)</code> runs and remembers the 2',
+        title: 'Call 1: <code>repeat(2)</code> runs and remembers the 2',
         desc: 'A frame opens with <code>times</code> bound to <code>2</code>. Inside it, <code>def decorator</code> creates a function that uses <code>times</code>, so it gets a closure cell holding that <code>2</code>.',
         lines: [8, 1, 2],
         memory: {
@@ -502,7 +502,7 @@ def ping():
           heap: [
             { id: 'repeatFn', pyId: ADDRS.repeatFn, type: 'function', value: 'repeat(times)', refcount: 1, mutable: false, state: 'normal' },
             { id: 'int2', pyId: ADDRS.int2, type: 'int', value: 2, refcount: '∞', mutable: false, state: 'new',
-              note: 'cached small int — CPython pre-creates −5 to 256 and never frees them' },
+              note: 'cached small int: CPython pre-creates -5 to 256 and never frees them' },
             { id: 'cellDeco', pyId: ADDRS.cellDeco, type: 'dict', refcount: 1, mutable: true, state: 'new',
               dictLabel: 'closure cell on decorator', pairs: [
                 { key: 'times', value: 2, type: 'int' },
@@ -513,8 +513,8 @@ def ping():
         },
       },
       {
-        title: 'The <code>repeat</code> frame closes; <code>decorator</code> is what <code>@</code> will use',
-        desc: 'The line <code>@repeat(2)</code> has now finished its first half. What sits above <code>def ping</code> is this <code>decorator</code> object — and it already knows the number 2.',
+        title: 'The <code>repeat</code> frame closes, and <code>decorator</code> is what <code>@</code> will use',
+        desc: 'The line <code>@repeat(2)</code> has now finished its first half. What sits above <code>def ping</code> is this <code>decorator</code> object, and it already knows the number 2.',
         lines: [6, 8],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -532,8 +532,8 @@ def ping():
         },
       },
       {
-        title: 'Call 2 — <code>def ping</code> builds the function, then hands it over',
-        desc: 'The same three moments as demo 2. The <code>ping</code> object is created, passed to <code>decorator</code>, and <code>decorator</code>&rsquo;s frame opens with <code>func</code> pointing at it.',
+        title: 'Call 2: <code>def ping</code> builds the function, then hands it over',
+        desc: 'The same three moments as in demo 2. The <code>ping</code> object is created, passed to <code>decorator</code>, and <code>decorator</code>\'s frame opens with <code>func</code> pointing at it.',
         lines: [9, 10, 2],
         memory: {
           frames: [
@@ -558,7 +558,7 @@ def ping():
       },
       {
         title: '<code>wrapper</code> gets <em>two</em> remembered names',
-        desc: 'It uses <code>func</code> (from this frame) and <code>times</code> (from the frame above), so its closure holds both. That is the payoff: the argument you wrote in <code>@repeat(2)</code> travelled down two levels and is still there.',
+        desc: 'It uses <code>func</code> (from this frame) and <code>times</code> (from the frame above), so its closure holds both. This is what the extra layer was for: the argument you wrote in <code>@repeat(2)</code> travelled down two levels and is still there.',
         lines: [3, 4],
         memory: {
           frames: [
@@ -585,7 +585,7 @@ def ping():
       },
       {
         title: 'The name <code>ping</code> lands on the wrapper',
-        desc: 'Now <code>ping()</code> returns <code>[&#39;ping&#39;, &#39;ping&#39;]</code>. Two calls happened while the file was being read — <code>repeat(2)</code>, then <code>decorator(ping)</code> — and neither of them ran your function body.',
+        desc: 'Now <code>ping()</code> returns <code>[\'ping\', \'ping\']</code>. Two calls happened while the file was being read, <code>repeat(2)</code> and then <code>decorator(ping)</code>, and neither of them ran your function body.',
         lines: [8, 9],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -613,7 +613,7 @@ def ping():
      5 · Two decorators on one function
      ────────────────────────────────────────────────────────── */
   stacking: {
-    watch: 'Applied bottom-up. Executed top-down. Two different orders — and both are visible in the diagram.',
+    watch: 'Applied bottom-up, executed top-down. Two different orders, and both are visible in the diagram.',
     code: `def bold(func):
     def wrapper():
         return "<b>" + func() + "</b>"
@@ -631,7 +631,7 @@ def text():
     steps: [
       {
         title: 'Two decorators, stacked',
-        desc: 'The question everyone asks: which one runs first? The answer differs depending on whether you mean &ldquo;applied&rdquo; or &ldquo;called&rdquo;. Both answers fall out of <code>name = deco(name)</code>.',
+        desc: 'The question everyone asks is which one runs first. The answer depends on whether you mean "applied" or "called", and both answers fall out of <code>name = deco(name)</code>.',
         lines: [],
         memory: EMPTY,
       },
@@ -653,7 +653,7 @@ def text():
       },
       {
         title: '<code>def text</code> builds your function',
-        desc: 'As always, the body under the decorators is created first. It is not named <code>text</code> yet.',
+        desc: 'As always, the body under the decorators is created first. It isn\'t named <code>text</code> yet.',
         lines: [13, 14],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -669,8 +669,8 @@ def text():
         },
       },
       {
-        title: 'The <em>nearest</em> decorator goes first — <code>@italic</code>',
-        desc: 'Decorators are applied from the <code>def</code> outwards, so the bottom line wins the race. <code>italic(text)</code> returns a wrapper whose cell holds your original function.',
+        title: 'The <em>nearest</em> decorator goes first: <code>@italic</code>',
+        desc: 'Decorators are applied from the <code>def</code> outwards, so the bottom line goes first. <code>italic(text)</code> returns a wrapper whose cell holds your original function.',
         lines: [12, 6, 7],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -719,7 +719,7 @@ def text():
       },
       {
         title: 'The name <code>text</code> lands on the outermost wrapper',
-        desc: 'The decorator closest to <code>def</code> is applied first, so the one furthest away ends up outermost. That is why the top line is the last one applied — and the first one entered.',
+        desc: 'The decorator closest to <code>def</code> is applied first, so the one furthest away ends up outermost. That\'s why the top line is the last one applied and the first one entered.',
         lines: [11, 13],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -739,7 +739,7 @@ def text():
       },
       {
         title: 'Calling <code>text()</code> walks the chain outside-in',
-        desc: 'Bold runs, calls italic, which calls your function. The result comes back through the same chain in reverse: <code>&lt;b&gt;&lt;i&gt;hi&lt;/i&gt;&lt;/b&gt;</code>. Applied bottom-up, executed top-down — one picture, two directions.',
+        desc: 'Bold runs, calls italic, which calls your function. The result comes back through the same chain in reverse: <code>&lt;b&gt;&lt;i&gt;hi&lt;/i&gt;&lt;/b&gt;</code>. Applied bottom-up, executed top-down, in one picture.',
         lines: [3, 8, 14],
         memory: {
           frames: [

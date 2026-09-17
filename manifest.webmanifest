@@ -1,0 +1,19 @@
+{
+  "name": "Py Internals",
+  "short_name": "Py Internals",
+  "description": "Learn Python from the inside out: an interactive course that shows what your code does in memory.",
+  "start_url": "https://inboxpraveen.github.io/Py-Internals/",
+  "scope": "https://inboxpraveen.github.io/Py-Internals/",
+  "display": "standalone",
+  "background_color": "#FAFAF7",
+  "theme_color": "#1A6B5C",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "https://inboxpraveen.github.io/Py-Internals/assets/images/Python-logo.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

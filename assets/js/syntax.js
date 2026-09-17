@@ -1,5 +1,5 @@
 /* ============================================================
-   PY INTERNALS — SYNTAX.JS
+   PY INTERNALS: SYNTAX.JS
    Lightweight Python syntax highlighter + line manager
    ============================================================ */
 
@@ -26,7 +26,7 @@ PJ.Syntax = (function () {
   const CONSTANTS = new Set(['True', 'False', 'None']);
 
   /* One pass, left to right. Each token is consumed exactly once, so the
-     markup this emits can never be re-matched by a later rule — the previous
+     markup this emits can never be re-matched by a later rule. The previous
      multi-pass version wrapped the word `bool` inside its own `tok-bool`
      class attribute, and lost string placeholders that landed in comments. */
   const TOKEN = new RegExp([

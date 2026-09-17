@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Session 01: Variables &amp; Mutability — Py Internals</title>
-  <meta name="description" content="Understand what Python variables really are, how memory works, and why some objects are mutable while others aren't." />
+  <title>Python Variables and Mutability, Visualised | Py Internals</title>
+  <meta name="description" content="See what x = 42 really does in memory. Names, objects, id(), aliasing, mutation versus rebinding and reference counting, animated one step at a time." />
   <meta name="theme-color" content="#1A6B5C" />
 
   <link rel="icon" type="image/png" href="../../assets/images/Python-logo.png" />
@@ -16,6 +16,116 @@
   <link rel="stylesheet" href="../../assets/css/memory-viz.css" />
   <link rel="stylesheet" href="../../assets/css/animations.css" />
   <link rel="stylesheet" href="../../assets/css/session.css" />
+  <!-- seo:head -->
+  <link rel="canonical" href="https://inboxpraveen.github.io/Py-Internals/sessions/01-variables/" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Praveen Kumar" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="Py Internals" />
+  <meta property="og:locale" content="en_GB" />
+  <meta property="og:url" content="https://inboxpraveen.github.io/Py-Internals/sessions/01-variables/" />
+  <meta property="og:title" content="Python Variables and Mutability, Visualised" />
+  <meta property="og:description" content="See what x = 42 really does in memory. Names, objects, id(), aliasing, mutation versus rebinding and reference counting, animated one step at a time." />
+  <meta property="og:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/01-variables.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Python Variables and Mutability, Visualised on Py Internals" />
+  <meta property="article:published_time" content="2026-03-23" />
+  <meta property="article:modified_time" content="2026-09-17" />
+  <meta property="article:section" content="Foundations" />
+  <meta property="article:author" content="https://github.com/inboxpraveen" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Python Variables and Mutability, Visualised" />
+  <meta name="twitter:description" content="See what x = 42 really does in memory. Names, objects, id(), aliasing, mutation versus rebinding and reference counting, animated one step at a time." />
+  <meta name="twitter:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/01-variables.png" />
+  <link rel="alternate" type="application/atom+xml" title="Py Internals sessions" href="https://inboxpraveen.github.io/Py-Internals/feed.xml" />
+  <link rel="manifest" href="https://inboxpraveen.github.io/Py-Internals/manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" />
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": [
+        "Article",
+        "LearningResource"
+      ],
+      "@id": "https://inboxpraveen.github.io/Py-Internals/sessions/01-variables/#lesson",
+      "mainEntityOfPage": "https://inboxpraveen.github.io/Py-Internals/sessions/01-variables/",
+      "headline": "Session 01: Variables & Mutability",
+      "name": "Session 01: Variables & Mutability",
+      "description": "See what x = 42 really does in memory. Names, objects, id(), aliasing, mutation versus rebinding and reference counting, animated one step at a time.",
+      "image": "https://inboxpraveen.github.io/Py-Internals/assets/images/og/01-variables.png",
+      "author": {
+        "@type": "Person",
+        "name": "Praveen Kumar",
+        "url": "https://github.com/inboxpraveen"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Py Internals",
+        "url": "https://inboxpraveen.github.io/Py-Internals/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://inboxpraveen.github.io/Py-Internals/assets/images/Python-logo.png",
+          "width": 1024,
+          "height": 1024
+        },
+        "sameAs": [
+          "https://github.com/inboxpraveen/Py-Internals"
+        ]
+      },
+      "datePublished": "2026-03-23",
+      "dateModified": "2026-09-17",
+      "inLanguage": "en",
+      "isAccessibleForFree": true,
+      "license": "https://github.com/inboxpraveen/Py-Internals/blob/main/LICENSE",
+      "isPartOf": {
+        "@type": "Course",
+        "@id": "https://inboxpraveen.github.io/Py-Internals/#course",
+        "name": "Py Internals",
+        "url": "https://inboxpraveen.github.io/Py-Internals/"
+      },
+      "position": 1,
+      "learningResourceType": "Interactive lesson",
+      "educationalLevel": "Beginner",
+      "timeRequired": "PT25M",
+      "teaches": [
+        "Python variables as names bound to objects",
+        "id() and object identity",
+        "aliasing",
+        "mutation versus rebinding",
+        "reference counting and garbage collection",
+        "mutable and immutable types"
+      ],
+      "about": [
+        "Python (programming language)"
+      ],
+      "keywords": "Python variables as names bound to objects, id() and object identity, aliasing, mutation versus rebinding, reference counting and garbage collection, mutable and immutable types"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://inboxpraveen.github.io/Py-Internals/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Session 01: Variables & Mutability",
+          "item": "https://inboxpraveen.github.io/Py-Internals/sessions/01-variables/"
+        }
+      ]
+    }
+  ]
+}
+  </script>
+  <!-- /seo:head -->
 </head>
 <body>
 
@@ -136,14 +246,14 @@
       <div class="session-hero__eyebrow">Foundations · Session 01</div>
       <h1 class="session-hero__title">Variables &amp; Mutability</h1>
       <p class="session-hero__subtitle">
-        <code>x = 42</code> is not putting a number in a box. It is sticking a nametag
-        on something that already lives in memory. Two nametags can share one thing.
-        We will start there, then get precise about identity, mutation, and references.
+        <code>x = 42</code> isn't putting a number in a box. It's sticking a nametag
+        on something that already lives in memory, and two nametags can share one thing.
+        We'll start there, then get precise about identity, mutation and references.
       </p>
       <div class="session-meta">
         <div class="session-meta__item">~25 minutes</div>
         <div class="session-meta__item">4 interactive demos</div>
-        <div class="session-meta__item">Start here — no prerequisites</div>
+        <div class="session-meta__item">Start here, no prerequisites needed</div>
       </div>
     </div>
 
@@ -158,9 +268,7 @@
           A variable is a nametag, not a box.
         </h2>
         <p class="learning-card__body">
-          Start there. <code>x</code> does not hold 42 — it points at an object that is 42.
-          Once that feels natural, the technical words (identity, mutation, aliasing, refcount)
-          are just names for things you can already see.
+          Start there. <code>x</code> doesn't hold 42, it points at an object that is 42. Once that feels natural, the technical words (identity, mutation, aliasing, refcount) are just names for things you can already see.
         </p>
         <div class="concept-chip-row" aria-label="Concepts covered">
           <span class="type-chip type-chip--int">Names vs objects</span>
@@ -201,9 +309,7 @@
           <div class="stage-intro__label">Interactive lab</div>
           <h2 id="stage-title">Follow one idea at a time</h2>
           <p>
-            Choose a demo, then move line by line. One panel holds the Python you wrote;
-            the other holds the nametags and the objects they stick to. Same address means
-            the same thing — two notes, one object.
+            Choose a demo, then move through it line by line. One panel holds the Python you wrote. The other holds the nametags and the objects they're stuck on. If two names show the same address, they're on the same object.
           </p>
         </div>
         <div class="stage-intro__hint">
@@ -236,8 +342,8 @@
       </div>
 
       <div class="mem-legend" aria-label="How to read the memory diagram">
-        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--stack"></span> Namespace — names pointing at objects</div>
-        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--heap"></span> Heap — objects with type, value, refcount</div>
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--stack"></span> Namespace: names pointing at objects</div>
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--heap"></span> Heap: objects with a type, a value and a refcount</div>
         <div class="mem-legend__item"><kbd>→</kbd> next <kbd>←</kbd> back <kbd>Space</kbd> play <kbd>R</kbd> reset</div>
       </div>
 
@@ -338,9 +444,7 @@
         <div class="explanation-strip__content">
           <h3 id="stepTitle" class="explanation-text">Nothing has run yet</h3>
           <p  id="stepDesc"  class="explanation-text">
-            No names, no objects — the namespace is empty and so is the heap.
-            Press <strong>Play</strong> to autoplay, or use <strong>Next</strong> to step through manually.
-            Watch the <strong>Memory panel</strong> as objects appear on the heap.
+            No names, no objects. The namespace is empty and so is the heap. Press <strong>Play</strong> to autoplay, or use <strong>Next</strong> to step through by hand, and watch the <strong>Memory panel</strong> as objects appear on the heap.
           </p>
         </div>
       </div>
@@ -353,9 +457,7 @@
 
       <p class="in-plain">
         <span class="in-plain__label">In plain words</span>
-        Imagine a sticky note that says <code>x</code>. The note is not the number.
-        It is stuck on a real thing sitting in memory. Two notes can sit on the same thing.
-        Moving a note does not change the thing — it just points the note somewhere else.
+        Imagine a sticky note that says <code>x</code>. The note isn't the number. It's stuck on a real thing sitting in memory. Two notes can sit on the same thing, and moving a note doesn't change the thing. It just points the note somewhere else.
       </p>
 
       <p class="narrative-lede then-precise">
@@ -400,9 +502,7 @@
         <div>
           <div class="callout__title">Assignment binds a name</div>
           <div class="callout__body">
-            In Python, <strong>everything is an object</strong>. Numbers, strings, functions, classes — all objects.
-            Assignment with <code>=</code> binds a name to an object. It does not copy the object unless
-            you explicitly ask Python to make a copy.
+            In Python, <strong>everything is an object</strong>: numbers, strings, functions, classes, all of them. Assignment with <code>=</code> binds a name to an object. It doesn't copy the object unless you ask Python for a copy.
           </div>
         </div>
       </div>
@@ -411,13 +511,11 @@
 
       <p class="in-plain">
         <span class="in-plain__label">In plain words</span>
-        <code>id()</code> answers: “are these two names looking at the <em>same</em> thing,
-        or just two things that happen to look alike?” Same id means one object, two nametags.
+        <code>id()</code> answers one question: are these two names looking at the <em>same</em> thing, or at two things that happen to look alike? The same id means one object with two nametags.
       </p>
 
       <p class="then-precise">
-        Every object has a unique identity — in CPython, a stand-in for its memory address.
-        <code>id(x)</code> returns that as an integer. Two names with the
+        Every object has a unique identity, which in CPython is a stand-in for its memory address. <code>id(x)</code> returns that as an integer. Two names with the
         <strong>same <code>id()</code> point to the exact same object</strong>. No copy was made.
       </p>
 
@@ -434,8 +532,8 @@
 <span class="tok-var">x</span> <span class="tok-op">=</span> <span class="tok-num">42</span>
 <span class="tok-var">y</span> <span class="tok-op">=</span> <span class="tok-var">x</span>
 
-<span class="tok-fn">print</span>(<span class="tok-fn">id</span>(<span class="tok-var">x</span>) <span class="tok-op">==</span> <span class="tok-fn">id</span>(<span class="tok-var">y</span>))  <span class="tok-cmt"># True — same object!</span>
-<span class="tok-fn">print</span>(<span class="tok-var">x</span> <span class="tok-kw">is</span> <span class="tok-var">y</span>)                 <span class="tok-cmt"># True — 'is' checks identity</span>
+<span class="tok-fn">print</span>(<span class="tok-fn">id</span>(<span class="tok-var">x</span>) <span class="tok-op">==</span> <span class="tok-fn">id</span>(<span class="tok-var">y</span>))  <span class="tok-cmt"># True, same object</span>
+<span class="tok-fn">print</span>(<span class="tok-var">x</span> <span class="tok-kw">is</span> <span class="tok-var">y</span>)                 <span class="tok-cmt"># True, 'is' checks identity</span>
         </div>
       </div>
 
@@ -444,8 +542,7 @@
         <div>
           <div class="callout__title"><code>is</code> vs <code>==</code></div>
           <div class="callout__body">
-            <code>==</code> checks <strong>value equality</strong> — do the objects look the same?<br>
-            <code>is</code> checks <strong>identity</strong> — are they literally the same object in memory?<br>
+            <code>==</code> checks <strong>value equality</strong>: do the objects look the same?<br> <code>is</code> checks <strong>identity</strong>: are they literally the same object in memory?<br>
             Use <code>is None</code>, <code>is True</code>, <code>is False</code> for singletons.
             For everything else, prefer <code>==</code>.
           </div>
@@ -460,13 +557,11 @@
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
           Some things you can edit (a shopping list). Some things you can only replace
-          (a printed number). If you “change” a number, Python throws the old one away
-          and points your name at a new one.
+          (a printed number). If you "change" a number, Python throws the old one away and points your name at a new one.
         </p>
 
         <p class="then-precise">
-          That is mutability. Once a name points at an object, ask: can this object change
-          in place, or must a “change” create a different object?
+          That's mutability. Once a name points at an object, ask whether the object can change in place, or whether a "change" has to create a different object.
         </p>
 
         <div class="rule-grid">
@@ -515,16 +610,11 @@
 
         <p class="then-precise">
           That hidden counter is the <strong>reference count</strong>. CPython updates it
-          as names and containers are bound and unbound. At zero, the object is freed immediately
-          — unless it is stuck in a cycle, which needs a separate collector.
+          as names and containers are bound and unbound. At zero the object is freed immediately, unless it's stuck in a cycle, which needs a separate collector.
         </p>
 
         <p>
-          Try this on a list, not on a number. A few values — small integers, <code>True</code>,
-          <code>False</code>, <code>None</code> — are <strong>immortal</strong> in CPython 3.12 and
-          later: their count is pinned and they are never freed, so
-          <code>sys.getrefcount(42)</code> returns a huge fixed number rather than a count you can
-          watch move. There is more on that further down.
+          Try this on a list, not on a number. A few values (small integers, <code>True</code>, <code>False</code>, <code>None</code>) are <strong>immortal</strong> in CPython 3.12 and later. Their count is pinned and they're never freed, so <code>sys.getrefcount(42)</code> returns a huge fixed number rather than a count you can watch move. There's more on that further down.
         </p>
 
         <div class="key-idea">
@@ -546,8 +636,7 @@
         <div class="key-idea">
           <div class="key-idea__icon">✕</div>
           <p>
-            When refcount reaches <strong>0</strong>, CPython immediately frees the object's memory.
-            No waiting, no delay — garbage collected on the spot.
+            When the refcount reaches <strong>0</strong>, CPython frees the object's memory right away. No waiting and no delay, it's collected on the spot.
           </p>
         </div>
 
@@ -581,9 +670,7 @@
             <div class="callout__body">
               If two objects reference each other (e.g., a list containing itself), their refcounts
               never reach 0 even when nothing else points to them.
-              CPython has a <strong>cyclic garbage collector</strong> that handles these cases,
-              but it runs periodically — not immediately. This is why CPython doesn't <em>only</em>
-              use reference counting.
+              CPython has a <strong>cyclic garbage collector</strong> that handles these cases, but it runs now and then rather than immediately. That's why CPython doesn't <em>only</em> use reference counting.
             </div>
           </div>
         </div>
@@ -592,18 +679,16 @@
       <!-- ── Mutation vs Rebinding ───────────────────────────── -->
       <div id="demo-rebind">
         <div class="section-divider"><div class="section-divider__label">Mutation vs Rebinding</div></div>
-        <h2>The most important distinction in Python</h2>
+        <h2>The distinction that matters most</h2>
 
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
-          Did you move the nametag, or did you edit the thing it was stuck to?
-          Moving the nametag leaves other nametags alone. Editing the thing
-          is visible to everyone still pointing at it.
+          Did you move the nametag, or did you edit the thing it was stuck to? Moving the nametag leaves the other nametags alone. Editing the thing is visible to everyone still pointing at it.
         </p>
 
         <p class="then-precise">
           Those two operations are <strong>rebinding</strong> and <strong>mutation</strong>.
-          Almost every “why did my list change?” bug is mixing them up.
+          Almost every "why did my list change?" bug comes from mixing them up.
         </p>
 
         <div class="rule-grid">
@@ -637,19 +722,18 @@
 <span class="tok-var">s</span> <span class="tok-op">=</span> <span class="tok-str">"hello"</span>
 <span class="tok-var">t</span> <span class="tok-op">=</span> <span class="tok-var">s</span>            <span class="tok-cmt"># both point to the same "hello" object</span>
 <span class="tok-var">s</span> <span class="tok-op">=</span> <span class="tok-str">"world"</span>     <span class="tok-cmt"># s rebound to a NEW object; t still "hello"</span>
-<span class="tok-fn">print</span>(<span class="tok-var">t</span>)           <span class="tok-cmt"># hello — unaffected</span>
+<span class="tok-fn">print</span>(<span class="tok-var">t</span>)           <span class="tok-cmt"># hello, unaffected</span>
 
 <span class="tok-cmt"># ── MUTATION (mutable types) ─────────────────────────────────</span>
 <span class="tok-var">a</span> <span class="tok-op">=</span> [<span class="tok-num">1</span>, <span class="tok-num">2</span>, <span class="tok-num">3</span>]
 <span class="tok-var">b</span> <span class="tok-op">=</span> <span class="tok-var">a</span>            <span class="tok-cmt"># both point to the same list</span>
 <span class="tok-var">a</span>.<span class="tok-fn">append</span>(<span class="tok-num">4</span>)     <span class="tok-cmt"># mutates the shared object</span>
-<span class="tok-fn">print</span>(<span class="tok-var">b</span>)           <span class="tok-cmt"># [1, 2, 3, 4] — b sees the change!</span>
+<span class="tok-fn">print</span>(<span class="tok-var">b</span>)           <span class="tok-cmt"># [1, 2, 3, 4], b sees the change</span>
           </div>
         </div>
 
         <p>
-          Immutable types (<code>int</code>, <code>str</code>, <code>float</code>, <code>tuple</code>) can
-          <em>only</em> be rebound — you can never change the object itself.
+          Immutable types (<code>int</code>, <code>str</code>, <code>float</code>, <code>tuple</code>) can <em>only</em> be rebound. You can never change the object itself.
           Mutable types (<code>list</code>, <code>dict</code>, <code>set</code>) can be both mutated
           and rebound.
         </p>
@@ -716,11 +800,10 @@
 
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
-          You do not need to memorize every type today. For each one, ask one question:
-          can I edit this thing, or can I only replace it?
+          You don't need to memorise every type today. For each one, ask one question: can I edit this thing, or can I only replace it?
         </p>
 
-        <p class="then-precise">Python's built-in types differ mainly by <strong>mutability</strong> — and that decides whether a “change” is a mutation or a rebind.</p>
+        <p class="then-precise">Python's built-in types differ mainly by <strong>mutability</strong>, and that decides whether a "change" is a mutation or a rebind.</p>
 
         <div class="type-explorer">
 
@@ -756,7 +839,7 @@
             </div>
             <div class="type-card__body">
               <div class="type-card__example">s = "hello"<br>s = 'world'<br>s = """multi<br>line"""</div>
-              <div class="type-card__note">Sequences of Unicode characters. Cannot be changed after creation — <code>s[0] = 'H'</code> raises a TypeError.</div>
+              <div class="type-card__note">Sequences of Unicode characters. They can't be changed after creation: <code>s[0] = 'H'</code> raises a TypeError.</div>
             </div>
           </div>
 
@@ -780,7 +863,7 @@
             </div>
             <div class="type-card__body">
               <div class="type-card__example">result = None</div>
-              <div class="type-card__note">The absence of a value. A singleton — there is exactly <strong>one</strong> None object in the entire Python process.</div>
+              <div class="type-card__note">The absence of a value. It's a singleton: there is exactly <strong>one</strong> None object in the whole Python process.</div>
             </div>
           </div>
 
@@ -828,7 +911,7 @@
             </div>
             <div class="type-card__body">
               <div class="type-card__example">s = {1, 2, 3}<br>s.add(4)<br>s.discard(1)</div>
-              <div class="type-card__note">Unordered collection of unique items. Mutable — you can add/remove. But elements must be immutable (hashable).</div>
+              <div class="type-card__note">An unordered collection of unique items. Mutable, so you can add and remove, but the elements themselves must be immutable (hashable).</div>
             </div>
           </div>
 
@@ -887,13 +970,13 @@
                 <td><span class="type-chip type-chip--list">list</span></td>
                 <td><code>[1, 2]</code></td>
                 <td>Yes</td>
-                <td>Functions can modify the list you passed — be careful with aliases!</td>
+                <td>A function can modify the list you passed in, so be careful with aliases</td>
               </tr>
               <tr>
                 <td><span class="type-chip type-chip--dict">dict</span></td>
                 <td><code>{"k": v}</code></td>
                 <td>Yes</td>
-                <td>A function gets a second name for the same dict — changes made inside it are visible to the caller</td>
+                <td>A function gets a second name for the same dict, so changes made inside it are visible to the caller</td>
               </tr>
               <tr>
                 <td><span class="type-chip type-chip--set">set</span></td>
@@ -924,27 +1007,20 @@
           <div>
             <div class="callout__title">Some objects are shared, and a few live forever</div>
             <div class="callout__body">
-              CPython builds the small integers once, at start-up, and hands out the same object
-              every time — typically <code>-5</code> through <code>256</code>. So
+              CPython builds the small integers once, at start-up, and hands out the same object every time, typically for <code>-5</code> through <code>256</code>. So
               <code>a = 5; b = 5</code> gives <code>a is b</code> → <code>True</code>: one object,
               two names. It does the same for short identifier-like strings, which is why
               <code>s = "hello"; t = "hello"</code> also gives <code>s is t</code> → <code>True</code>.
               <br><br>
-              Outside that cached range there is no promise either way. Two large numbers
-              <em>computed</em> separately are usually different objects —
-              <code>n = 999; c = n + 1; d = 1000; c is d</code> → <code>False</code> — but two
-              identical literals written in the same file often still share one object, because the
-              compiler stores the constant once. Don't test interning with
+              Outside that cached range there is no promise either way. Two large numbers <em>computed</em> separately are usually different objects (<code>n = 999; c = n + 1; d = 1000; c is d</code> → <code>False</code>), but two identical literals written in the same file often still share one object, because the compiler stores the constant once. Don't test interning with
               <code>id(5) == id(5)</code>: that is <code>True</code> for every number, interned or
               not, since both halves are the same literal.
               <br><br>
-              One more consequence: in CPython 3.12 and later these shared values (small ints,
-              <code>True</code>, <code>False</code>, <code>None</code>) are <strong>immortal</strong> —
-              they are never freed, and their reference count is pinned at a huge fixed number.
+              One more consequence: in CPython 3.12 and later these shared values (small ints, <code>True</code>, <code>False</code>, <code>None</code>) are <strong>immortal</strong>. They're never freed, and their reference count is pinned at a huge fixed number.
               That is why <code>sys.getrefcount(42)</code> prints something like
               <code>4294967295</code> instead of a small count, and why the memory panel shows
               <code>∞</code> for <code>42</code> rather than a number that ticks up and down.
-              All of this is an implementation detail, not a language guarantee — never write code
+              All of this is an implementation detail, not a language guarantee, so never write code
               whose correctness depends on it.
             </div>
           </div>
@@ -955,8 +1031,7 @@
           <div>
             <div class="callout__title">The golden rule</div>
             <div class="callout__body">
-              <strong>Immutable objects</strong> are safe to share — no one can change them through another reference.
-              <strong>Mutable objects</strong> need careful handling when passed around — anyone with a reference can change the object.
+              <strong>Immutable objects</strong> are safe to share, because no one can change them through another reference. <strong>Mutable objects</strong> need care when passed around, because anyone with a reference can change the object.
             </div>
           </div>
         </div>
@@ -983,9 +1058,7 @@
         <h2>Four ways this goes wrong</h2>
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
-          Every one of these is the same slip: treating a nametag as if it were the thing
-          it is stuck to. When code surprises you, find the object first, then count the
-          names on it.
+          Every one of these is the same slip: treating a nametag as if it were the thing it's stuck to. When code surprises you, find the object first, then count the names on it.
         </p>
 
         <div class="mistake-list">
@@ -1003,29 +1076,22 @@
             <p>
               <code>del</code> removes the <em>name</em>. The object loses one reference, and it
               is freed only if that was the last one. After <code>a = [1, 2]; b = a; del a</code>,
-              the list is alive and well under <code>b</code>. Nothing you write ever destroys an
-              object directly — you only ever let go of it.
+              the list is alive and well under <code>b</code>. Nothing you write ever destroys an object directly. You only ever let go of it.
             </p>
           </div>
           <div class="mistake-item">
-            <h3>Reading <code>+=</code> as &ldquo;edit in place&rdquo; for every type</h3>
+            <h3>Reading <code>+=</code> as "edit in place" for every type</h3>
             <p>
               On an <code>int</code> or a <code>str</code>, <code>x += 1</code> builds a new object
               and moves the name; other names keep the old value. On a <code>list</code>,
               <code>x += [1]</code> edits the object, and every alias sees it. The same two
-              characters, two different operations. The famous trap: <code>t = ([1], 2)</code>
-              then <code>t[0] += [3]</code> raises <code>TypeError</code> — <em>and</em> the inner
-              list has already grown to <code>[1, 3]</code>, because the mutation happened
-              before the tuple refused the assignment.
+              characters, two different operations. The famous trap: <code>t = ([1], 2)</code> then <code>t[0] += [3]</code> raises <code>TypeError</code>, <em>and</em> the inner list has already grown to <code>[1, 3]</code>, because the mutation happened before the tuple refused the assignment.
             </p>
           </div>
           <div class="mistake-item">
             <h3>Testing values with <code>is</code></h3>
             <p>
-              <code>a is b</code> asks &ldquo;same object?&rdquo;, and for numbers and strings the
-              answer depends on how the objects were made — a cached small int says
-              <code>True</code>, two computed <code>1000</code>s say <code>False</code>, two
-              literals in one file often say <code>True</code>. None of that is a language promise.
+              <code>a is b</code> asks "same object?", and for numbers and strings the answer depends on how the objects were made. A cached small int says <code>True</code>, two computed <code>1000</code>s say <code>False</code>, and two literals in one file often say <code>True</code>. None of that is a language promise.
               Compare values with <code>==</code>; keep <code>is</code> for <code>None</code>,
               <code>True</code> and <code>False</code>, and for checking aliasing while you learn.
             </p>
@@ -1037,8 +1103,7 @@
           <div>
             <div class="callout__title">One question answers most of these</div>
             <div class="callout__body">
-              &ldquo;How many names are on this object right now?&rdquo; If the answer is more than
-              one, a mutation through any of them is visible through all of them, and a rebinding
+              "How many names are on this object right now?" If the answer is more than one, a mutation through any of them is visible through all of them, and a rebinding
               of one of them changes nothing for the rest.
             </div>
           </div>
@@ -1061,8 +1126,8 @@
 
       <div class="quiz-card" data-answer="0">
         <div class="quiz-card__q">2. <code>a = [1, 2]</code> then <code>b = a</code> then <code>b.append(3)</code>. What is <code>a</code>?</div>
-        <button class="quiz-option" data-choice="0"><code>[1, 2, 3]</code> — both names alias one list</button>
-        <button class="quiz-option" data-choice="1"><code>[1, 2]</code> — append only changes <code>b</code></button>
+        <button class="quiz-option" data-choice="0"><code>[1, 2, 3]</code>, because both names are on one list</button>
+        <button class="quiz-option" data-choice="1"><code>[1, 2]</code>, because append only changes <code>b</code></button>
         <button class="quiz-option" data-choice="2">An error, because lists cannot be shared</button>
         <div class="quiz-explain">Mutation changes the object. Every alias sees it. Use <code>b = a.copy()</code> if you need a separate list.</div>
       </div>
@@ -1072,34 +1137,50 @@
         <button class="quiz-option" data-choice="0">At the end of the program only</button>
         <button class="quiz-option" data-choice="1">The next time you call <code>gc.collect()</code></button>
         <button class="quiz-option" data-choice="2">As soon as its reference count hits zero</button>
-        <div class="quiz-explain">Reference counting frees the object immediately. The cyclic collector is only needed when objects point at each other.</div>
+        <div class="quiz-explain">Reference counting frees the object straight away. The cyclic collector is only needed when objects point at each other.</div>
       </div>
       <div class="quiz-card" data-answer="1">
         <div class="quiz-card__q">4. <code>a = [1, 2]</code>, <code>b = a</code>, then <code>del a</code>. What happens to the list?</div>
-        <button class="quiz-option" data-choice="0">It is freed immediately — <code>del</code> destroys the object</button>
-        <button class="quiz-option" data-choice="1">Nothing — only the name <code>a</code> is gone; <code>b</code> still points at the list</button>
+        <button class="quiz-option" data-choice="0">It's freed immediately, because <code>del</code> destroys the object</button>
+        <button class="quiz-option" data-choice="1">Nothing. Only the name <code>a</code> is gone, and <code>b</code> still points at the list</button>
         <button class="quiz-option" data-choice="2">Python raises an error because <code>b</code> still uses it</button>
         <div class="quiz-explain"><code>del</code> removes a name and drops one reference. The list still has one name on it, so its count is 1, not 0, and it stays.</div>
       </div>
 
       <div class="quiz-card" data-answer="0">
         <div class="quiz-card__q">5. <code>s = "hi"</code>, <code>t = s</code>, <code>s += "!"</code>. What is <code>t</code>?</div>
-        <button class="quiz-option" data-choice="0"><code>"hi"</code> — strings are immutable, so <code>+=</code> built a new string and moved only <code>s</code></button>
-        <button class="quiz-option" data-choice="1"><code>"hi!"</code> — <code>t</code> is an alias, so it sees the change</button>
+        <button class="quiz-option" data-choice="0"><code>"hi"</code>, because strings are immutable, so <code>+=</code> built a new string and moved only <code>s</code></button>
+        <button class="quiz-option" data-choice="1"><code>"hi!"</code>, because <code>t</code> is an alias and sees the change</button>
         <button class="quiz-option" data-choice="2">An error, because you cannot change a string</button>
         <div class="quiz-explain">No string object was edited. <code>s += "!"</code> made a new object <code>"hi!"</code> and rebound <code>s</code>; <code>t</code> still wears its nametag on the old <code>"hi"</code>.</div>
       </div>
 
       <div class="quiz-card" data-answer="2">
         <div class="quiz-card__q">6. <code>x = [1, 2]</code>, <code>y = x</code>, then <code>x = x + [3]</code>. What is <code>y</code>?</div>
-        <button class="quiz-option" data-choice="0"><code>[1, 2, 3]</code> — <code>y</code> is an alias of <code>x</code></button>
+        <button class="quiz-option" data-choice="0"><code>[1, 2, 3]</code>, because <code>y</code> is an alias of <code>x</code></button>
         <button class="quiz-option" data-choice="1">An error, because <code>x</code> was reassigned while <code>y</code> used it</button>
-        <button class="quiz-option" data-choice="2"><code>[1, 2]</code> — <code>x + [3]</code> built a new list and rebound <code>x</code>; <code>y</code> stayed on the old one</button>
-        <div class="quiz-explain"><code>x + [3]</code> is rebinding: a third list appears and only <code>x</code> moves. Had the line been <code>x += [3]</code>, the shared list would have been mutated and <code>y</code> would show <code>[1, 2, 3]</code>.</div>
+        <button class="quiz-option" data-choice="2"><code>[1, 2]</code>, because <code>x + [3]</code> built a new list and rebound <code>x</code>, while <code>y</code> stayed on the old one</button>
+        <div class="quiz-explain"><code>x + [3]</code> is a rebinding: a third list appears and only <code>x</code> moves. If the line had been <code>x += [3]</code>, the shared list would have been mutated and <code>y</code> would show <code>[1, 2, 3]</code>.</div>
       </div>
     </section>
 
     <!-- ── Session Footer ──────────────────────────────────── -->
+    <!-- seo:sessions-nav -->
+    <nav class="sessions-nav" aria-label="All sessions">
+      <div class="sessions-nav__label">All sessions</div>
+      <ul>
+        <li class="is-current"><a href="../01-variables/"><span>01</span> Variables &amp; Mutability</a></li>
+        <li><a href="../02-functions/"><span>02</span> Functions, Scope &amp; the Call Stack</a></li>
+        <li><a href="../03-lists-dicts/"><span>03</span> Lists, Dicts &amp; References</a></li>
+        <li><a href="../04-classes/"><span>04</span> Classes &amp; Objects</a></li>
+        <li><a href="../05-iterators/"><span>05</span> Iterators &amp; Generators</a></li>
+        <li><a href="../06-decorators/"><span>06</span> Decorators</a></li>
+        <li><a href="../07-gil/"><span>07</span> The GIL &amp; Concurrency</a></li>
+        <li><a href="../08-exceptions/"><span>08</span> Exceptions, Tracebacks &amp; Context Managers</a></li>
+      </ul>
+    </nav>
+    <!-- /seo:sessions-nav -->
+
     <div class="session-footer">
       <a href="../../index.html" class="btn btn--secondary">
         ← Back to Course

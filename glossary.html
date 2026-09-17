@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Glossary — Py Internals</title>
-  <meta name="description" content="Plain-English definitions for Python memory, names, objects, frames, iterators, and more." />
+  <title>Python Internals Glossary: Names, Frames, Refcounts, GIL</title>
+  <meta name="description" content="Plain-English definitions for the words you meet while learning how Python works: names, objects, frames, closures, generators, decorators, the GIL and exceptions." />
   <meta name="theme-color" content="#1A6B5C" />
-  <link rel="canonical" href="https://inboxpraveen.github.io/Py-Internals/glossary.html" />
   <link rel="icon" type="image/png" href="assets/images/Python-logo.png" />
   <link rel="apple-touch-icon" href="assets/images/Python-logo.png" />
   <link rel="stylesheet" href="assets/css/base.css" />
@@ -103,6 +102,567 @@
     }
     .footer a { color: var(--clr-accent); }
   </style>
+  <!-- seo:head -->
+  <link rel="canonical" href="https://inboxpraveen.github.io/Py-Internals/glossary.html" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Praveen Kumar" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Py Internals" />
+  <meta property="og:locale" content="en_GB" />
+  <meta property="og:url" content="https://inboxpraveen.github.io/Py-Internals/glossary.html" />
+  <meta property="og:title" content="Py Internals Glossary" />
+  <meta property="og:description" content="Plain-English definitions for the words you meet while learning how Python works: names, objects, frames, closures, generators, decorators, the GIL and exceptions." />
+  <meta property="og:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/glossary.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Py Internals Glossary on Py Internals" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Py Internals Glossary" />
+  <meta name="twitter:description" content="Plain-English definitions for the words you meet while learning how Python works: names, objects, frames, closures, generators, decorators, the GIL and exceptions." />
+  <meta name="twitter:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/glossary.png" />
+  <link rel="alternate" type="application/atom+xml" title="Py Internals sessions" href="https://inboxpraveen.github.io/Py-Internals/feed.xml" />
+  <link rel="manifest" href="https://inboxpraveen.github.io/Py-Internals/manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" />
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "DefinedTermSet",
+      "@id": "https://inboxpraveen.github.io/Py-Internals/glossary.html",
+      "name": "Py Internals Glossary",
+      "description": "Plain-English definitions for the words you meet while learning how Python works: names, objects, frames, closures, generators, decorators, the GIL and exceptions.",
+      "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html",
+      "hasDefinedTerm": [
+        {
+          "@type": "DefinedTerm",
+          "name": "Name",
+          "description": "A label in a namespace, such as x. It does not store a value. It points at an object. See Session 01.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#name",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Object",
+          "description": "Everything in Python is an object: numbers, strings, lists, functions, classes, instances. An object has identity, a type, and a value. Objects live on the heap.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#object",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Reference",
+          "description": "The connection from a name (or a container slot) to an object. Assignment creates or changes a reference. It does not copy the object unless you ask for a copy.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#reference",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Identity",
+          "description": "Which object something is, not what it looks like. id(x) and x is y test identity. Two names with the same identity are aliases.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#identity",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Equality",
+          "description": "== asks whether two objects have the same value. They can be equal and still be different objects.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#equality",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Aliasing",
+          "description": "Two or more names (or slots) pointing at the same object. Mutations through any alias are visible to all of them.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#aliasing",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Rebinding",
+          "description": "x = something_else makes the name point at a different object. The old object is unchanged; it just loses one reference.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#rebinding",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Mutation",
+          "description": "Changing an object in place without creating a new one. lst.append(1) mutates. The object's id() stays the same.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#mutation",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Mutable / immutable",
+          "description": "A mutable object can change its contents (list, dict, set, instances). An immutable object cannot (int, str, tuple). \"Changing\" an immutable object always rebinds the name instead.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#mutable",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Reference count",
+          "description": "How many names or containers currently point at an object. In CPython, when this hits zero the object is freed immediately. Cycles need a separate collector.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#refcount",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Heap",
+          "description": "The region of memory where objects live. Every Python object (an int, a list, a function, a class) is allocated on the heap. Names live in namespaces and point into it.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#heap",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Call stack",
+          "description": "The pile of frames for calls currently in progress. Each call pushes a frame; each return pops one. A traceback is a printout of this stack. See Session 02.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#call-stack",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Garbage collection",
+          "description": "Freeing objects nothing refers to any more. CPython does this mainly by reference counting: the instant a count hits zero the object is freed. A separate cyclic collector handles objects that only refer to each other.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#garbage-collection",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Small-integer cache",
+          "description": "CPython builds the integers -5 to 256 once at start-up and hands out the same object every time, so a = 42; b = 42 gives two names for one object. Those objects are never freed. It's an implementation detail, not a language guarantee, so never write code that depends on it.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#small-int-cache",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Interning",
+          "description": "CPython reuses some immutable objects, especially small integers (typically -5 to 256) and some strings. That is an optimisation, not a language rule. Do not write code that depends on it.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#interning",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Function object",
+          "description": "def creates a function object and binds a name to it. The body does not run at definition time. See Session 02.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#function",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Frame",
+          "description": "The temporary workspace for one function call: local names, the current line, and the path back to the caller. Frames stack; the top one is running.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#frame",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "LEGB",
+          "description": "Name lookup order: Local, Enclosing function scopes, Global, Built-ins. Assignment creates a local name unless you declare global or nonlocal.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#legb",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Argument binding",
+          "description": "A parameter is a local name bound to the object the caller passed. Python does not copy that object. Mutating it is visible to the caller; rebinding the parameter is not.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#argument",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Closure",
+          "description": "An inner function plus the outer names it still needs after the outer call returns. nonlocal updates a remembered outer name instead of creating a new local.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#closure",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Default argument",
+          "description": "Default values are created once, when the function is defined, and stored on the function object. A mutable default is shared across calls, which is a classic surprise.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#default",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Container",
+          "description": "An object whose contents are references to other objects. Lists, dicts, tuples, and sets are containers. See Session 03.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#container",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Shallow copy",
+          "description": "A new outer container filled with the same inner references. list.copy() and dict.copy() are shallow. Nested objects stay shared.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#shallow-copy",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Deep copy",
+          "description": "A recursive copy of nested objects. Use it only when you need nested independence. Some objects should stay shared on purpose.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#deep-copy",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Hashable",
+          "description": "An object with a stable hash, required for dict keys and set elements. Built-in immutables are usually hashable. Lists and dicts are not.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#hashable",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Class object",
+          "description": "class creates a class object. It holds methods and class attributes. Calling the class creates an instance. See Session 04.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#class",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Instance",
+          "description": "An object created by calling a class. It has its own identity and usually its own __dict__ for instance attributes.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#instance",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "self",
+          "description": "The conventional name for the instance a method is operating on. Python passes it automatically when you write obj.method().",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#self",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "__dict__",
+          "description": "The mapping that stores an object's writable attributes. Instance attributes live on the instance dict. Methods usually live on the class dict.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#dict",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Attribute lookup",
+          "description": "Python looks on the instance first, then the class, then base classes (the MRO). That is why a class attribute is visible on every instance until one instance shadows it.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#lookup",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Bound method",
+          "description": "Accessing a function on an instance creates a method object that already remembers self. g.hello is not the raw function; it is hello bound to g.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#bound-method",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "__init__",
+          "description": "The initialiser. After the instance exists, Python calls __init__(self, ...) to write attributes. It returns None. The caller receives the instance, not that return value. See Session 04.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#init",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "__new__",
+          "description": "The allocator. Calling a class first creates the instance, then initialises it. You almost never override __new__. The important picture: the object exists before __init__ runs.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#new",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Class attribute",
+          "description": "A name stored on the class object. Every instance can read it until it assigns the same name on itself. A mutable class attribute (a list on the class) is one shared object.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#class-attr",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Instance attribute",
+          "description": "A name stored in the instance __dict__. Assignment on an instance usually creates one of these. It shadows a class attribute of the same name for that instance only.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#instance-attr",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "MRO",
+          "description": "Method resolution order: the list of classes Python searches for an attribute. For class Dog(Animal) it is Dog → Animal → object. Subclasses do not copy methods; they walk this list.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#mro",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "__class__ / type()",
+          "description": "The instance's link to its class. type(p) is Point and p.__class__ is Point are the same idea. Lookup follows this pointer after the instance dict misses.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#class-link",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Iterable",
+          "description": "An object you can loop over. It can produce an iterator via iter(obj). Lists, strings, dicts, and generators are iterable. See Session 05.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#iterable",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Iterator",
+          "description": "An object with state that yields one item at a time through next(). When it is exhausted it raises StopIteration. A for loop hides this protocol.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#iterator",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Generator",
+          "description": "A function that uses yield. Calling it does not run the body; it returns a generator object. Each next() resumes a suspended frame until the next yield.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#generator",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Lazy evaluation",
+          "description": "Work is done only when the next value is requested. A generator expression keeps one pending computation; a list comprehension builds every value immediately.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#lazy",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "StopIteration",
+          "description": "The signal that an iterator is exhausted. A for loop catches it and exits. The collection is unchanged; the iterator is spent. A new for on a list creates a new iterator. A generator does not rewind.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#stopiteration",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Decorator",
+          "description": "A callable that takes a function and returns a replacement. @deco above a def is shorthand for f = deco(f): your function is built, handed to deco, and the name is bound to whatever comes back. See Session 06.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#decorator",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Wrapper",
+          "description": "The function a decorator returns. It usually calls the original and adds something around it. After decorating, your name points at the wrapper, not at the function you wrote.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#wrapper",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Closure cell",
+          "description": "The small box that keeps an outer name alive for an inner function. It is why a wrapper can still reach your original function after the decorator's frame is gone, and why that original is not garbage collected even though no name points at it. See Session 02.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#closure-cell",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Decorator factory",
+          "description": "A function you call to get a decorator, which is how a decorator takes arguments. In @repeat(2), repeat(2) runs first and returns the decorator that is then applied to your function.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#decorator-factory",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "functools.wraps",
+          "description": "A decorator applied to a wrapper. It copies __name__, __qualname__, __doc__, __module__ and __annotations__ from the original function onto the wrapper, so tracebacks and help() keep telling the truth.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#functools-wraps",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "__wrapped__",
+          "description": "The attribute functools.wraps sets on a wrapper, pointing at the function underneath. It is how tools reach past a decorator to the real thing.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#wrapped",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "GIL (Global Interpreter Lock)",
+          "description": "The single lock a thread must hold to execute Python bytecode in CPython. It exists because interpreter bookkeeping, reference counts above all, would be corrupted by unsynchronised threads. It's a property of CPython, not of the Python language. See Session 07.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#gil",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Thread",
+          "description": "A real operating-system thread, sharing the whole heap with its siblings. threading.Thread(...) only creates an object; the OS thread appears at .start(), which is when ident stops being None.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#thread",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Switch interval",
+          "description": "How long a thread may hold the GIL before the interpreter asks it to hand over: sys.getswitchinterval(), 5 ms by default. The request is only honoured at a safe point, chiefly a jump back to the top of a loop or a call into a function.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#switch-interval",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Race condition",
+          "description": "A bug whose outcome depends on the order in which threads happen to run. The classic shape is read-modify-write: two threads read the same value, both compute from it, and the second write erases the first. The GIL doesn't prevent this. It only keeps single bytecodes indivisible.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#race-condition",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Atomic",
+          "description": "An operation that cannot be interrupted partway. In CPython one bytecode is atomic; one line of your source usually is not, because it compiles to several. If a switch can land in the middle, the operation is not atomic.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#atomic",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Lock",
+          "description": "threading.Lock, an object only one thread may hold at a time. Wrapping a read-modify-write in with lock: makes it indivisible with respect to every other thread that uses the same lock. A thread waiting for a lock is in a different queue from a thread waiting for the GIL.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#lock",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Deadlock",
+          "description": "Two threads each holding a lock the other needs. Neither can ever proceed and no error is raised. The program just stops. Prevented by always acquiring locks in the same order, or by holding only one at a time.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#deadlock",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "CPU-bound / I/O-bound",
+          "description": "The question that picks your tool. I/O-bound code is slow because it waits, and threads and asyncio overlap the waiting. CPU-bound code is slow because it computes, and only a second process (or a library that releases the GIL) adds a second core.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#cpu-bound",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Process",
+          "description": "A second operating-system process running a second interpreter, with its own heap and its own GIL. Two processes really do execute Python at the same instant. They share no objects at all, so anything passed between them is copied.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#process",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Pickling",
+          "description": "Turning an object into bytes so it can cross a process boundary and be rebuilt on the other side. The result is an equal object at a different address, never the same object. Lambdas, open files, connections and locks cannot be pickled.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#pickling",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Start method",
+          "description": "How multiprocessing creates a child: spawn, fork or forkserver. Check yours with mp.get_start_method(). Where the child re-imports your module (spawn is the default on Windows and macOS), the if __name__ == \"__main__\": guard is required or the child spawns its own child.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#start-method",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Event loop",
+          "description": "The object asyncio uses to drive coroutines on a single thread. It keeps a list of tasks that are ready and a list of things being waited on, runs one task until it suspends, then picks the next.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#event-loop",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Coroutine",
+          "description": "What calling an async def function gives you: an object that has run none of its body, exactly like a generator object. It suspends at await, keeping its frame and locals, and the event loop resumes it later. Never awaiting one produces RuntimeWarning: coroutine ... was never awaited.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#coroutine",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "await (yield point)",
+          "description": "The only place a coroutine can be suspended, and a word you typed, visible in the source. This is what makes asyncio cooperative: between two awaits nothing else runs, so no lock is needed. Threads, by contrast, are pre-empted wherever the interpreter allows.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#await",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Task",
+          "description": "An object that drives one coroutine on the event loop. A coroutine on its own does nothing; asyncio.gather or create_task wraps it in a Task and hands it to the loop.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#task",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Free-threaded build",
+          "description": "An optional CPython build with no GIL, added by PEP 703. It was experimental in 3.13, is officially supported in 3.14, and is separate from the default build, which still has one. Check with sys._is_gil_enabled(), which exists from 3.13 onwards. It makes CPU-bound threads scale. It doesn't fix any race condition, and it makes the ones you have easier to hit.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#free-threading",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Exception",
+          "description": "An ordinary instance of a class that inherits from BaseException. raise X evaluates X (usually a constructor call) and then starts the object climbing the call stack. It carries args, a __traceback__, and links to related exceptions. See Session 08.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#exception",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Unwinding",
+          "description": "What happens between raise and the handler: each frame without a matching except around the current line is popped, locals and all, just as on return, and the exception arrives in the caller at the line that made the call. If it runs out of frames, the traceback is printed and the process exits with status 1.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#unwinding",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Traceback",
+          "description": "The record of frames an exception has passed through, outermost first, reachable as exc.__traceback__ and walked with tb_next. The printed Traceback (most recent call last) is that chain written out one frame per entry; read it from the bottom, where the error and the raise site are.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#traceback",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Handler (try / except)",
+          "description": "An except clause covering the line an exception arrived on. Clauses are tested in order with isinstance, so a clause catches the class it names and every subclass. The frame that catches keeps its desk; the name bound by as err is deleted automatically when the block ends, to break the cycle between the exception, its traceback and the frame.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#handler",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "finally",
+          "description": "A block that runs on every way out of a try: a clean finish, a handled exception, an unhandled one, or a return. The pending result is parked while it runs and resumed afterwards. A return inside finally replaces that result and throws away an exception in flight. Python 3.14 warns about it.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#finally-clause",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Context manager",
+          "description": "Any object whose class defines __enter__ and __exit__. with EXPR as name: calls __enter__ and binds its return value to name, runs the body inside an invisible try, and then calls __exit__(exc_type, exc, tb), with three Nones on success. If __exit__ returns a true value the exception is suppressed. @contextlib.contextmanager builds one from a generator: the code before yield is the enter half, after it the exit half.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#context-manager",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Exception chaining",
+          "description": "An exception raised while another is being handled gets __context__ set to the one being handled; the traceback then says During handling of the above exception, another exception occurred. raise New from old also sets __cause__, and the sentence becomes The above exception was the direct cause of the following exception. from None hides the earlier one.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#exception-chaining",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Exception hierarchy",
+          "description": "Exceptions are classes with parents: KeyError and IndexError are LookupErrors, most things you raise yourself are Exceptions, and KeyboardInterrupt and SystemExit sit directly under BaseException so that except Exception lets a program be interrupted. A bare except: catches those too, which is why it is almost always a mistake.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#exception-hierarchy",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://inboxpraveen.github.io/Py-Internals/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Glossary",
+          "item": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        }
+      ]
+    }
+  ]
+}
+  </script>
+  <!-- /seo:head -->
 </head>
 <body>
 <header class="topbar">
@@ -130,7 +690,7 @@
     Short definitions for the words this course uses again and again.
     Search, then jump back into the session that shows the idea in memory.
   </p>
-  <input class="glossary__search" id="glossarySearch" type="search" placeholder="Search terms — alias, frame, yield, wrapper, MRO, traceback…" autocomplete="off" />
+  <input class="glossary__search" id="glossarySearch" type="search" placeholder="Search terms: alias, frame, yield, wrapper, MRO, traceback..." autocomplete="off" />
   <div class="glossary-filters" id="glossaryFilters" role="tablist" aria-label="Filter by topic">
     <button type="button" class="glossary-filter is-active" data-filter="all">All</button>
     <button type="button" class="glossary-filter" data-filter="objects">Objects</button>
@@ -180,7 +740,7 @@
     </article>
     <article class="term" id="mutable" data-terms="mutable immutable">
       <h3>Mutable / immutable</h3>
-      <p>A mutable object can change its contents (<code>list</code>, <code>dict</code>, <code>set</code>, instances). An immutable object cannot (<code>int</code>, <code>str</code>, <code>tuple</code>). “Changing” an immutable name always rebinds.</p>
+      <p>A mutable object can change its contents (<code>list</code>, <code>dict</code>, <code>set</code>, instances). An immutable object cannot (<code>int</code>, <code>str</code>, <code>tuple</code>). "Changing" an immutable object always rebinds the name instead.</p>
     </article>
     <article class="term" id="refcount" data-terms="refcount reference count garbage collection gc">
       <h3>Reference count</h3>
@@ -188,7 +748,7 @@
     </article>
     <article class="term" id="heap" data-terms="heap memory allocation objects">
       <h3>Heap</h3>
-      <p>The region of memory where objects live. Every Python object — an int, a list, a function, a class — is allocated on the heap. Names live in namespaces and point into it.</p>
+      <p>The region of memory where objects live. Every Python object (an int, a list, a function, a class) is allocated on the heap. Names live in namespaces and point into it.</p>
     </article>
     <article class="term" id="call-stack" data-terms="call stack frames traceback">
       <h3>Call stack</h3>
@@ -200,11 +760,11 @@
     </article>
     <article class="term" id="small-int-cache" data-terms="small int cache interning immortal cached integers">
       <h3>Small-integer cache</h3>
-      <p>CPython builds the integers −5 to 256 once at start-up and hands out the same object every time, so <code>a = 42; b = 42</code> gives two names for one object. Those objects are never freed. It is an implementation detail, not a language guarantee — never write code that depends on it.</p>
+      <p>CPython builds the integers -5 to 256 once at start-up and hands out the same object every time, so <code>a = 42; b = 42</code> gives two names for one object. Those objects are never freed. It's an implementation detail, not a language guarantee, so never write code that depends on it.</p>
     </article>
     <article class="term" id="interning" data-terms="interning small int cache">
       <h3>Interning</h3>
-      <p>CPython reuses some immutable objects, especially small integers (typically -5 to 256) and some strings. That is an optimization, not a language rule. Do not write code that depends on it.</p>
+      <p>CPython reuses some immutable objects, especially small integers (typically -5 to 256) and some strings. That is an optimisation, not a language rule. Do not write code that depends on it.</p>
     </article>
   </section>
 
@@ -232,7 +792,7 @@
     </article>
     <article class="term" id="default" data-terms="default argument mutable default">
       <h3>Default argument</h3>
-      <p>Default values are created once, when the function is defined, and stored on the function object. A mutable default is shared across calls — a classic surprise.</p>
+      <p>Default values are created once, when the function is defined, and stored on the function object. A mutable default is shared across calls, which is a classic surprise.</p>
     </article>
   </section>
 
@@ -284,11 +844,11 @@
     </article>
     <article class="term" id="init" data-terms="__init__ constructor initialize">
       <h3>__init__</h3>
-      <p>The initializer. After the instance exists, Python calls <code>__init__(self, ...)</code> to write attributes. It returns <code>None</code>. The caller receives the instance, not that return value. See <a href="sessions/04-classes/">Session 04</a>.</p>
+      <p>The initialiser. After the instance exists, Python calls <code>__init__(self, ...)</code> to write attributes. It returns <code>None</code>. The caller receives the instance, not that return value. See <a href="sessions/04-classes/">Session 04</a>.</p>
     </article>
     <article class="term" id="new" data-terms="__new__ allocate">
       <h3>__new__</h3>
-      <p>The allocator. Calling a class first creates the instance, then initializes it. You almost never override <code>__new__</code>. The important picture: the object exists before <code>__init__</code> runs.</p>
+      <p>The allocator. Calling a class first creates the instance, then initialises it. You almost never override <code>__new__</code>. The important picture: the object exists before <code>__init__</code> runs.</p>
     </article>
     <article class="term" id="class-attr" data-terms="class attribute class variable shared">
       <h3>Class attribute</h3>
@@ -340,7 +900,7 @@
     </article>
     <article class="term" id="wrapper" data-terms="wrapper inner function replacement">
       <h3>Wrapper</h3>
-      <p>The function a decorator returns. It usually calls the original and adds something around it. After decorating, your name points at the wrapper — not at the function you wrote.</p>
+      <p>The function a decorator returns. It usually calls the original and adds something around it. After decorating, your name points at the wrapper, not at the function you wrote.</p>
     </article>
     <article class="term" id="closure-cell" data-terms="closure cell free variable remembered state __closure__">
       <h3>Closure cell</h3>
@@ -364,7 +924,7 @@
     <h2>Concurrency</h2>
     <article class="term" id="gil" data-terms="gil global interpreter lock cpython">
       <h3>GIL (Global Interpreter Lock)</h3>
-      <p>The single lock a thread must hold to execute Python bytecode in CPython. It exists because interpreter bookkeeping &mdash; reference counts above all &mdash; would be corrupted by unsynchronised threads. It is a property of CPython, not of the Python language. See <a href="sessions/07-gil/">Session 07</a>.</p>
+      <p>The single lock a thread must hold to execute Python bytecode in CPython. It exists because interpreter bookkeeping, reference counts above all, would be corrupted by unsynchronised threads. It's a property of CPython, not of the Python language. See <a href="sessions/07-gil/">Session 07</a>.</p>
     </article>
     <article class="term" id="thread" data-terms="thread threading concurrent os thread">
       <h3>Thread</h3>
@@ -372,11 +932,11 @@
     </article>
     <article class="term" id="switch-interval" data-terms="switch interval getswitchinterval 5ms handover preemption">
       <h3>Switch interval</h3>
-      <p>How long a thread may hold the GIL before the interpreter asks it to hand over &mdash; <code>sys.getswitchinterval()</code>, 5&nbsp;ms by default. The request is only honoured at a safe point, chiefly a jump back to the top of a loop or a call into a function.</p>
+      <p>How long a thread may hold the GIL before the interpreter asks it to hand over: <code>sys.getswitchinterval()</code>, 5&nbsp;ms by default. The request is only honoured at a safe point, chiefly a jump back to the top of a loop or a call into a function.</p>
     </article>
     <article class="term" id="race-condition" data-terms="race condition lost update data race interleaving">
       <h3>Race condition</h3>
-      <p>A bug whose outcome depends on the order in which threads happen to run. The classic shape is read-modify-write: two threads read the same value, both compute from it, and the second write erases the first. The GIL does not prevent this &mdash; it only keeps single bytecodes indivisible.</p>
+      <p>A bug whose outcome depends on the order in which threads happen to run. The classic shape is read-modify-write: two threads read the same value, both compute from it, and the second write erases the first. The GIL doesn't prevent this. It only keeps single bytecodes indivisible.</p>
     </article>
     <article class="term" id="atomic" data-terms="atomic indivisible bytecode thread safe">
       <h3>Atomic</h3>
@@ -384,19 +944,19 @@
     </article>
     <article class="term" id="lock" data-terms="lock mutex acquire release threading.Lock with">
       <h3>Lock</h3>
-      <p><code>threading.Lock</code> &mdash; an object only one thread may hold at a time. Wrapping a read-modify-write in <code>with lock:</code> makes it indivisible with respect to every other thread that uses the same lock. A thread waiting for a lock is in a different queue from a thread waiting for the GIL.</p>
+      <p><code>threading.Lock</code>, an object only one thread may hold at a time. Wrapping a read-modify-write in <code>with lock:</code> makes it indivisible with respect to every other thread that uses the same lock. A thread waiting for a lock is in a different queue from a thread waiting for the GIL.</p>
     </article>
     <article class="term" id="deadlock" data-terms="deadlock stuck two locks ordering">
       <h3>Deadlock</h3>
-      <p>Two threads each holding a lock the other needs. Neither can ever proceed and no error is raised &mdash; the program simply stops. Prevented by always acquiring locks in the same order, or by holding only one at a time.</p>
+      <p>Two threads each holding a lock the other needs. Neither can ever proceed and no error is raised. The program just stops. Prevented by always acquiring locks in the same order, or by holding only one at a time.</p>
     </article>
     <article class="term" id="cpu-bound" data-terms="cpu bound io bound bottleneck waiting computing">
       <h3>CPU-bound / I/O-bound</h3>
-      <p>The question that picks your tool. I/O-bound code is slow because it waits &mdash; threads and <code>asyncio</code> overlap the waiting. CPU-bound code is slow because it computes &mdash; only a second process (or a library that releases the GIL) adds a second core.</p>
+      <p>The question that picks your tool. I/O-bound code is slow because it waits, and threads and <code>asyncio</code> overlap the waiting. CPU-bound code is slow because it computes, and only a second process (or a library that releases the GIL) adds a second core.</p>
     </article>
     <article class="term" id="process" data-terms="process multiprocessing separate memory address space second gil">
       <h3>Process</h3>
-      <p>A second operating-system process running a second interpreter, with its own heap and its own GIL. Two processes genuinely execute Python at the same instant. They share no objects at all, so anything passed between them is copied.</p>
+      <p>A second operating-system process running a second interpreter, with its own heap and its own GIL. Two processes really do execute Python at the same instant. They share no objects at all, so anything passed between them is copied.</p>
     </article>
     <article class="term" id="pickling" data-terms="pickle pickling serialise copy arguments">
       <h3>Pickling</h3>
@@ -404,7 +964,7 @@
     </article>
     <article class="term" id="start-method" data-terms="spawn fork forkserver start method main guard">
       <h3>Start method</h3>
-      <p>How <code>multiprocessing</code> creates a child &mdash; <code>spawn</code>, <code>fork</code> or <code>forkserver</code>; check yours with <code>mp.get_start_method()</code>. Where the child re-imports your module (<code>spawn</code> is the default on Windows and macOS), the <code>if __name__ == "__main__":</code> guard is required or the child spawns its own child.</p>
+      <p>How <code>multiprocessing</code> creates a child: <code>spawn</code>, <code>fork</code> or <code>forkserver</code>. Check yours with <code>mp.get_start_method()</code>. Where the child re-imports your module (<code>spawn</code> is the default on Windows and macOS), the <code>if __name__ == "__main__":</code> guard is required or the child spawns its own child.</p>
     </article>
     <article class="term" id="event-loop" data-terms="event loop asyncio scheduler ready timers">
       <h3>Event loop</h3>
@@ -416,7 +976,7 @@
     </article>
     <article class="term" id="await" data-terms="await yield point suspension cooperative">
       <h3><code>await</code> (yield point)</h3>
-      <p>The only place a coroutine can be suspended &mdash; a word you typed, visible in the source. This is what makes <code>asyncio</code> <em>cooperative</em>: between two <code>await</code>s nothing else runs, so no lock is needed. Threads, by contrast, are pre-empted wherever the interpreter allows.</p>
+      <p>The only place a coroutine can be suspended, and a word you typed, visible in the source. This is what makes <code>asyncio</code> <em>cooperative</em>: between two <code>await</code>s nothing else runs, so no lock is needed. Threads, by contrast, are pre-empted wherever the interpreter allows.</p>
     </article>
     <article class="term" id="task" data-terms="task asyncio gather create_task driver">
       <h3>Task</h3>
@@ -424,7 +984,7 @@
     </article>
     <article class="term" id="free-threading" data-terms="free threaded no-gil PEP 703 is_gil_enabled">
       <h3>Free-threaded build</h3>
-      <p>An optional CPython build with no GIL, added by PEP&nbsp;703 &mdash; experimental in 3.13, officially supported in 3.14, and separate from the default build, which still has one. Check with <code>sys._is_gil_enabled()</code>, which exists from 3.13 onwards. It makes CPU-bound threads scale; it does not fix any race condition, and makes the ones you have easier to hit.</p>
+      <p>An optional CPython build with no GIL, added by PEP&nbsp;703. It was experimental in 3.13, is officially supported in 3.14, and is separate from the default build, which still has one. Check with <code>sys._is_gil_enabled()</code>, which exists from 3.13 onwards. It makes CPU-bound threads scale. It doesn't fix any race condition, and it makes the ones you have easier to hit.</p>
     </article>
   </section>
 
@@ -432,11 +992,11 @@
     <h2>Exceptions</h2>
     <article class="term" id="exception" data-terms="exception error raise instance BaseException">
       <h3>Exception</h3>
-      <p>An ordinary instance of a class that inherits from <code>BaseException</code>. <code>raise X</code> evaluates <code>X</code> &mdash; usually a constructor call &mdash; and then starts the object climbing the call stack. It carries <code>args</code>, a <code>__traceback__</code>, and links to related exceptions. See <a href="sessions/08-exceptions/">Session 08</a>.</p>
+      <p>An ordinary instance of a class that inherits from <code>BaseException</code>. <code>raise X</code> evaluates <code>X</code> (usually a constructor call) and then starts the object climbing the call stack. It carries <code>args</code>, a <code>__traceback__</code>, and links to related exceptions. See <a href="sessions/08-exceptions/">Session 08</a>.</p>
     </article>
     <article class="term" id="unwinding" data-terms="unwinding unwind propagate stack pop frames">
       <h3>Unwinding</h3>
-      <p>What happens between <code>raise</code> and the handler: each frame without a matching <code>except</code> around the current line is popped &mdash; locals and all, exactly as on <code>return</code> &mdash; and the exception arrives in the caller at the line that made the call. If it runs out of frames, the traceback is printed and the process exits with status 1.</p>
+      <p>What happens between <code>raise</code> and the handler: each frame without a matching <code>except</code> around the current line is popped, locals and all, just as on <code>return</code>, and the exception arrives in the caller at the line that made the call. If it runs out of frames, the traceback is printed and the process exits with status 1.</p>
     </article>
     <article class="term" id="traceback" data-terms="traceback tb_next tb_frame most recent call last stderr">
       <h3>Traceback</h3>
@@ -448,11 +1008,11 @@
     </article>
     <article class="term" id="finally-clause" data-terms="finally cleanup return break continue always runs">
       <h3><code>finally</code></h3>
-      <p>A block that runs on every way out of a <code>try</code> &mdash; a clean finish, a handled exception, an unhandled one, or a <code>return</code>. The pending result is parked while it runs and resumed afterwards. A <code>return</code> inside <code>finally</code> replaces that result and silently discards an exception in flight; Python 3.14 warns about it.</p>
+      <p>A block that runs on every way out of a <code>try</code>: a clean finish, a handled exception, an unhandled one, or a <code>return</code>. The pending result is parked while it runs and resumed afterwards. A <code>return</code> inside <code>finally</code> replaces that result and throws away an exception in flight. Python 3.14 warns about it.</p>
     </article>
     <article class="term" id="context-manager" data-terms="context manager with statement __enter__ __exit__ contextlib">
       <h3>Context manager</h3>
-      <p>Any object whose class defines <code>__enter__</code> and <code>__exit__</code>. <code>with EXPR as name:</code> calls <code>__enter__</code> and binds its return value to <code>name</code>, runs the body inside an invisible <code>try</code>, and then calls <code>__exit__(exc_type, exc, tb)</code> &mdash; three <code>None</code>s on success. If <code>__exit__</code> returns a true value the exception is suppressed. <code>@contextlib.contextmanager</code> builds one from a generator: the code before <code>yield</code> is the enter half, after it the exit half.</p>
+      <p>Any object whose class defines <code>__enter__</code> and <code>__exit__</code>. <code>with EXPR as name:</code> calls <code>__enter__</code> and binds its return value to <code>name</code>, runs the body inside an invisible <code>try</code>, and then calls <code>__exit__(exc_type, exc, tb)</code>, with three <code>None</code>s on success. If <code>__exit__</code> returns a true value the exception is suppressed. <code>@contextlib.contextmanager</code> builds one from a generator: the code before <code>yield</code> is the enter half, after it the exit half.</p>
     </article>
     <article class="term" id="exception-chaining" data-terms="chaining __cause__ __context__ raise from during handling direct cause">
       <h3>Exception chaining</h3>

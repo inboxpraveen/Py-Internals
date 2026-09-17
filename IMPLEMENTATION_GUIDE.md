@@ -1,4 +1,4 @@
-# Py Internals — Implementation Guide
+# Py Internals Implementation Guide
 ## How to Build New Sessions Using the Common Component System
 
 > Read this before creating any new session. Following this guide ensures
@@ -11,7 +11,7 @@
 1. [Project Structure](#1-project-structure)
 2. [The CSS System](#2-the-css-system)
 3. [The JavaScript Modules](#3-the-javascript-modules)
-4. [Creating a New Session — Step by Step](#4-creating-a-new-session-step-by-step)
+4. [Creating a New Session, Step by Step](#4-creating-a-new-session-step-by-step)
 5. [Defining Steps for the Animator](#5-defining-steps-for-the-animator)
 6. [Memory Snapshot Format](#6-memory-snapshot-format)
 7. [Component Reference](#7-component-reference)
@@ -35,7 +35,7 @@ Py-Internals/
 │   │   ├── base.css            ← Design tokens, reset, typography utilities
 │   │   ├── layout.css          ← App shell, sidebar, stage, hero, narrative
 │   │   ├── components.css      ← Buttons, badges, callouts, type chips, controls
-│   │   ├── memory-viz.css      ← Memory visualizer — stack, heap, objects
+│   │   ├── memory-viz.css      ← Memory visualiser: stack, heap, objects
 │   │   ├── animations.css      ← Keyframes and animation utilities
 │   │   └── session.css         ← Shared session-page layout (overview, lab, tables)
 │   │
@@ -59,6 +59,7 @@ Py-Internals/
     └── ...
 
 `glossary.html` at the repo root is the searchable term list. Link it from every session topbar.
+`tools/build_seo.py` generates the head tags, share cards, sitemap, feed and llms files (see Step 7).
 ```
 
 **Rule:** Each session lives in its own folder under `sessions/`.
@@ -82,7 +83,7 @@ Session-specific logic lives only in `session.js`.
 
 ### Design Tokens (in `base.css`)
 
-All values are CSS custom properties on `:root`. Use them everywhere — never hardcode colors, font sizes, or spacing.
+All values are CSS custom properties on `:root`. Use them everywhere, and never hardcode colours, font sizes or spacing.
 
 ```css
 /* Colors */
@@ -112,18 +113,18 @@ All values are CSS custom properties on `:root`. Use them everywhere — never h
 
 ### Session-specific CSS
 
-**There is none.** Sessions carry no `<style>` block at all — every session page
+**There is none.** Sessions carry no `<style>` block at all. Every session page
 loads exactly the six stylesheets above and nothing else.
 
-Sessions 01–03 used to keep a few hundred lines of inline CSS each. Those blocks
+Sessions 01 to 03 used to keep a few hundred lines of inline CSS each. Those blocks
 were ~95% identical to `session.css`, and the small differences meant the same
 component quietly rendered differently depending on which session you were
 reading. They have all been removed.
 
 If your session needs a style that does not exist yet:
 
-1. Check first — `grep -rn "your-class" assets/css/` — it very likely exists.
-2. If it genuinely does not, add it to `session.css` (or `components.css` if it
+1. Check first with `grep -rn "your-class" assets/css/`. It very likely exists already.
+2. If it really doesn't, add it to `session.css` (or `components.css` if it
    is a general-purpose component), using design tokens only.
 3. Give it a name that describes the idea, not the session (`.lookup-path`, not
    `.session04-lookup`), because the next session will want it too.
@@ -158,9 +159,9 @@ Session 03 did **not** add new shared CSS or JS files. It intentionally reuses t
 
 It did introduce a few session-local patterns that future container-heavy sessions can copy:
 
-- `.diagram-card` — a simple narrative card for before/after diagrams or conceptual comparisons.
-- `.diagram-grid` — a two-column responsive grid for paired explanations.
-- `.reference-map` and related elements — a static narrative diagram for showing names pointing to container objects and container slots pointing to values.
+- `.diagram-card`: a simple narrative card for before/after diagrams or conceptual comparisons.
+- `.diagram-grid`: a two-column responsive grid for paired explanations.
+- `.reference-map` and related elements: a static narrative diagram for showing names pointing to container objects and container slots pointing to values.
 - The convention of displaying nested container references as readable labels like `list -> 0x7f560010` inside list cells or dict values.
 
 These are now in `session.css` and available to every session.
@@ -169,10 +170,10 @@ These are now in `session.css` and available to every session.
 
 Session 07 needed to draw something no previous session had: several live call
 frames belonging to *different threads*, only one of which is executing. The
-old rule — "the deepest frame is the active one" — cannot express that, so
+old rule, "the deepest frame is the active one", cannot express that, so
 three small, backward-compatible additions were made.
 
-**`frame.state`** — a frame may declare its own status instead of inferring it
+**`frame.state`**: a frame may declare its own status instead of inferring it
 from position. Recognised values render as `.mem-frame--<state>` in
 `memory-viz.css`:
 
@@ -184,13 +185,13 @@ from position. Recognised values render as `.mem-frame--<state>` in
 | `runtime` | grey panel, uppercase header | the interpreter itself, not a call frame |
 | `unwinding` | red dashed border, red badge | a frame an exception is clearing on its way up (Session 08) |
 
-**`frame.badge`** — replaces the word `scope` in the frame header. Keep it
+**`frame.badge`**: replaces the word `scope` in the frame header. Keep it
 short (under about 16 characters): `running`, `waiting for GIL`,
 `blocked on lock`, `PID 4120`.
 
 **The active-frame rule.** If *any* frame in a snapshot carries a `state`, the
 `.mem-frame--active` highlight follows `state === 'running'` instead of the
-deepest frame. Sessions 01–06 set no `state`, so their rendering is unchanged.
+deepest frame. Sessions 01 to 06 set no `state`, so their rendering is unchanged.
 
 ```js
 frames: [
@@ -203,7 +204,7 @@ frames: [
 ]
 ```
 
-Frame order stays **stable across steps** — only the `state` and `badge` change.
+Frame order stays **stable across steps**. Only the `state` and `badge` change.
 Reordering frames to put the running one last would work, but the reader then
 has to re-find each thread on every step, which defeats the point.
 
@@ -211,23 +212,23 @@ has to re-find each thread on every step, which defeats the point.
 a token in `base.css`, a chip in `components.css`, an entry in
 `PJ.Core.getTypeColor`, and entries in `_renderValueHTML`, `pairTypes` and
 `_defaultDictLabel` in `memory-viz.js`. Adding a type means all five places;
-miss `pairTypes` and the object's `pairs` silently render nothing.
+miss `pairTypes` and the object's `pairs` render nothing, with no error to tell you.
 
 `Thread`, `Lock`, `Process` and `Task` deliberately did **not** get their own
-types. They are genuine instances, so they use Session 04's vocabulary —
-`type: 'instance'` with a `classRef` — which needs no new infrastructure and
+types. They are genuine instances, so they use Session 04's vocabulary,
+`type: 'instance'` with a `classRef`, which needs no new infrastructure and
 reinforces a model the reader already has.
 
 ### Two things a concurrency session cannot draw honestly
 
-The visualizer has one stack and one heap, so:
+The visualiser has one stack and one heap, so:
 
 - **Two processes** share the one heap panel. Say so in the demo's `watch`
   string, give the child's objects addresses from a visibly different family
-  (`0x7fb5…` against the parent's `0x7fa5…`), and label every object with a
+  (`0x7fb5...` against the parent's `0x7fa5...`), and label every object with a
   `note` naming the process it lives in.
-- **A value on the evaluation stack** — the half of a read-modify-write that a
-  race depends on — is not a named local. Session 07 shows it as an inline var
+- **A value on the evaluation stack**, the half of a read-modify-write that a
+  race depends on, is not a named local. Session 07 shows it as an inline var
   called `value read` and says in the step text that it is the value sitting on
   that thread's own stack. Label invented rows; never let one look like a
   real name.
@@ -236,9 +237,9 @@ The visualizer has one stack and one heap, so:
 
 Session 08 needed to draw an exception in flight, which surfaced two gaps.
 
-**`type: 'ref'` for item and pair values.** Sessions 03–07 wrote pointer
+**`type: 'ref'` for item and pair values.** Sessions 03 to 07 wrote pointer
 labels such as `{ value: 'list -> 0x7f560010', type: 'str' }`, and the
-renderer dutifully drew them as *quoted strings* in string colour — so a slot
+renderer dutifully drew them as *quoted strings* in string colour, so a slot
 that refers to another object looked exactly like a slot holding text. Every
 pointer label is now `type: 'ref'`, which renders in the same amber address
 style as a name's `pyId` in the frame, with no quotes and a real arrow:
@@ -249,14 +250,14 @@ pairs: [{ key: '__cause__', value: 'ValueError -> 0x7fc60140', type: 'ref' }]
 ```
 
 `ref` is a value type only. There is no `ref` heap object, no chip, and no
-entry in `pairTypes` — the "five places" rule below is for object types.
+entry in `pairTypes`. The "five places" rule below is for object types.
 
-**`state: 'unwinding'`** — a frame the exception is passing through. It renders
+**`state: 'unwinding'`**: a frame the exception is passing through. It renders
 red and dashed (the same palette as `state: 'gc'` on an object) with whatever
 `badge` you give it (`raising`, `unwinding`, `no handler`). As with Session
 07's states, once any frame in a snapshot sets a `state`, the active ring
 follows `state === 'running'` only; a snapshot with an `unwinding` frame and no
-`running` frame draws no ring at all, which is the honest picture — nothing is
+`running` frame draws no ring at all, which is the honest picture, since nothing is
 executing while the exception climbs.
 
 **Exceptions are instances.** Following Session 07's precedent (`Thread`,
@@ -278,7 +279,7 @@ wraps that in an `exception()` helper; copy it rather than re-inventing it:
 ```
 
 `__traceback__` is drawn as the list of frames the exception has passed
-through, **outermost first** — the order `tb_next` walks and the order the
+through, **outermost first**, which is the order `tb_next` walks and the order the
 printed traceback uses. It grows by one entry per frame cleared. Do not draw
 it innermost-first because "that is where it started"; the reader will then
 read the printed traceback backwards.
@@ -295,7 +296,7 @@ whole `.stage` past the viewport on phones and squeeze the memory panel in the
 two-column layout; `.stage__code-panel` and `.stage__memory-panel` are now
 `min-width: 0` and the code body scrolls sideways instead. And
 `.session-footer` stacks its three children below 768px, with the button
-labels allowed to wrap — `.btn` is `nowrap` + `overflow: hidden` everywhere
+labels allowed to wrap. `.btn` is `nowrap` + `overflow: hidden` everywhere
 else, which was quietly truncating "Session 03: Lists, Dicts & References" to
 "Session 03: Lists".
 
@@ -314,22 +315,22 @@ else, which was quietly truncating "Session 03: Lists, Dicts & References" to
 ```
 
 ### `PJ.Core`
-- **`PJ.Core.sleep(ms)`** — Returns a Promise that resolves after `ms` milliseconds
-- **`PJ.Core.debounce(fn, delay)`** — Returns a debounced function
-- **`PJ.Core.formatPyValue(val, type)`** — Formats a value with Python repr (adds quotes for strings, etc.)
-- **`PJ.Core.getTypeColor(type)`** — Returns the CSS variable for a type's color
-- **`PJ.Core.markSessionComplete(id)`** — Saves completion to localStorage
-- **`PJ.Core.scrollToSection(selector)`** — Smooth-scroll helper for sidebar anchors
-- **`PJ.Session.mount({ sessionId, demos, defaultDemo, defaultSpeed })`** — Preferred session bootstrap (wires the lab, keyboard, and completion)
+- **`PJ.Core.sleep(ms)`**: Returns a Promise that resolves after `ms` milliseconds
+- **`PJ.Core.debounce(fn, delay)`**: Returns a debounced function
+- **`PJ.Core.formatPyValue(val, type)`**: Formats a value with Python repr (adds quotes for strings, etc.)
+- **`PJ.Core.getTypeColor(type)`**: Returns the CSS variable for a type's color
+- **`PJ.Core.markSessionComplete(id)`**: Saves completion to localStorage
+- **`PJ.Core.scrollToSection(selector)`**: Smooth-scroll helper for sidebar anchors
+- **`PJ.Session.mount({ sessionId, demos, defaultDemo, defaultSpeed })`**: Preferred session bootstrap (wires the lab, keyboard, and completion)
 
 Keyboard playback (once an animator is mounted): `→` next, `←` previous, `Space` play/pause, `R` reset.
 
 Quizzes are plain HTML. Add `<section class="quiz" data-session="NN-topic">` with `.quiz-card` elements. Set `data-answer` to the winning `data-choice`. `PJ.Core` scores them automatically.
 
 ### `PJ.Syntax`
-- **`PJ.Syntax.render(source, container, opts)`** — Highlights Python source and renders numbered lines into `container`
-- **`PJ.Syntax.highlightLines(container, lines)`** — Highlights specific lines (1-indexed) and clears others
-- **`PJ.Syntax.markExecuted(container, lines)`** — Adds a faded "already executed" style
+- **`PJ.Syntax.render(source, container, opts)`**: Highlights Python source and renders numbered lines into `container`
+- **`PJ.Syntax.highlightLines(container, lines)`**: Highlights specific lines (1-indexed) and clears others
+- **`PJ.Syntax.markExecuted(container, lines)`**: Adds a faded "already executed" style
 
 ### `PJ.MemoryViz`
 ```js
@@ -342,13 +343,13 @@ viz.clear();
 - `frame` for a single namespace, used by simple sessions like variables.
 - `frames` for an actual call stack, used by function/scope sessions.
 
-When using `frames`, list frames in execution order from oldest to newest, for example global first and the active function call last. The visualizer displays the active frame at the top and gives it the `.mem-frame--active` style.
+When using `frames`, list frames in execution order from oldest to newest, for example global first and the active function call last. The visualiser displays the active frame at the top and gives it the `.mem-frame--active` style.
 
 ### `PJ.Animator`
 ```js
 const anim = new PJ.Animator({
   steps: [...],                // array of step objects
-  containerId: 'stage',        // ID of wrapper — must contain the control buttons
+  containerId: 'stage',        // ID of wrapper, must contain the control buttons
   defaultSpeed: 800,           // ms per step in autoplay
   onStep(step, index, total),  // called on every step change
   onComplete(),                // called when last step reached
@@ -358,17 +359,17 @@ anim.mount();  // wires up DOM controls
 ```
 
 The `containerId` element must contain buttons with these `data-action` attributes:
-- `data-action="play"` — play/pause toggle
-- `data-action="prev"` — previous step
-- `data-action="next"` — next step
-- `data-action="reset"` — reset to step 0
-- `data-action="speed"` — `<select>` with speed values in ms
-- `data-role="step-counter"` — displays "N / Total"
-- `data-role="step-track"` — container for dot indicators
+- `data-action="play"`: play/pause toggle
+- `data-action="prev"`: previous step
+- `data-action="next"`: next step
+- `data-action="reset"`: reset to step 0
+- `data-action="speed"`: `<select>` with speed values in ms
+- `data-role="step-counter"`: displays "N / Total"
+- `data-role="step-track"`: container for dot indicators
 
 ---
 
-## 4. Creating a New Session — Step by Step
+## 4. Creating a New Session, Step by Step
 
 ### Step 1: Create the folder
 
@@ -380,7 +381,7 @@ touch sessions/09-your-topic/session.js
 
 ### Step 2: Copy the HTML shell
 
-Copy `sessions/06-decorators/` — it is the leanest complete shell (no inline
+Copy `sessions/06-decorators/`. It is the leanest complete shell (no inline
 styles, no inline `onclick`, `PJ.Session.mount`, skip link, labelled controls),
 so you start with structure and not with someone else's scaffolding to delete.
 
@@ -391,19 +392,19 @@ anything that tears frames down (`state: 'unwinding'`, the `exception()`
 helper); Session 04 for the object model (`classRef`, `bases`, inheritance);
 Session 02 for call stacks; Session 03 for containers and references. In your
 copy, replace:
-- `<title>` — update session name
-- `<meta name="description">` — describe the session
-- `.session-hero__eyebrow` — e.g., "Foundations · Session 02"
-- `.session-hero__title` — your title
-- `.session-hero__subtitle` — one-paragraph intro
-- `.session-meta` items — time estimate, demo count, difficulty
-- Sidebar `.sidebar__item` links — update active state and anchors
+- `<title>`: update session name
+- `<meta name="description">`: describe the session
+- `.session-hero__eyebrow`: e.g., "Foundations · Session 02"
+- `.session-hero__title`: your title
+- `.session-hero__subtitle`: one-paragraph intro
+- `.session-meta` items: time estimate, demo count, difficulty
+- Sidebar `.sidebar__item` links: update the active state and anchors
 - The breadcrumb
-- `.session-footer` — update prev/next links
+- `.session-footer`: update prev/next links
 
 ### Step 3: Plan your demos
 
-A session typically has 3–5 interactive demos. Each demo focuses on one concrete behavior.
+A session typically has 3 to 5 interactive demos. Each demo focuses on one concrete behaviour.
 Sketch it on paper first:
 - What code will be shown?
 - How does memory change at each step?
@@ -425,16 +426,16 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 ```
 
-That is the whole bootstrap. `mount` wires the demo pills (from their
+That's all the bootstrap there is. `mount` wires the demo pills (from their
 `data-demo` attributes), the code panel, the memory panel, the explanation
 strip, the animator and completion tracking. **Do not** write your own
-`initStage`, `switchDemo`, `scrollTo`, read-progress bar or sidebar scroll-spy —
+`initStage`, `switchDemo`, `scrollTo`, read-progress bar or sidebar scroll-spy.
 `PJ.Core.init()` already installs the last two on every page, and a second copy
 means two scroll listeners doing the same work.
 
 **Never add an `onclick` attribute.** Demo pills are found by `data-demo`;
 sidebar links navigate by their `href="#id"` with `scroll-behavior: smooth`.
-An inline handler that duplicates a listener in `core.js` fires twice — that is
+An inline handler that duplicates a listener in `core.js` fires twice. That is
 how the mobile menu ended up toggling itself shut on every tap.
 
 ### Step 5: Write the narrative
@@ -454,13 +455,37 @@ In `assets/js/core.js`, add an entry (or flip `status` from `planned` to
 This is not optional. `PJ.COURSE` drives the "Session N of M" counter, the
 Start-here / Done badges, the Continue-Learning button and the next-incomplete
 logic. A session that is not registered still renders, but its own chrome
-silently reports the wrong numbers.
+reports the wrong numbers without any error.
 
 ### Step 6: Add to `index.html` (homepage)
 
 Add a new session card in the homepage sessions grid.
 Use `<a href="sessions/NN-topic/" class="session-card ...">` once the session is ready.
 Leave future sessions as `<div class="session-card locked">`.
+
+### Step 7: Register it in `tools/build_seo.py` and run the script
+
+Add one entry to `PAGES` (id, number, title, description, publish date, time,
+section, `teaches` list), then run `python tools/build_seo.py` from the repo
+root. It rewrites the block between `<!-- seo:head -->` and `<!-- /seo:head -->`
+in every page (canonical, Open Graph, Twitter, JSON-LD), the "All sessions" nav
+above every session footer, the 404 page's list, and the root files
+(`sitemap.xml`, `feed.xml`, `llms.txt`, `llms-full.txt`, `manifest.webmanifest`,
+`robots.txt`). It also draws the page's share card into `assets/images/og/`.
+Copy the marker comments from `sessions/06-decorators/index.html` into your
+new page first so the script has somewhere to write. The Google Fonts link
+lives in that block too, so a page without the markers loses its fonts as well
+as its meta tags. Commit what it generates; the live site needs no build step.
+Pillow and node must be installed.
+
+Only the publish date lives in the table. The modified date on each page (and
+in the sitemap and feed) is read from git: the last commit that changed the
+page outside the generated blocks, or today if it has uncommitted edits. So
+there is nothing to bump by hand when you fix a typo, and re-running the script
+on an untouched checkout leaves the head tags and root files byte for byte the
+same. The share cards are the one exception: they are drawn with whatever
+Georgia and Segoe UI the machine has, so redraw them on the same machine, or
+skip them with `python tools/build_seo.py nocards`.
 
 ---
 
@@ -482,7 +507,7 @@ Each step is a plain JavaScript object:
 - **One idea per step.** Don't try to explain two things at once.
 - **First step = initial state.** Show an empty namespace before any code runs.
 - **Last step = summary state.** Show the final state after all code has run.
-- **5–8 steps per demo is ideal.** Fewer feels too fast; more feels tedious.
+- **5 to 8 steps per demo is ideal.** Fewer feels too fast, more feels tedious.
 - **Highlight only relevant lines.** Don't highlight a line just because it was executed earlier.
 
 ---
@@ -500,7 +525,7 @@ Use `frame` when the demo only needs one namespace:
       {
         name: 'x',
         ref:  'obj-id',      // ID of the heap object this name points to
-        pyId: '0x7f1234',    // Simulated Python id() — shown in namespace
+        pyId: '0x7f1234',    // Simulated Python id(), shown in the namespace
         type: 'int',         // Used for the type chip
         state: 'new' | 'rebound' | 'deleted' | 'normal'
       },
@@ -579,13 +604,13 @@ Use `frames` when the demo needs a call stack. This is the recommended format fo
 }
 ```
 
-Frame ordering rule: write frames from caller to callee (`global`, then the active function, then deeper calls). The visualizer reverses that order visually so the active frame appears at the top of the call stack.
+Frame ordering rule: write frames from caller to callee (`global`, then the active function, then deeper calls). The visualiser reverses that order visually so the active frame appears at the top of the call stack.
 
 A frame also accepts two optional fields, added for Session 07 and described
 under *Shared additions from Session 07* above:
 
-- `badge` — replaces the `scope` label in the frame header.
-- `state` — `'running'`, `'waiting'`, `'blocked'` or `'runtime'`. When any frame
+- `badge`: replaces the `scope` label in the frame header.
+- `state`: `'running'`, `'waiting'`, `'blocked'`, `'unwinding'` or `'runtime'`. When any frame
   in the snapshot sets this, the active highlight follows `'running'` rather
   than stack position.
 
@@ -609,7 +634,7 @@ This keeps the explanation Python-level: `def` creates a function object and bin
 
 ### Closures and remembered state
 
-For closure demos, represent remembered outer names explicitly as Python-level state. A small `dict` object works well because the visualizer already supports key/value pairs:
+For closure demos, represent remembered outer names explicitly as Python-level state. A small `dict` object works well because the visualiser already supports key/value pairs:
 
 ```js
 {
@@ -625,13 +650,13 @@ For closure demos, represent remembered outer names explicitly as Python-level s
 }
 ```
 
-This is a teaching diagram, not a claim that Python literally stores closures as dictionaries. Use copy such as "remembered outer state" or "closure cell" so learners understand the behavior without needing implementation internals.
+This is a teaching diagram, not a claim that Python literally stores closures as dictionaries. Use copy such as "remembered outer state" or "closure cell" so learners understand the behaviour without needing implementation internals.
 
 ### Container references and nested objects
 
 For list and dict sessions, keep the model Python-level: containers are heap objects, and their slots/values point to other objects. Avoid claiming that the browser diagram is the literal CPython structure.
 
-The current visualizer displays collection items as values, not as clickable arrows. When teaching nested containers, use readable labels inside the parent container, give them `type: 'ref'` so they render as addresses rather than as quoted strings, and render the nested objects separately on the heap:
+The current visualiser displays collection items as values, not as clickable arrows. When teaching nested containers, use readable labels inside the parent container, give them `type: 'ref'` so they render as addresses rather than as quoted strings, and render the nested objects separately on the heap:
 
 ```js
 {
@@ -719,7 +744,7 @@ Session 04 uses extra snapshot fields so learners can see type links without stu
   classRef: { name: 'Point', pyId: ADDRS.PointCls },  // type(p)
   dictLabel: 'instance __dict__',                     // optional caption
   pairs: [{ key: 'x', value: 3, type: 'int' }],
-  note: 'empty __dict__ — lookup walks to the class', // optional footer
+  note: 'empty __dict__, lookup walks to the class', // optional footer
 }
 ```
 
@@ -761,7 +786,7 @@ labels a wrapper carries:
 
 For a closure, keep using a separate labelled `dict` object (`dictLabel:
 'closure cell on wrapper'`) as Session 02 does. Real closures are a tuple of
-cells, not a dict — the label is what keeps the diagram honest.
+cells, not a dict. The label is what keeps the diagram honest.
 
 ### Demo "Watch for" hints
 
@@ -939,13 +964,13 @@ Delays: `delay-1` = 80ms, `delay-2` = 160ms, `delay-3` = 240ms, `delay-4` = 320m
 
 ### DO
 
-- ✅ Use design tokens (CSS variables) for every color, size, and spacing value
+- ✅ Use design tokens (CSS variables) for every colour, size and spacing value
 - ✅ Test at 320px, 375px, 768px, 900px and 1440px before committing
-- ✅ Explain in plain words first, then name the term — the `in-plain` / `then-precise`
+- ✅ Explain in plain words first, then name the term. The `in-plain` / `then-precise`
      pair exists for exactly this, and it is what makes one page work for a
      school student and a senior engineer at the same time
 - ✅ Run every factual claim through the interpreter before you write it down
-- ✅ Keep steps short — one concept per step
+- ✅ Keep steps short, one concept per step
 - ✅ Use `state: 'new'` on newly created heap objects (triggers the appear animation)
 - ✅ Use `state: 'gc'` on objects about to be garbage collected (triggers the red pulsing border)
 - ✅ Use `state: 'rebound'` on a var row when its reference has just changed
@@ -955,25 +980,25 @@ Delays: `delay-1` = 80ms, `delay-2` = 160ms, `delay-3` = 240ms, `delay-4` = 320m
 - ✅ Represent list and dict aliases by pointing multiple names at the same heap object ID
 - ✅ For nested containers, render the nested object separately and label parent slots/values with `name -> 0x7f...` as `type: 'ref'`
 - ✅ Put the most important insight in the second-to-last step, and confirm/summarize on the last
-- ✅ Use callouts generously — they break up text and highlight key insights
-- ✅ Make `highlight` arrays specific — highlight only the objects currently being discussed
+- ✅ Use callouts generously. They break up text and highlight key insights
+- ✅ Make `highlight` arrays specific. Highlight only the objects currently being discussed
 
 ### DON'T
 
 - ❌ Add a `<style>` block to a session page, or an `onclick` attribute anywhere
 - ❌ Re-implement anything `PJ.Core.init()` or `PJ.Session.mount()` already does
-- ❌ State a Python fact you have not run — especially about refcounts, identity or freeing
-- ❌ Draw a cached small int (−5 to 256) or a short string as garbage collected; they are immortal — and draw their `refcount` as `'∞'`, never as a number that ticks up and down
-- ❌ Give a pointer label (`'list -> 0x…'`, `'fn @ 0x…'`) `type: 'str'` — it renders as a quoted string; use `type: 'ref'`
-- ❌ Hardcode hex colors or pixel values — use CSS variables
-- ❌ Add more than 10 steps to a demo — learners lose context
-- ❌ Skip the initial "empty state" step — learners need to see the baseline
-- ❌ Use `inline: true` on variables that point to heap objects — use `ref` instead
-- ❌ Explain Python behavior through C/Cython implementation details in learner-facing copy; keep the model Python-level unless low-level details are essential
-- ❌ Claim the visualizer's nested-reference labels are literal CPython storage; they are teaching labels for Python-level references
-- ❌ Reorder frames between steps to show which one is running — set `state: 'running'` instead, or the reader loses track of which thread is which
-- ❌ Add a new `type` without updating all five places (`base.css` token, `components.css` chip, `getTypeColor`, `_renderValueHTML`, `pairTypes`) — a missing `pairTypes` entry drops the object's `pairs` with no error
-- ❌ Name heap objects generically (e.g., `obj1`) — use meaningful names like `iCount` for an int named `count`
+- ❌ State a Python fact you have not run, especially about refcounts, identity or freeing
+- ❌ Draw a cached small int (-5 to 256) or a short string as garbage collected. They are immortal, so draw their `refcount` as `'∞'`, never as a number that ticks up and down
+- ❌ Give a pointer label (`'list -> 0x...'`, `'fn @ 0x...'`) `type: 'str'`. It renders as a quoted string, so use `type: 'ref'`
+- ❌ Hardcode hex colours or pixel values. Use CSS variables
+- ❌ Add more than 10 steps to a demo. Learners lose context
+- ❌ Skip the initial "empty state" step. Learners need to see the baseline
+- ❌ Use `inline: true` on variables that point to heap objects. Use `ref` instead
+- ❌ Explain Python behaviour through C/Cython implementation details in learner-facing copy; keep the model Python-level unless low-level details are essential
+- ❌ Claim the visualiser's nested-reference labels are literal CPython storage; they are teaching labels for Python-level references
+- ❌ Reorder frames between steps to show which one is running. Set `state: 'running'` instead, or the reader loses track of which thread is which
+- ❌ Add a new `type` without updating all five places (`base.css` token, `components.css` chip, `getTypeColor`, `_renderValueHTML`, `pairTypes`). A missing `pairTypes` entry drops the object's `pairs` with no error
+- ❌ Name heap objects generically (e.g. `obj1`). Use meaningful names like `iCount` for an int named `count`
 - ❌ Forget to update the sidebar active state in each session
 - ❌ Add session-global styles that leak into the common CSS files
 
@@ -983,10 +1008,10 @@ Delays: `delay-1` = 80ms, `delay-2` = 160ms, `delay-3` = 240ms, `delay-4` = 320m
 
 Before shipping a session, verify:
 
-- [ ] No horizontal page scroll at **320px** — the strictest real width. Check with
+- [ ] No horizontal page scroll at **320px**, the strictest real width. Check with
       `document.documentElement.scrollWidth > document.documentElement.clientWidth`.
 - [ ] Stage code panel readable at 375px; indentation visible (the panel uses `white-space: pre`)
-- [ ] Memory panel scrolls rather than clipping when a snapshot is tall — step to
+- [ ] Memory panel scrolls rather than clipping when a snapshot is tall. Step to
       the busiest step of the busiest demo and confirm you can reach the bottom
 - [ ] The memory panel does not overlap the explanation strip below it
 - [ ] Playback controls reachable with a thumb (tap targets ≥ 44px on touch)
@@ -994,21 +1019,21 @@ Before shipping a session, verify:
 - [ ] Narrative text has appropriate padding on mobile (`var(--sp-5)`)
 - [ ] Type explorer grid wraps gracefully at small sizes
 - [ ] Comparison tables scroll horizontally (wrap in `<div style="overflow-x:auto">`)
-- [ ] Check the awkward middle too: **860–1024px**, where the sidebar is still
+- [ ] Check the awkward middle too: **860 to 1024px**, where the sidebar is still
       pinned but the stage has just gone single-column
-- [ ] Prose never says "on the right" or "on the left" about the panels — below
+- [ ] Prose never says "on the right" or "on the left" about the panels. Below
       860px they stack vertically
 - [ ] Tab through the whole lab: every control has a visible focus ring, and
       `Space` on a quiz option answers it rather than starting playback
 - [ ] If any frame sets `state`, step every demo and confirm exactly one frame
       carries the `running` highlight per step (two is correct only when the
       snapshot shows two interpreters, as in Session 07's process demo)
-- [ ] Frame `badge` text does not wrap the frame header at 320px — keep badges
+- [ ] Frame `badge` text does not wrap the frame header at 320px. Keep badges
       under about 16 characters
 - [ ] The footer's two navigation labels read in full at 320px (they wrap and
       stack; if you see them cut off, something has re-added `nowrap`)
 - [ ] The memory panel is still full width at 320px and half width at 1100px
-      with your longest code line on screen — a code line cannot widen the
+      with your longest code line on screen. A code line cannot widen the
       stage any more, but check the first demo of a new session anyway
 - [ ] Compare your tallest memory snapshot against the existing ceiling
       (~1200px, set by Sessions 04 and 07). Measure it, do not guess:
@@ -1018,7 +1043,7 @@ Before shipping a session, verify:
 
 ## 10. Example: Minimal New Session
 
-Here is the complete `session.js` for a new session. This is the whole file —
+Here is the complete `session.js` for a new session. This is the whole file:
 there is no `initStage`, no `switchDemo`, no scroll wiring.
 
 ```js
@@ -1132,8 +1157,8 @@ python -c "import sys; print(sys.version)"
 ```
 
 **Run your claims through the interpreter.** If a step says an object is freed,
-prove it — subclass with `__del__` and watch it fire. If it says two names share
-an object, check `a is b`. Small integers (−5 to 256) and short strings are
+prove it: subclass with `__del__` and watch it fire. If it says two names share
+an object, check `a is b`. Small integers (-5 to 256) and short strings are
 cached and, since CPython 3.12, **immortal**: `sys.getrefcount(42)` is
 4294967295 and they are never garbage collected. Never draw one with
 `state: 'gc'` or `refcount: 0`. When a demo needs a genuine refcount → 0 → freed

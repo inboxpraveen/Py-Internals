@@ -1,0 +1,26 @@
+# Py Internals
+
+> A free, open-source, interactive Python course. Every concept is paired with an animated memory diagram (names, objects, frames, references, refcounts), followed by a plain-English narrative and a short quiz. Pure static HTML, CSS and JavaScript, hosted on GitHub Pages.
+
+The full text of every session and the glossary is in [llms-full.txt](https://inboxpraveen.github.io/Py-Internals/llms-full.txt). Source and licence: [https://github.com/inboxpraveen/Py-Internals](https://github.com/inboxpraveen/Py-Internals) (Py Internals Community License: free for educational use with attribution).
+
+## Sessions
+
+- [Session 01: Variables & Mutability](https://inboxpraveen.github.io/Py-Internals/sessions/01-variables/): See what x = 42 really does in memory. Names, objects, id(), aliasing, mutation versus rebinding and reference counting, animated one step at a time.
+- [Session 02: Functions, Scope & the Call Stack](https://inboxpraveen.github.io/Py-Internals/sessions/02-functions/): Watch a call frame appear and disappear. Local scope, LEGB lookup, arguments passed by reference, closures with real cells and the mutable default trap.
+- [Session 03: Lists, Dicts & References](https://inboxpraveen.github.io/Py-Internals/sessions/03-lists-dicts/): Why b = a shares a list, what a shallow copy really copies, how deepcopy differs, and why passing a dict to a function can change the caller's data.
+- [Session 04: Classes & Objects](https://inboxpraveen.github.io/Py-Internals/sessions/04-classes/): What self really is, where attributes live, how bound methods work, why class attributes are shared and how inheritance is just a longer lookup.
+- [Session 05: Iterators & Generators](https://inboxpraveen.github.io/Py-Internals/sessions/05-iterators/): How a for loop uses iter and next, what StopIteration does, how yield pauses a frame and what lazy evaluation costs in memory compared with a list.
+- [Session 06: Decorators](https://inboxpraveen.github.io/Py-Internals/sessions/06-decorators/): A decorator is one line of assignment. See the wrapper, the closure cell that keeps your function alive, functools.wraps, decorator factories and stacking.
+- [Session 07: The GIL & Concurrency](https://inboxpraveen.github.io/Py-Internals/sessions/07-gil/): Why CPython has a global interpreter lock, why it doesn't make your code thread-safe, and when threads, multiprocessing or asyncio actually help.
+- [Session 08: Exceptions, Tracebacks & Context Managers](https://inboxpraveen.github.io/Py-Internals/sessions/08-exceptions/): What raise does to the call stack, how to read a traceback, why finally runs past a return, what with calls for you and how exceptions chain with from.
+
+## Reference
+
+- [Glossary](https://inboxpraveen.github.io/Py-Internals/glossary.html): plain-English definitions for every term the course uses, grouped by topic.
+- [Implementation guide](https://github.com/inboxpraveen/Py-Internals/blob/main/IMPLEMENTATION_GUIDE.md): how the memory visualiser and the session format work, for contributors.
+
+## Optional
+
+- [Atom feed](https://inboxpraveen.github.io/Py-Internals/feed.xml): one entry per session.
+- [Sitemap](https://inboxpraveen.github.io/Py-Internals/sitemap.xml)

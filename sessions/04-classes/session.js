@@ -1,5 +1,5 @@
 /* ============================================================
-   SESSION 04 — Classes & Objects
+   SESSION 04: Classes & Objects
    Demos: instance creation, class vs instance attrs,
    bound methods, mutable instance state, inheritance / MRO
    ============================================================ */
@@ -45,7 +45,7 @@ const ADDRS = {
 
 /* Cached small ints (-5..256) are pre-created by CPython and never freed.
    Drawn with an infinite refcount, exactly as Sessions 01 and 02 draw them. */
-const CACHED_INT_NOTE = 'cached small int — CPython pre-creates −5 to 256 and never frees them';
+const CACHED_INT_NOTE = 'cached small int: CPython pre-creates -5 to 256 and never frees them';
 
 const EMPTY = {
   frames: [{ name: 'global', vars: [] }],
@@ -76,7 +76,7 @@ function pointInst(state, pairs, refcount, note) {
 
 const DEMOS = {
   create: {
-    watch: 'Find <code>self</code> and <code>p</code>. Same address means the same instance. Both functions stay on the class; <code>x</code> and <code>y</code> land in the instance <code>__dict__</code> — and <code>total</code> reads them straight back out.',
+    watch: 'Find <code>self</code> and <code>p</code>. The same address means the same instance. Both functions stay on the class, <code>x</code> and <code>y</code> land in the instance <code>__dict__</code>, and <code>total</code> reads them straight back out.',
     code: `class Point:
     def __init__(self, x, y):
         self.x = x
@@ -89,14 +89,14 @@ p = Point(3, 4)
 t = p.total()`,
     steps: [
       {
-        title: 'Initial state — only the global frame',
+        title: 'Initial state: only the global frame',
         desc: 'No class exists yet. A <code>class</code> statement is executable code, just like <code>def</code>. Press Next to watch Python build the class, then the instance.',
         lines: [],
         memory: EMPTY,
       },
       {
         title: 'The class body runs, then <code>Point</code> gets its name',
-        desc: 'The order matters and it is the opposite of what most people guess. Python runs the indented body first — that creates the two <strong>function objects</strong> and collects them in a fresh namespace. Only when the body finishes does Python build the <strong>class object</strong> and bind the name <code>Point</code> to it. There is no moment where you can see a half-built <code>Point</code>.',
+        desc: 'The order matters, and it is the opposite of what most people guess. Python runs the indented body first, which creates the two <strong>function objects</strong> and collects them in a fresh namespace. Only when the body finishes does Python build the <strong>class object</strong> and bind the name <code>Point</code> to it. There\'s no moment where you can see a half-built <code>Point</code>.',
         lines: [1, 2, 3, 4, 6, 7],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -112,7 +112,7 @@ t = p.total()`,
       },
       {
         title: '<code>Point(3, 4)</code> allocates an instance, then calls <code>__init__</code>',
-        desc: 'Calling a class does two jobs: create a new instance (with <code>__class__</code> pointing at <code>Point</code>), then call <code>__init__</code> with that instance as <code>self</code>. The instance dict is still empty. <code>x</code> and <code>y</code> bind to the cached <code>3</code> and <code>4</code> from Session 01 — nothing new is built for them.',
+        desc: 'Calling a class does two jobs: create a new instance (with <code>__class__</code> pointing at <code>Point</code>), then call <code>__init__</code> with that instance as <code>self</code>. The instance dict is still empty. <code>x</code> and <code>y</code> bind to the cached <code>3</code> and <code>4</code> from Session 01, so nothing new is built for them.',
         lines: [9],
         memory: {
           frames: [
@@ -131,14 +131,14 @@ t = p.total()`,
             pointClass('normal', 2),
             { id: 'int3', pyId: ADDRS.int3, type: 'int', value: 3, refcount: '∞', mutable: false, state: 'new', note: CACHED_INT_NOTE },
             { id: 'int4', pyId: ADDRS.int4, type: 'int', value: 4, refcount: '∞', mutable: false, state: 'new' },
-            pointInst('new', [], 1, 'empty __dict__ — attributes will be written here'),
+            pointInst('new', [], 1, 'empty __dict__, attributes will be written here'),
           ],
           highlight: ['pInst', 'int3', 'int4'],
         },
       },
       {
         title: '<code>self.x = x</code> writes into the instance <code>__dict__</code>',
-        desc: 'This is not a local that stays on the instance. It stores a reference in the instance\'s attribute mapping. <code>self</code> still points at the same object. The class is unchanged.',
+        desc: 'This isn\'t a local that stays on the instance. It stores a reference in the instance\'s attribute mapping. <code>self</code> still points at the same object, and the class is unchanged.',
         lines: [3],
         memory: {
           frames: [
@@ -163,8 +163,8 @@ t = p.total()`,
         },
       },
       {
-        title: '<code>self.y = y</code> — data on the instance, behavior on the class',
-        desc: 'The instance now holds <code>x</code> and <code>y</code>. Methods stay on the class. That split is the whole mental model. <code>type(p)</code> is still <code>Point</code> via <code>__class__</code>.',
+        title: '<code>self.y = y</code>: data on the instance, behaviour on the class',
+        desc: 'The instance now holds <code>x</code> and <code>y</code>. The methods stay on the class. That split is the mental model in one line. <code>type(p)</code> is still <code>Point</code>, through <code>__class__</code>.',
         lines: [4],
         memory: {
           frames: [
@@ -193,7 +193,7 @@ t = p.total()`,
       },
       {
         title: '<code>p</code> is bound to the finished instance',
-        desc: '<code>__init__</code> returns <code>None</code> (implicitly). The call frame disappears. The global name <code>p</code> now references the instance. <code>self</code> was just another name for that same object.',
+        desc: '<code>__init__</code> returns <code>None</code> (implicitly). The call frame disappears, and the global name <code>p</code> now refers to the instance. <code>self</code> was just another name for the same object.',
         lines: [9],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -215,8 +215,8 @@ t = p.total()`,
         },
       },
       {
-        title: '<code>p.total()</code> — the method reads back out of the instance',
-        desc: 'This is the payoff for storing <code>x</code> and <code>y</code> on the instance. The function lives on <code>Point</code>, but its <code>self</code> is <em>this</em> point, so <code>self.x</code> and <code>self.y</code> reach into <em>this</em> instance dict and find <code>3</code> and <code>4</code>. Change the point and the same shared function returns a different answer.',
+        title: '<code>p.total()</code>: the method reads back out of the instance',
+        desc: 'This is why <code>x</code> and <code>y</code> were stored on the instance. The function lives on <code>Point</code>, but its <code>self</code> is <em>this</em> point, so <code>self.x</code> and <code>self.y</code> reach into <em>this</em> instance dict and find <code>3</code> and <code>4</code>. Change the point and the same shared function returns a different answer.',
         lines: [10, 7],
         memory: {
           frames: [
@@ -243,8 +243,8 @@ t = p.total()`,
         },
       },
       {
-        title: 'Final state — data on the instance, functions on the class',
-        desc: 'The frame is gone and <code>t</code> holds <code>7</code>. Look at the finished picture: one class object holding two functions, one instance holding <code>x</code> and <code>y</code> plus a <code>__class__</code> link back. Make a thousand points and you still have exactly two function objects.',
+        title: 'Final state: data on the instance, functions on the class',
+        desc: 'The frame is gone and <code>t</code> holds <code>7</code>. Look at the finished picture: one class object holding two functions, and one instance holding <code>x</code> and <code>y</code> plus a <code>__class__</code> link back. Make a thousand points and you still have two function objects.',
         lines: [10],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -258,7 +258,7 @@ t = p.total()`,
             pointClass('normal', 2),
             { id: 'int3', pyId: ADDRS.int3, type: 'int', value: 3, refcount: '∞', mutable: false, state: 'normal' },
             { id: 'int4', pyId: ADDRS.int4, type: 'int', value: 4, refcount: '∞', mutable: false, state: 'normal' },
-            { id: 'int7', pyId: ADDRS.int7, type: 'int', value: 7, refcount: '∞', mutable: false, state: 'new', note: 'cached small int — the addition found it, not built it' },
+            { id: 'int7', pyId: ADDRS.int7, type: 'int', value: 7, refcount: '∞', mutable: false, state: 'new', note: 'cached small int: the addition found it rather than building it' },
             pointInst('normal', [
               { key: 'x', value: 3, type: 'int' },
               { key: 'y', value: 4, type: 'int' },
@@ -271,7 +271,7 @@ t = p.total()`,
   },
 
   classAttr: {
-    watch: 'Every <code>print</code> here is a lookup. Watch it miss on the instance and land on the class — until <code>a</code> gets a <code>lives</code> of its own.',
+    watch: 'Every <code>print</code> here is a lookup. Watch it miss on the instance and land on the class, until <code>a</code> gets a <code>lives</code> of its own.',
     code: `class Player:
     lives = 3
 
@@ -285,14 +285,14 @@ a.lives = 1
 print(a.lives, b.lives)`,
     steps: [
       {
-        title: 'Initial state — no class yet',
-        desc: 'A class attribute is just a name stored on the class object. Watch where <code>lives</code> lives as instances appear, and watch each <code>print</code> go looking for it.',
+        title: 'Initial state: no class yet',
+        desc: 'A class attribute is a name stored on the class object. Watch where <code>lives</code> lives as instances appear, and watch each <code>print</code> go looking for it.',
         lines: [],
         memory: EMPTY,
       },
       {
         title: 'Class attributes live on the class object',
-        desc: '<code>lives = 3</code> is stored on <code>Player</code>, not copied into each instance. The <code>3</code> is one of the pre-created small integers from Session 01 — shared by everything that needs a 3, and never freed.',
+        desc: '<code>lives = 3</code> is stored on <code>Player</code>, not copied into each instance. The <code>3</code> is one of the pre-created small integers from Session 01, shared by everything that needs a 3 and never freed.',
         lines: [1, 2],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -300,7 +300,7 @@ print(a.lives, b.lives)`,
           ]}],
           heap: [
             { id: 'intLives3', pyId: ADDRS.intLives3, type: 'int', value: 3, refcount: '∞', mutable: false, state: 'new',
-              note: 'small int — pre-created and immortal' },
+              note: 'small int, pre-created and immortal' },
             { id: 'PlayerCls', pyId: ADDRS.PlayerCls, type: 'class', value: 'class Player', refcount: 1, mutable: true, state: 'new', pairs: [
               { key: 'lives', value: 3, type: 'int' },
             ] },
@@ -333,7 +333,7 @@ print(a.lives, b.lives)`,
       },
       {
         title: '<code>a.score = 10</code> writes only on <code>a</code>',
-        desc: 'Assignment on an instance does not go looking anywhere. It writes straight into <em>that</em> instance\'s <code>__dict__</code>. <code>b</code> has no <code>score</code>, and neither does the class.',
+        desc: 'Assignment on an instance doesn\'t go looking anywhere. It writes straight into <em>that</em> instance\'s <code>__dict__</code>. <code>b</code> has no <code>score</code>, and neither does the class.',
         lines: [6],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -357,8 +357,8 @@ print(a.lives, b.lives)`,
         },
       },
       {
-        title: 'The first <code>print</code> — both reads miss, then hit the class',
-        desc: 'This is the lookup the demo exists for. <code>a.lives</code> checks <code>a</code>\'s own dict (only <code>score</code> is there — miss), follows <code>__class__</code> to <code>Player</code>, and hits. <code>b.lives</code> takes the same walk. Output: <code>3 3</code>. Both arrive at the one <code>3</code> object, not at a copy each.',
+        title: 'The first <code>print</code>: both reads miss, then hit the class',
+        desc: 'This is the lookup the demo exists for. <code>a.lives</code> checks <code>a</code>\'s own dict (only <code>score</code> is there, so it misses), follows <code>__class__</code> to <code>Player</code>, and hits. <code>b.lives</code> takes the same walk. Output: <code>3 3</code>. Both arrive at the one <code>3</code> object, not at a copy each.',
         lines: [7],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -372,21 +372,21 @@ print(a.lives, b.lives)`,
             { id: 'intScore', pyId: ADDRS.intScore, type: 'int', value: 10, refcount: '∞', mutable: false, state: 'normal' },
             { id: 'PlayerCls', pyId: ADDRS.PlayerCls, type: 'class', value: 'class Player', refcount: 3, mutable: true, state: 'normal', pairs: [
               { key: 'lives', value: 3, type: 'int' },
-            ], note: 'hit — the walk stops here' },
+            ], note: 'hit, the walk stops here' },
             { id: 'aInst', pyId: ADDRS.aInst, type: 'instance', value: 'Player()', refcount: 1, mutable: true, state: 'normal',
               classRef: { name: 'Player', pyId: ADDRS.PlayerCls },
               pairs: [{ key: 'score', value: 10, type: 'int' }],
-              note: 'miss — walk to Player' },
+              note: 'miss, walk on to Player' },
             { id: 'bInst', pyId: ADDRS.bInst, type: 'instance', value: 'Player()', refcount: 1, mutable: true, state: 'normal',
               classRef: { name: 'Player', pyId: ADDRS.PlayerCls }, pairs: [],
-              note: 'miss — walk to Player' },
+              note: 'miss, walk on to Player' },
           ],
           highlight: ['aInst', 'bInst', 'PlayerCls'],
         },
       },
       {
         title: '<code>Player.lives = 2</code> repoints the shared class attribute',
-        desc: 'The class dict now references the <code>2</code> object instead of the <code>3</code>. Notice what does <em>not</em> happen: the <code>3</code> is not destroyed. CPython pre-creates every small integer from −5 to 256 and keeps them alive for the whole run — nothing points at this one right now, and it stays anyway.',
+        desc: 'The class dict now refers to the <code>2</code> object instead of the <code>3</code>. Notice what does <em>not</em> happen: the <code>3</code> isn\'t destroyed. CPython pre-creates every small integer from -5 to 256 and keeps them alive for the whole run. Nothing points at this one right now, and it stays anyway.',
         lines: [8],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -396,7 +396,7 @@ print(a.lives, b.lives)`,
           ]}],
           heap: [
             { id: 'intLives3', pyId: ADDRS.intLives3, type: 'int', value: 3, refcount: '∞', mutable: false, state: 'normal',
-              note: 'still here — small ints are never freed' },
+              note: 'still here, small ints are never freed' },
             { id: 'intLives2', pyId: ADDRS.intLives2, type: 'int', value: 2, refcount: '∞', mutable: false, state: 'new' },
             { id: 'intScore', pyId: ADDRS.intScore, type: 'int', value: 10, refcount: '∞', mutable: false, state: 'normal' },
             { id: 'PlayerCls', pyId: ADDRS.PlayerCls, type: 'class', value: 'class Player', refcount: 3, mutable: true, state: 'mutated', pairs: [
@@ -412,8 +412,8 @@ print(a.lives, b.lives)`,
         },
       },
       {
-        title: 'The second <code>print</code> — one edit, both instances see it',
-        desc: 'Same walk as before: miss on the instance, hit on the class. But the class now points at <code>2</code>, so the output is <code>2 2</code>. Neither instance was touched. That is what "shared" really means — they were never holding a value, only a route to one.',
+        title: 'The second <code>print</code>: one edit, both instances see it',
+        desc: 'Same walk as before, a miss on the instance and a hit on the class. But the class now points at <code>2</code>, so the output is <code>2 2</code>. Neither instance was touched. That\'s what "shared" really means. They were never holding a value, only a route to one.',
         lines: [9],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -431,17 +431,17 @@ print(a.lives, b.lives)`,
             { id: 'aInst', pyId: ADDRS.aInst, type: 'instance', value: 'Player()', refcount: 1, mutable: true, state: 'normal',
               classRef: { name: 'Player', pyId: ADDRS.PlayerCls },
               pairs: [{ key: 'score', value: 10, type: 'int' }],
-              note: 'miss — walk to Player' },
+              note: 'miss, walk on to Player' },
             { id: 'bInst', pyId: ADDRS.bInst, type: 'instance', value: 'Player()', refcount: 1, mutable: true, state: 'normal',
               classRef: { name: 'Player', pyId: ADDRS.PlayerCls }, pairs: [],
-              note: 'miss — walk to Player' },
+              note: 'miss, walk on to Player' },
           ],
           highlight: ['aInst', 'bInst', 'PlayerCls'],
         },
       },
       {
-        title: 'Final state — <code>a</code> shadows the name, <code>b</code> still walks',
-        desc: '<code>a.lives = 1</code> wrote into <code>a</code>\'s own dict, so the last <code>print</code> gives <code>1 2</code>: <code>a</code> hits on itself and stops, <code>b</code> walks to the class as it always did. That is the rule in one picture — reading walks outward, writing stays home, and an instance assignment hides a class attribute instead of changing it.',
+        title: 'Final state: <code>a</code> shadows the name, <code>b</code> still walks',
+        desc: '<code>a.lives = 1</code> wrote into <code>a</code>\'s own dict, so the last <code>print</code> gives <code>1 2</code>. <code>a</code> hits on itself and stops, and <code>b</code> walks to the class as it always did. That\'s the rule in one picture: reading walks outward, writing stays home, and an instance assignment hides a class attribute instead of changing it.',
         lines: [10, 11],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -463,10 +463,10 @@ print(a.lives, b.lives)`,
                 { key: 'score', value: 10, type: 'int' },
                 { key: 'lives', value: 1, type: 'int' },
               ],
-              note: 'a.lives hits here and stops — prints 1' },
+              note: 'a.lives hits here and stops, so it prints 1' },
             { id: 'bInst', pyId: ADDRS.bInst, type: 'instance', value: 'Player()', refcount: 1, mutable: true, state: 'normal',
               classRef: { name: 'Player', pyId: ADDRS.PlayerCls }, pairs: [],
-              note: 'b.lives still walks to Player.lives — prints 2' },
+              note: 'b.lives still walks to Player.lives, so it prints 2' },
           ],
           highlight: ['aInst', 'intLives1'],
         },
@@ -485,14 +485,14 @@ fn = g.hello
 msg = fn("Ada")`,
     steps: [
       {
-        title: 'Initial state — no class yet',
-        desc: 'A method defined in a class body is a function object. Binding happens later, when you access it on an instance.',
+        title: 'Initial state: no class yet',
+        desc: 'A method defined in a class body is a function object. The binding happens later, when you access it on an instance.',
         lines: [],
         memory: EMPTY,
       },
       {
         title: '<code>hello</code> lives on the class as a function',
-        desc: 'Nothing is bound to an instance yet. <code>Greeter.hello</code> is the raw function — you would have to pass the instance yourself.',
+        desc: 'Nothing is bound to an instance yet. <code>Greeter.hello</code> is the raw function, and you would have to pass the instance yourself.',
         lines: [1, 2, 3],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -508,7 +508,7 @@ msg = fn("Ada")`,
         },
       },
       {
-        title: '<code>g = Greeter()</code> — instance with no attributes',
+        title: '<code>g = Greeter()</code>: an instance with no attributes',
         desc: 'The instance is empty. It can still find <code>hello</code> by following <code>__class__</code> to <code>Greeter</code>.',
         lines: [5],
         memory: {
@@ -529,7 +529,7 @@ msg = fn("Ada")`,
       },
       {
         title: '<code>fn = g.hello</code> creates a bound method',
-        desc: 'Attribute access on the instance does not return the raw function. Python builds a <strong>bound method</strong> that already remembers <code>g</code> as <code>self</code>. That is why you write <code>g.hello("Ada")</code> with one argument, not two.',
+        desc: 'Attribute access on the instance doesn\'t return the raw function. Python builds a <strong>bound method</strong> that already remembers <code>g</code> as <code>self</code>. That\'s why you write <code>g.hello("Ada")</code> with one argument, not two.',
         lines: [6],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -554,7 +554,7 @@ msg = fn("Ada")`,
       },
       {
         title: '<code>fn("Ada")</code> calls the function with <code>self</code> already filled in',
-        desc: 'The call frame receives <code>self</code> (the instance) and <code>name</code> (<code>"Ada"</code>). You did not pass <code>self</code> yourself — the bound method did. Compare addresses: <code>self</code> is <code>g</code>.',
+        desc: 'The call frame receives <code>self</code> (the instance) and <code>name</code> (<code>"Ada"</code>). You didn\'t pass <code>self</code> yourself. The bound method did. Compare the addresses: <code>self</code> is <code>g</code>.',
         lines: [7],
         memory: {
           frames: [
@@ -586,7 +586,7 @@ msg = fn("Ada")`,
       },
       {
         title: '<code>msg</code> receives the returned string',
-        desc: 'The method frame returns and disappears. The bound method can be called again later — it still remembers <code>g</code>. Method binding in one sentence: a function plus a remembered instance.',
+        desc: 'The method frame returns and disappears. The bound method can be called again later, and it still remembers <code>g</code>. Method binding in one sentence: a function plus a remembered instance.',
         lines: [7],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -625,8 +625,8 @@ b = Box(data)
 b.items.append(2)`,
     steps: [
       {
-        title: 'Initial state — no class yet',
-        desc: 'Same rule as Session 03: storing a list on <code>self</code> is still aliasing. We start from an empty global, then build the class.',
+        title: 'Initial state: no class yet',
+        desc: 'Same rule as Session 03: storing a list on <code>self</code> is still aliasing. We start from an empty global frame, then build the class.',
         lines: [],
         memory: EMPTY,
       },
@@ -649,7 +649,7 @@ b.items.append(2)`,
       },
       {
         title: '<code>data</code> is a list object',
-        desc: 'The name <code>data</code> points at a mutable list. Passing it into <code>Box</code> will not copy it.',
+        desc: 'The name <code>data</code> points at a mutable list. Passing it into <code>Box</code> won\'t copy it.',
         lines: [5],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -669,7 +669,7 @@ b.items.append(2)`,
         },
       },
       {
-        title: '<code>Box(data)</code> — <code>self.items</code> aliases the same list',
+        title: '<code>Box(data)</code>: <code>self.items</code> aliases the same list',
         desc: 'Inside <code>__init__</code>, <code>items</code> and <code>data</code> are already the same object. <code>self.items = items</code> stores that reference on the instance. Three names reach this one list right now: the global <code>data</code>, the local <code>items</code>, and <code>self.items</code>. When the frame returns the local goes away and the count drops to 2.',
         lines: [6, 3],
         memory: {
@@ -700,7 +700,7 @@ b.items.append(2)`,
       },
       {
         title: 'After <code>__init__</code>, two names still share one list',
-        desc: 'The call frame is gone. <code>data</code> and <code>b.items</code> still point at <code>0x7f780010</code>. The instance did not get a private copy.',
+        desc: 'The call frame is gone. <code>data</code> and <code>b.items</code> still point at <code>0x7f780010</code>. The instance didn\'t get a private copy.',
         lines: [6],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -725,7 +725,7 @@ b.items.append(2)`,
       },
       {
         title: '<code>b.items.append(2)</code> mutates the shared list',
-        desc: '<code>data</code> sees <code>[1, 2]</code> as well. Storing a mutable object on <code>self</code> is the same aliasing rule you already know — just reached through an attribute. Copy in <code>__init__</code> if you need independence: <code>self.items = list(items)</code>.',
+        desc: '<code>data</code> sees <code>[1, 2]</code> as well. Storing a mutable object on <code>self</code> is the same aliasing rule you already know, reached through an attribute this time. Copy in <code>__init__</code> if you need independence: <code>self.items = list(items)</code>.',
         lines: [7],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -750,11 +750,8 @@ b.items.append(2)`,
         },
       },
       {
-        title: 'Final state — one list, reached by two different routes',
-        desc: 'Count the list objects on the heap: there is exactly one, with a refcount of 2. '
-            + '<code>data</code> reaches it by name; <code>b.items</code> reaches it through an attribute. '
-            + 'An attribute is not a container — it is another reference, so everything Session 03 '
-            + 'taught about aliasing applies unchanged here.',
+        title: 'Final state: one list, reached by two different routes',
+        desc: 'Count the list objects on the heap: there is one, with a refcount of 2. <code>data</code> reaches it by name and <code>b.items</code> reaches it through an attribute. An attribute isn\'t a container, it\'s another reference, so everything Session 03 taught about aliasing applies here unchanged.',
         lines: [3, 5, 7],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -770,7 +767,7 @@ b.items.append(2)`,
             { id: 'dataList', pyId: ADDRS.dataList, type: 'list', refcount: 2, mutable: true, state: 'normal', items: [
               { value: 1, type: 'int' },
               { value: 2, type: 'int' },
-            ], note: 'one object — data and b.items both point here' },
+            ], note: 'one object, data and b.items both point here' },
             { id: 'boxInst', pyId: ADDRS.boxInst, type: 'instance', value: 'Box()', refcount: 1, mutable: true, state: 'normal',
               classRef: { name: 'Box', pyId: ADDRS.BoxCls },
               pairs: [{ key: 'items', value: 'list -> 0x7f780010', type: 'ref' }] },
@@ -782,7 +779,7 @@ b.items.append(2)`,
   },
 
   inherit: {
-    watch: '<code>Dog</code> has no <code>speak</code>. Follow <code>d.__class__</code> → <code>Dog</code> → <code>__bases__</code> → <code>Animal</code>.',
+    watch: '<code>Dog</code> has no <code>speak</code>. Follow <code>d.__class__</code> to <code>Dog</code>, then <code>__bases__</code> to <code>Animal</code>.',
     code: `class Animal:
     def speak(self):
         return "hi"
@@ -794,14 +791,14 @@ d = Dog()
 msg = d.speak()`,
     steps: [
       {
-        title: 'Initial state — two classes will appear',
-        desc: 'Inheritance is attribute lookup with an extra stop. The subclass does not copy methods. It remembers its bases and walks them.',
+        title: 'Initial state: two classes will appear',
+        desc: 'Inheritance is attribute lookup with an extra stop. The subclass doesn\'t copy methods. It remembers its bases and walks them.',
         lines: [],
         memory: EMPTY,
       },
       {
         title: '<code>Animal.speak</code> lives on the base class',
-        desc: 'A normal class with one function in its namespace. <code>Dog</code> does not exist yet.',
+        desc: 'A normal class with one function in its namespace. <code>Dog</code> doesn\'t exist yet.',
         lines: [1, 2, 3],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -817,8 +814,8 @@ msg = d.speak()`,
         },
       },
       {
-        title: '<code>class Dog(Animal)</code> — a subclass with an empty namespace',
-        desc: '<code>Dog</code> is a different class object. It does not copy <code>speak</code>. It records <code>Animal</code> in <code>__bases__</code>. The method resolution order (MRO) is <code>Dog → Animal → object</code>.',
+        title: '<code>class Dog(Animal)</code>: a subclass with an empty namespace',
+        desc: '<code>Dog</code> is a different class object. It doesn\'t copy <code>speak</code>. It records <code>Animal</code> in <code>__bases__</code>. The method resolution order (MRO) is <code>Dog</code>, then <code>Animal</code>, then <code>object</code>.',
         lines: [5, 6],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -833,14 +830,14 @@ msg = d.speak()`,
             { id: 'DogCls', pyId: ADDRS.DogCls, type: 'class', value: 'class Dog', refcount: 1, mutable: true, state: 'new',
               bases: [{ name: 'Animal', pyId: ADDRS.AnimalCls }],
               pairs: [],
-              note: 'speak is not copied here — lookup walks to Animal' },
+              note: 'speak is not copied here, lookup walks on to Animal' },
           ],
           highlight: ['DogCls'],
         },
       },
       {
-        title: '<code>d = Dog()</code> — instance type is <code>Dog</code>, not <code>Animal</code>',
-        desc: '<code>d.__class__</code> is <code>Dog</code>. The instance dict is empty. <code>type(d) is Dog</code> is true. Inheritance will show up only when we look up a name.',
+        title: '<code>d = Dog()</code>: the instance\'s type is <code>Dog</code>, not <code>Animal</code>',
+        desc: '<code>d.__class__</code> is <code>Dog</code>. The instance dict is empty, and <code>type(d) is Dog</code> is true. Inheritance only shows up when we look up a name.',
         lines: [8],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -864,7 +861,7 @@ msg = d.speak()`,
       },
       {
         title: '<code>d.speak</code> misses twice, then binds <code>self</code>',
-        desc: 'Lookup: instance dict (miss) → <code>Dog</code> (miss) → <code>Animal</code> (hit). Python then builds a bound method whose <code>__self__</code> is <code>d</code>, not some generic Animal. The function still lives on <code>Animal</code>.',
+        desc: 'The lookup goes instance dict (miss), <code>Dog</code> (miss), <code>Animal</code> (hit). Python then builds a bound method whose <code>__self__</code> is <code>d</code>, not some generic Animal. The function still lives on <code>Animal</code>.',
         lines: [9],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -891,7 +888,7 @@ msg = d.speak()`,
       },
       {
         title: 'The call runs with <code>self</code> bound to the <code>Dog</code> instance',
-        desc: 'Even though the function was found on <code>Animal</code>, <code>self</code> is <code>d</code>. That is how a base method can use subclass state: it receives the actual instance.',
+        desc: 'Even though the function was found on <code>Animal</code>, <code>self</code> is <code>d</code>. That\'s how a base method can use subclass state: it receives the actual instance.',
         lines: [2, 3, 9],
         memory: {
           frames: [
@@ -922,8 +919,8 @@ msg = d.speak()`,
         },
       },
       {
-        title: '<code>msg</code> is the returned string — the classes did not change',
-        desc: 'No method was copied onto <code>d</code> or <code>Dog</code>. Inheritance is a search path. If <code>Dog</code> later defined its own <code>speak</code>, lookup would stop there and shadow the base.',
+        title: '<code>msg</code> is the returned string, and the classes didn\'t change',
+        desc: 'No method was copied onto <code>d</code> or <code>Dog</code>. Inheritance is a search path. If <code>Dog</code> later defined its own <code>speak</code>, the lookup would stop there and shadow the base.',
         lines: [9],
         memory: {
           frames: [{ name: 'global', vars: [

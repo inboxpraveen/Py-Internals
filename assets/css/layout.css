@@ -1,5 +1,5 @@
 /* ============================================================
-   PY INTERNALS — LAYOUT CSS
+   PY INTERNALS: LAYOUT CSS
    App shell, sidebar navigation, main content regions
    ============================================================ */
 
@@ -261,7 +261,7 @@
 
 .stage__code-panel {
   background: #1C2333;
-  color: #CDD6F4;          /* default token colour — unstyled identifiers stay readable */
+  color: #CDD6F4;          /* default token colour, so unstyled identifiers stay readable */
   display: flex;
   flex-direction: column;
   border-right: 1px solid rgba(255,255,255,0.07);
@@ -274,7 +274,7 @@
 }
 
 /* Grid items default to min-width: auto, so one long `white-space: pre` code
-   line used to widen the whole stage past the viewport — the memory panel and
+   line used to widen the whole stage past the viewport. The memory panel and
    the speed control were clipped on phones, and in the two-column layout the
    memory panel was squeezed to ~260px. Let the panels shrink; the code body
    scrolls sideways instead. */
@@ -503,6 +503,6 @@
     gap: var(--sp-3);
   }
   .session-footer .btn { width: 100%; padding-top: var(--sp-3); padding-bottom: var(--sp-3); }
-  /* Counter first, then previous, then next — reads like a page footer. */
+  /* Counter first, then previous, then next. It reads like a page footer. */
   .session-footer [data-role="session-count"] { order: -1; }
 }

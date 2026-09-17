@@ -1,5 +1,5 @@
 /* ============================================================
-   PY INTERNALS — MEMORY VISUALIZER CSS
+   PY INTERNALS: MEMORY VISUALIZER CSS
    Stack frame, heap objects, reference arrows, animations
    ============================================================ */
 
@@ -98,7 +98,7 @@
   border: 1px solid #F0C5C5;
 }
 
-/* The interpreter itself — not a call frame, so it does not look like one. */
+/* The interpreter itself. It is not a call frame, so it does not look like one. */
 .mem-frame--runtime {
   background: var(--clr-surface-2);
   border-style: solid;

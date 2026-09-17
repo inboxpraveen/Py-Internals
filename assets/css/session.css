@@ -1,5 +1,5 @@
 /* ============================================================
-   PY INTERNALS — SESSION.CSS
+   PY INTERNALS: SESSION.CSS
    Shared session-page layout: learning overview, lab chrome,
    narrative helpers. Load after components.css.
    ============================================================ */
@@ -640,7 +640,56 @@
   flex-shrink: 0;
 }
 
-/* Full-bleed sections have no natural measure — cap the text so a 27" monitor
+/* ── All-sessions nav (static, so crawlers get the full link graph) ─── */
+.sessions-nav {
+  padding: var(--sp-6) var(--sp-12);
+  background: var(--clr-bg);
+  border-top: 1px solid var(--clr-border);
+}
+
+.sessions-nav__label {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--clr-text-3);
+  margin-bottom: var(--sp-3);
+}
+
+.sessions-nav ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--sp-2) var(--sp-5);
+}
+
+.sessions-nav a {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--clr-text-2);
+  padding: var(--sp-1) 0;
+}
+
+.sessions-nav a:hover { color: var(--clr-accent); }
+
+.sessions-nav a span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--clr-accent);
+}
+
+.sessions-nav li.is-current a {
+  color: var(--clr-text);
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .sessions-nav { padding: var(--sp-5); }
+}
+
+/* Full-bleed sections have no natural measure. Cap the text so a 27" monitor
    does not turn every paragraph into a 120-character line. */
 .stage-intro > div > p,
 .learning-card__body,

@@ -1,5 +1,5 @@
 /* ============================================================
-   PY INTERNALS — ANIMATOR.JS
+   PY INTERNALS: ANIMATOR.JS
    Step-based animation engine: autoplay, pause, step forward/back,
    speed control, step dots, progress tracking
    ============================================================ */
@@ -94,7 +94,7 @@ PJ.Animator = class {
     // Build step track dots
     this._buildTrack();
 
-    // Initialize state
+    // Initialise state
     this._updateControls();
 
     // Show first step immediately

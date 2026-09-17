@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Session 03: Lists, Dicts &amp; References — Py Internals</title>
-  <meta name="description" content="Understand how Python lists and dictionaries store references, why aliases share mutations, and what shallow copies really copy." />
+  <title>Python Lists, Dicts and References: Aliases and Copies</title>
+  <meta name="description" content="Why b = a shares a list, what a shallow copy really copies, how deepcopy differs, and why passing a dict to a function can change the caller&#x27;s data." />
   <meta name="theme-color" content="#1A6B5C" />
 
   <link rel="icon" type="image/png" href="../../assets/images/Python-logo.png" />
@@ -16,6 +16,116 @@
   <link rel="stylesheet" href="../../assets/css/memory-viz.css" />
   <link rel="stylesheet" href="../../assets/css/animations.css" />
   <link rel="stylesheet" href="../../assets/css/session.css" />
+  <!-- seo:head -->
+  <link rel="canonical" href="https://inboxpraveen.github.io/Py-Internals/sessions/03-lists-dicts/" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Praveen Kumar" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="Py Internals" />
+  <meta property="og:locale" content="en_GB" />
+  <meta property="og:url" content="https://inboxpraveen.github.io/Py-Internals/sessions/03-lists-dicts/" />
+  <meta property="og:title" content="Python Lists, Dicts and References: Aliases and Copies" />
+  <meta property="og:description" content="Why b = a shares a list, what a shallow copy really copies, how deepcopy differs, and why passing a dict to a function can change the caller&#x27;s data." />
+  <meta property="og:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/03-lists-dicts.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Python Lists, Dicts and References: Aliases and Copies on Py Internals" />
+  <meta property="article:published_time" content="2026-05-07" />
+  <meta property="article:modified_time" content="2026-09-17" />
+  <meta property="article:section" content="Foundations" />
+  <meta property="article:author" content="https://github.com/inboxpraveen" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Python Lists, Dicts and References: Aliases and Copies" />
+  <meta name="twitter:description" content="Why b = a shares a list, what a shallow copy really copies, how deepcopy differs, and why passing a dict to a function can change the caller&#x27;s data." />
+  <meta name="twitter:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/03-lists-dicts.png" />
+  <link rel="alternate" type="application/atom+xml" title="Py Internals sessions" href="https://inboxpraveen.github.io/Py-Internals/feed.xml" />
+  <link rel="manifest" href="https://inboxpraveen.github.io/Py-Internals/manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" />
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": [
+        "Article",
+        "LearningResource"
+      ],
+      "@id": "https://inboxpraveen.github.io/Py-Internals/sessions/03-lists-dicts/#lesson",
+      "mainEntityOfPage": "https://inboxpraveen.github.io/Py-Internals/sessions/03-lists-dicts/",
+      "headline": "Session 03: Lists, Dicts & References",
+      "name": "Session 03: Lists, Dicts & References",
+      "description": "Why b = a shares a list, what a shallow copy really copies, how deepcopy differs, and why passing a dict to a function can change the caller's data.",
+      "image": "https://inboxpraveen.github.io/Py-Internals/assets/images/og/03-lists-dicts.png",
+      "author": {
+        "@type": "Person",
+        "name": "Praveen Kumar",
+        "url": "https://github.com/inboxpraveen"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Py Internals",
+        "url": "https://inboxpraveen.github.io/Py-Internals/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://inboxpraveen.github.io/Py-Internals/assets/images/Python-logo.png",
+          "width": 1024,
+          "height": 1024
+        },
+        "sameAs": [
+          "https://github.com/inboxpraveen/Py-Internals"
+        ]
+      },
+      "datePublished": "2026-05-07",
+      "dateModified": "2026-09-17",
+      "inLanguage": "en",
+      "isAccessibleForFree": true,
+      "license": "https://github.com/inboxpraveen/Py-Internals/blob/main/LICENSE",
+      "isPartOf": {
+        "@type": "Course",
+        "@id": "https://inboxpraveen.github.io/Py-Internals/#course",
+        "name": "Py Internals",
+        "url": "https://inboxpraveen.github.io/Py-Internals/"
+      },
+      "position": 3,
+      "learningResourceType": "Interactive lesson",
+      "educationalLevel": "Beginner",
+      "timeRequired": "PT40M",
+      "teaches": [
+        "containers hold references",
+        "list and dict aliasing",
+        "shallow copy versus deep copy",
+        "nested container mutation",
+        "function side effects on containers",
+        "hashable keys"
+      ],
+      "about": [
+        "Python (programming language)"
+      ],
+      "keywords": "containers hold references, list and dict aliasing, shallow copy versus deep copy, nested container mutation, function side effects on containers, hashable keys"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://inboxpraveen.github.io/Py-Internals/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Session 03: Lists, Dicts & References",
+          "item": "https://inboxpraveen.github.io/Py-Internals/sessions/03-lists-dicts/"
+        }
+      ]
+    }
+  ]
+}
+  </script>
+  <!-- /seo:head -->
 </head>
 <body>
 
@@ -133,9 +243,7 @@
       <div class="session-hero__eyebrow">Foundations · Session 03</div>
       <h1 class="session-hero__title">Lists, Dicts &amp; References</h1>
       <p class="session-hero__subtitle">
-        If two variables share a list, changing one changes the other. That is not a bug —
-        they are looking at the same list. This session makes that picture precise:
-        containers, aliases, copies, and mutations that travel.
+        If two variables share a list, changing one changes the other. That's not a bug. They're looking at the same list. This session makes that picture precise: containers, aliases, copies, and mutations that travel.
       </p>
       <div class="session-meta">
         <div class="session-meta__item">~40 minutes</div>
@@ -153,9 +261,7 @@
           A list is a tray of arrows, not a box of values.
         </h2>
         <p class="learning-card__body">
-          Each slot points at some other object. Two names can share one tray.
-          A cheap copy makes a new tray but keeps the same arrows.
-          Once that feels true, aliases, nested mutation, and function side effects stop being surprises.
+          Each slot points at some other object. Two names can share one tray. A cheap copy makes a new tray but keeps the same arrows. Once that feels true, aliases, nested mutation and function side effects stop being surprises.
         </p>
         <div class="concept-chip-row">
           <span class="type-chip type-chip--list">list</span>
@@ -192,14 +298,11 @@
           <div class="stage-intro__label">Interactive lab</div>
           <h2 id="stage-title">Watch the tray, then the arrows</h2>
           <p>
-            Pick a demo and step line by line. Ask: is this a new tray, or the same tray
-            with another nametag? Nested labels such as <code>list -&gt; 0x7f...</code>
-            mean a slot pointing at another object — not a value stuffed inside the list.
+            Pick a demo and step through it line by line. Keep asking whether you're looking at a new tray, or the same tray with another nametag on it. Nested labels such as <code>list -&gt; 0x7f...</code> mean a slot pointing at another object, not a value stuffed inside the list.
           </p>
         </div>
         <div class="stage-intro__hint">
-          Tip: when a result surprises you, compare object addresses. Same address means same object.
-          Different names do not guarantee different data.
+          Tip: when a result surprises you, compare the object addresses. The same address means the same object. Different names don't guarantee different data.
         </div>
       </section>
 
@@ -294,7 +397,7 @@
         <div class="explanation-strip__content">
           <h3 id="stepTitle" class="explanation-text">Initial state - no names, no list yet</h3>
           <p id="stepDesc" class="explanation-text">
-            Press Play or use Next to watch one container behavior at a time.
+            Press Play or use Next to watch one container behaviour at a time.
           </p>
         </div>
       </div>
@@ -304,14 +407,10 @@
       <h2 id="containers">A list or dict is a container object</h2>
       <p class="in-plain">
         <span class="in-plain__label">In plain words</span>
-        Putting <code>99</code> in a list does not swallow the number into the list.
-        The list keeps a pointer that says “slot 0 is over there.” Another name can
-        point at the same list — then both of you are looking at the same tray.
+        Putting <code>99</code> in a list doesn't swallow the number into the list. The list keeps a pointer that says "slot 0 is over there". Another name can point at the same list, and then both of you are looking at the same tray.
       </p>
       <p class="narrative-lede then-precise">
-        A container does not absorb its contents. It stores <strong>references</strong> to other objects.
-        That Python-level model is enough to predict everyday code. You do not need CPython's
-        internal storage layout.
+        A container doesn't absorb its contents. It stores <strong>references</strong> to other objects. That Python-level model is enough to predict everyday code. You don't need CPython's internal storage layout for it.
       </p>
 
       <div class="reference-map" aria-label="Reference diagram for a list alias">
@@ -367,9 +466,7 @@
         <h2>Shallow copy copies one container level</h2>
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
-          A cheap copy is like getting a new folder and putting the <em>same papers</em> in it.
-          The folder is yours. Scribbling on a paper still shows up in the other folder.
-          A deep copy photocopies the papers too.
+          A cheap copy is like getting a new folder and putting the <em>same papers</em> in it. The folder is yours, but scribbling on a paper still shows up in the other folder. A deep copy photocopies the papers too.
         </p>
         <p class="then-precise">
           A <strong>shallow copy</strong> creates a new outer container filled with the same inner references.
@@ -421,7 +518,7 @@
                 <td><code>b = a[:]</code></td>
                 <td>Yes</td>
                 <td>Yes</td>
-                <td>The classic slice copy — same result as <code>list(a)</code></td>
+                <td>The classic slice copy, with the same result as <code>list(a)</code></td>
               </tr>
               <tr>
                 <td><code>b = list(a)</code></td>
@@ -432,7 +529,7 @@
               <tr>
                 <td><code>b = copy.deepcopy(a)</code></td>
                 <td>Yes</td>
-                <td>No — mutable nested objects are cloned</td>
+                <td>No, mutable nested objects are cloned</td>
                 <td>Independent nested data, used deliberately</td>
               </tr>
             </tbody>
@@ -447,8 +544,7 @@
               A deep copy walks through nested objects and copies them too. That can be expensive and can be wrong
               for objects that should stay shared, such as open files, database connections, or intentionally shared
               configuration. Use it when you specifically need nested independence.
-              Immutable nested values such as ints, strings and tuples of immutables are still shared after a deep
-              copy — that is safe, because nothing can change them.
+              Immutable nested values such as ints, strings and tuples of immutables are still shared after a deep copy. That's safe, because nothing can change them.
             </div>
           </div>
         </div>
@@ -456,9 +552,7 @@
         <h3>The multiplication trap</h3>
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
-          <code>[[0] * 3] * 3</code> does not make three rows. It makes one row and then points at it
-          three times. Write into any cell and the whole column seems to change, because there was only
-          ever one list to write into.
+          <code>[[0] * 3] * 3</code> doesn't make three rows. It makes one row and then points at it three times. Write into any cell and the whole column seems to change, because there was only ever one list to write into.
         </p>
         <p class="then-precise">
           List multiplication repeats <em>references</em>, exactly like a shallow copy. The list comprehension
@@ -492,8 +586,7 @@
         <h2>Passing a container passes the object reference</h2>
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
-          Hand a function your scorebook and it can write a new score on the page you already have.
-          If it tosses that book aside and starts a blank one, your original book is still on your desk.
+          Hand a function your scorebook and it can write a new score on the page you already have. If it tosses that book aside and starts a blank one, your original book is still on your desk.
         </p>
         <p class="then-precise">
           The parameter is a local name pointing at the same mutable object as the caller.
@@ -538,8 +631,7 @@
 
         <h3>The same split shows up in <code>+=</code> versus <code>+</code></h3>
         <p class="then-precise">
-          These two lines read almost the same and do genuinely different things. On a list,
-          <code>+=</code> is in-place mutation; <code>a = a + [...]</code> builds a new list and rebinds the name.
+          These two lines read almost the same and do different things. On a list, <code>+=</code> is an in-place mutation, while <code>a = a + [...]</code> builds a new list and rebinds the name.
         </p>
 
         <div class="rule-grid">
@@ -569,9 +661,8 @@
         <h2>Dict keys and values are references too</h2>
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
-          A dict is a labeled tray: each label points at some value. The value can be a list
-          you later append to. The label itself has to stay stable — if the key could change
-          after you filed it, Python could not find it again.
+          A dict is a labelled tray: each label points at some value. The value can be a list
+          you later append to. The label itself has to stay stable. If the key could change after you filed it, Python couldn't find it again.
         </p>
         <p class="then-precise">
           Keys must be <strong>hashable</strong>, which for built-ins usually means immutable
@@ -617,8 +708,7 @@
           <div>
             <div class="callout__title">The practical rule</div>
             <div class="callout__body">
-              Before changing a list or dict, ask: "Who else has a reference to this same object?" If another name,
-              object, or function parameter points there too, it will observe the mutation.
+              Before changing a list or dict, ask who else has a reference to the same object. If another name, object or function parameter points there too, it will see the mutation.
             </div>
           </div>
         </div>
@@ -628,7 +718,7 @@
           <div class="rule-card">
             <div class="rule-card__label">Identity</div>
             <h3><code>is</code> answers "same object?"</h3>
-            <p>Use identity checks while learning to confirm whether two names are aliases. In normal app code, prefer <code>==</code> unless checking singletons like <code>None</code>.</p>
+            <p>Use identity checks while you're learning, to confirm whether two names are aliases. In normal application code, prefer <code>==</code> unless you're checking a singleton like <code>None</code>.</p>
           </div>
           <div class="rule-card">
             <div class="rule-card__label">Mutation</div>
@@ -643,12 +733,12 @@
           <div class="rule-card">
             <div class="rule-card__label">Copying</div>
             <h3>Choose the copy depth intentionally</h3>
-            <p>Use assignment for sharing, shallow copy for a new outer container, and deep copy only when nested independence is truly required.</p>
+            <p>Use assignment for sharing, a shallow copy for a new outer container, and a deep copy only when the nested objects really need to be independent.</p>
           </div>
           <div class="rule-card">
             <div class="rule-card__label">Hashability</div>
             <h3>A key's hash has to hold still</h3>
-            <p><code>{[1, 2]: "x"}</code> raises <code>TypeError: unhashable type: 'list'</code>. Swap the list for a tuple and <code>{(1, 2): "x"}[(1, 2)]</code> returns <code>"x"</code> — matching on hash and <code>==</code>, not on <code>is</code>.</p>
+            <p><code>{[1, 2]: "x"}</code> raises <code>TypeError: unhashable type: 'list'</code>. Swap the list for a tuple and <code>{(1, 2): "x"}[(1, 2)]</code> returns <code>"x"</code>, matching on hash and <code>==</code>, not on <code>is</code>.</p>
           </div>
           <div class="rule-card">
             <div class="rule-card__label">Repetition</div>
@@ -660,10 +750,7 @@
         <div class="try-this">
           <div class="try-this__label">Try this in a REPL</div>
           <p>
-            Paste this whole line: <code>import copy; a = [[1]]; b = a.copy(); b[0].append(2); print(a)</code>
-            — it prints <code>[[1, 2]]</code>, because <code>a</code> and <code>b</code> share the inner list.
-            Now, in that same session, run <code>c = copy.deepcopy(a); c[0].append(3); print(a, c)</code>. The
-            <code>3</code> lands only in <code>c</code>. Shallow shares the inner list; deep does not.
+            Paste this whole line: <code>import copy; a = [[1]]; b = a.copy(); b[0].append(2); print(a)</code>. It prints <code>[[1, 2]]</code>, because <code>a</code> and <code>b</code> share the inner list. Now, in the same session, run <code>c = copy.deepcopy(a); c[0].append(3); print(a, c)</code>. The <code>3</code> lands only in <code>c</code>. Shallow shares the inner list, deep doesn't.
           </p>
         </div>
 
@@ -680,14 +767,12 @@
         <h2>Four ways this goes wrong</h2>
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
-          Containers hold arrows, and arrows are cheap to copy. Almost every container bug is
-          two arrows pointing at one tray when you pictured two trays — or a method quietly
-          returning nothing at all.
+          Containers hold arrows, and arrows are cheap to copy. Almost every container bug is two arrows pointing at one tray when you pictured two trays, or a method returning nothing when you expected a value.
         </p>
 
         <div class="mistake-list">
           <div class="mistake-item">
-            <h3><code>x = y = []</code> — one list, two names</h3>
+            <h3><code>x = y = []</code>: one list, two names</h3>
             <p>
               Chained assignment builds the list <em>once</em> and sticks both nametags on it.
               <code>x.append(1)</code> then shows up in <code>y</code>, and <code>x is y</code> is
@@ -699,8 +784,7 @@
           <div class="mistake-item">
             <h3><code>nums = nums.sort()</code></h3>
             <p>
-              <code>sort()</code> sorts the list in place and returns <code>None</code> — it is a
-              mutation, not a value. After that line, <code>nums</code> is <code>None</code> and the
+              <code>sort()</code> sorts the list in place and returns <code>None</code>. It's a mutation, not a value. After that line, <code>nums</code> is <code>None</code> and the
               sorted list has lost its only name. The same goes for <code>append</code>,
               <code>reverse</code>, <code>extend</code> and <code>update</code>. When you want a new
               object handed back, use the function form: <code>sorted(nums)</code>,
@@ -712,18 +796,14 @@
             <p>
               <code>for k in d: del d[k]</code> raises <code>RuntimeError: dictionary changed size
               during iteration</code>. The loop is walking the dict's own slots and you are moving
-              them underneath it. Loop over a snapshot instead — <code>for k in list(d):</code> —
-              or build a new dict with a comprehension and rebind the name.
+              them underneath it. Loop over a snapshot instead, with <code>for k in list(d):</code>, or build a new dict with a comprehension and rebind the name.
             </p>
           </div>
           <div class="mistake-item">
             <h3>Trusting a copy to go all the way down</h3>
             <p>
               <code>a.copy()</code>, <code>a[:]</code>, <code>list(a)</code> and <code>dict(d)</code>
-              all copy one level. Nested lists and dicts inside are still shared, so
-              <code>b[0].append(99)</code> changes <code>a[0]</code> too — Demo 2, exactly. Reach
-              for <code>copy.deepcopy</code> when the nested objects genuinely have to be yours,
-              and only then, because it walks the whole tree.
+              all copy one level. Nested lists and dicts inside are still shared, so <code>b[0].append(99)</code> changes <code>a[0]</code> too, which is demo 2 all over again. Reach for <code>copy.deepcopy</code> when the nested objects really have to be yours, and only then, because it walks the whole tree.
             </p>
           </div>
         </div>
@@ -733,9 +813,7 @@
           <div>
             <div class="callout__title">One question answers most container bugs</div>
             <div class="callout__body">
-              &ldquo;Is this a new tray, or the same tray with another nametag?&rdquo; Compare the
-              addresses — <code>id(a) == id(b)</code>, or simply <code>a is b</code> — and the
-              surprise usually disappears on the spot.
+              "Is this a new tray, or the same tray with another nametag?" Compare the addresses with <code>id(a) == id(b)</code>, or just <code>a is b</code>, and the surprise usually disappears on the spot.
             </div>
           </div>
         </div>
@@ -745,11 +823,11 @@
     <section class="quiz" id="quiz" data-session="03-lists-dicts">
       <div class="section-divider"><div class="section-divider__label">Check your understanding</div></div>
       <h2>Can you predict the memory?</h2>
-      <p class="quiz__lede">Same address means same object. That rule solves most container bugs.</p>
+      <p class="quiz__lede">The same address means the same object. That one rule solves most container bugs.</p>
 
       <div class="quiz-card" data-answer="0">
         <div class="quiz-card__q">1. After <code>b = a.copy()</code> on a nested list, what is shared?</div>
-        <button class="quiz-option" data-choice="0">The inner objects — only the outer list is new</button>
+        <button class="quiz-option" data-choice="0">The inner objects. Only the outer list is new</button>
         <button class="quiz-option" data-choice="1">Nothing. Copy always clones every level</button>
         <button class="quiz-option" data-choice="2">The outer list only; inner lists become integers</button>
         <div class="quiz-explain">Shallow copy fills the new container with the same references. Use <code>deepcopy</code> when nested independence is required.</div>
@@ -759,21 +837,21 @@
         <div class="quiz-card__q">2. Why can a list not be a dict key?</div>
         <button class="quiz-option" data-choice="0">Lists are too large</button>
         <button class="quiz-option" data-choice="1">Dicts can only store strings</button>
-        <button class="quiz-option" data-choice="2">Lists are mutable, so they are unhashable — a key's hash must not change while it sits in the dict</button>
+        <button class="quiz-option" data-choice="2">Lists are mutable, so they're unhashable. A key's hash must not change while it sits in the dict</button>
         <div class="quiz-explain">If a key could change after insertion, the dict could not find it again. Tuples of immutables are allowed. Identity is not required: two equal tuples work as one key even though they are different objects, because lookup goes by hash and <code>==</code>.</div>
       </div>
 
       <div class="quiz-card" data-answer="1">
         <div class="quiz-card__q">3. You pass a dict into a function that does <code>scores["math"].append(95)</code> and then <code>scores = {}</code>. What does the caller see?</div>
-        <button class="quiz-option" data-choice="0">An empty dict — both operations affect the caller</button>
-        <button class="quiz-option" data-choice="1">The appended score, but not the empty dict — mutation is shared, rebinding is local</button>
+        <button class="quiz-option" data-choice="0">An empty dict, because both operations affect the caller</button>
+        <button class="quiz-option" data-choice="1">The appended score, but not the empty dict. Mutation is shared, rebinding is local</button>
         <button class="quiz-option" data-choice="2">Nothing. Function arguments are copies</button>
         <div class="quiz-explain">The parameter starts as an alias. <code>append</code> mutates the nested list. <code>scores = {}</code> only rebinds the local name.</div>
       </div>
       <div class="quiz-card" data-answer="0">
         <div class="quiz-card__q">4. <code>x = y = []</code>, then <code>x.append(1)</code>. What is <code>y</code>?</div>
-        <button class="quiz-option" data-choice="0"><code>[1]</code> — chained assignment made one list and gave it two names</button>
-        <button class="quiz-option" data-choice="1"><code>[]</code> — each name got its own empty list</button>
+        <button class="quiz-option" data-choice="0"><code>[1]</code>, because chained assignment made one list and gave it two names</button>
+        <button class="quiz-option" data-choice="1"><code>[]</code>, because each name got its own empty list</button>
         <button class="quiz-option" data-choice="2">An error, because a list cannot have two names</button>
         <div class="quiz-explain">The <code>[]</code> is evaluated once. Both <code>x</code> and <code>y</code> point at that single object, so a mutation through one is visible through the other. <code>x is y</code> is <code>True</code>.</div>
       </div>
@@ -781,8 +859,8 @@
       <div class="quiz-card" data-answer="2">
         <div class="quiz-card__q">5. <code>nums = [3, 1, 2]</code>, then <code>result = nums.sort()</code>. What are <code>result</code> and <code>nums</code>?</div>
         <button class="quiz-option" data-choice="0"><code>result</code> is <code>[1, 2, 3]</code> and <code>nums</code> is unchanged</button>
-        <button class="quiz-option" data-choice="1">Both are <code>[1, 2, 3]</code> — the method returns the list it sorted</button>
-        <button class="quiz-option" data-choice="2"><code>result</code> is <code>None</code> and <code>nums</code> is <code>[1, 2, 3]</code> — <code>sort</code> mutates in place and returns nothing</button>
+        <button class="quiz-option" data-choice="1">Both are <code>[1, 2, 3]</code>, because the method returns the list it sorted</button>
+        <button class="quiz-option" data-choice="2"><code>result</code> is <code>None</code> and <code>nums</code> is <code>[1, 2, 3]</code>, because <code>sort</code> mutates in place and returns nothing</button>
         <div class="quiz-explain">In-place methods return <code>None</code> on purpose, so you cannot mistake them for the copying kind. <code>sorted(nums)</code> is the one that builds and returns a new list.</div>
       </div>
 
@@ -794,6 +872,22 @@
         <div class="quiz-explain">The loop walks the dict's own storage, and deleting a key changes that storage under it. Iterate over a copy of the keys, <code>for k in list(d):</code>, or build the dict you want and rebind the name.</div>
       </div>
     </section>
+
+    <!-- seo:sessions-nav -->
+    <nav class="sessions-nav" aria-label="All sessions">
+      <div class="sessions-nav__label">All sessions</div>
+      <ul>
+        <li><a href="../01-variables/"><span>01</span> Variables &amp; Mutability</a></li>
+        <li><a href="../02-functions/"><span>02</span> Functions, Scope &amp; the Call Stack</a></li>
+        <li class="is-current"><a href="../03-lists-dicts/"><span>03</span> Lists, Dicts &amp; References</a></li>
+        <li><a href="../04-classes/"><span>04</span> Classes &amp; Objects</a></li>
+        <li><a href="../05-iterators/"><span>05</span> Iterators &amp; Generators</a></li>
+        <li><a href="../06-decorators/"><span>06</span> Decorators</a></li>
+        <li><a href="../07-gil/"><span>07</span> The GIL &amp; Concurrency</a></li>
+        <li><a href="../08-exceptions/"><span>08</span> Exceptions, Tracebacks &amp; Context Managers</a></li>
+      </ul>
+    </nav>
+    <!-- /seo:sessions-nav -->
 
     <div class="session-footer">
       <a href="../02-functions/" class="btn btn--secondary">

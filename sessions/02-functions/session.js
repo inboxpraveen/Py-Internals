@@ -1,5 +1,5 @@
 /* ============================================================
-   SESSION 02 — Functions, Scope & the Call Stack
+   SESSION 02: Functions, Scope & the Call Stack
    Demos: call and return, local scope, mutable arguments, closures,
           mutable default arguments (and the None cure)
    ============================================================ */
@@ -33,7 +33,7 @@ const ADDRS = {
 
 /* Cached small ints (-5..256) are pre-created by CPython and never freed.
    They are drawn with an infinite refcount, exactly as Session 01 draws them. */
-const CACHED_INT_NOTE = 'cached small int — CPython pre-creates −5 to 256 and never frees them';
+const CACHED_INT_NOTE = 'cached small int: CPython pre-creates -5 to 256 and never frees them';
 
 const EMPTY_MEMORY = {
   frames: [{ name: 'global', vars: [] }],
@@ -43,7 +43,7 @@ const EMPTY_MEMORY = {
 
 const DEMOS = {
   call: {
-    watch: 'A new frame appears on top, then disappears on return. Locals die with the frame.',
+    watch: 'A new frame appears on top, then disappears on return. The locals go with it.',
     code: `def add(a, b):
     total = a + b
     return total
@@ -51,8 +51,8 @@ const DEMOS = {
 answer = add(2, 3)`,
     steps: [
       {
-        title: 'Initial state — only the global frame exists',
-        desc: 'Before this code runs, there is one namespace: <strong>global</strong>. No function object exists yet, and no call frame has been created.',
+        title: 'Initial state: only the global frame exists',
+        desc: 'Before this code runs there is one namespace, <strong>global</strong>. No function object exists yet and no call frame has been created.',
         lines: [],
         memory: EMPTY_MEMORY,
       },
@@ -74,7 +74,7 @@ answer = add(2, 3)`,
       },
       {
         title: '<code>add(2, 3)</code> creates a new call frame',
-        desc: 'Calling the function creates a fresh desk for that call. The parameters <code>a</code> and <code>b</code> are local names on it, bound to the objects <code>2</code> and <code>3</code>. Those two objects are not built here — CPython already made them at startup, along with every int from −5 to 256.',
+        desc: 'Calling the function opens a fresh desk for that call. The parameters <code>a</code> and <code>b</code> are local names on it, bound to the objects <code>2</code> and <code>3</code>. Those two objects aren\'t built here. CPython made them at startup, along with every int from -5 to 256.',
         lines: [5],
         memory: {
           frames: [
@@ -96,7 +96,7 @@ answer = add(2, 3)`,
       },
       {
         title: '<code>total = a + b</code> creates a local name',
-        desc: 'Python evaluates <code>a + b</code> and gets back the <strong>same cached <code>5</code></strong> the rest of your program uses — nothing new is built. It then binds the local name <code>total</code> to that object. The name lives only on this desk; the object does not.',
+        desc: 'Python evaluates <code>a + b</code> and gets back the <strong>same cached <code>5</code></strong> the rest of your program uses, so nothing new is built. It then binds the local name <code>total</code> to that object. The name lives only on this desk. The object doesn\'t.',
         lines: [2],
         memory: {
           frames: [
@@ -120,7 +120,7 @@ answer = add(2, 3)`,
       },
       {
         title: '<code>return total</code> hands an object back to the caller',
-        desc: 'The return statement does not return the name <code>total</code>. It returns the object that <code>total</code> points to. That object is handed back to the suspended global line.',
+        desc: 'The return statement doesn\'t return the name <code>total</code>. It returns the object <code>total</code> points to, and that object is handed back to the global line that was waiting on the call.',
         lines: [3],
         memory: {
           frames: [
@@ -143,8 +143,8 @@ answer = add(2, 3)`,
         },
       },
       {
-        title: 'Summary — the desk is cleared, the objects on it are not',
-        desc: 'The frame is gone, so the <em>names</em> <code>a</code>, <code>b</code> and <code>total</code> are gone with it. Every object they pointed at is still exactly where it was: <code>2</code>, <code>3</code> and <code>5</code> are cached ints that outlive any call. All that changed in global is one new name, <code>answer</code>, pointing at the object the function handed back.',
+        title: 'Summary: the desk is cleared, the objects on it are not',
+        desc: 'The frame is gone, so the <em>names</em> <code>a</code>, <code>b</code> and <code>total</code> are gone with it. Every object they pointed at is still where it was: <code>2</code>, <code>3</code> and <code>5</code> are cached ints that outlive any call. The only change in global is one new name, <code>answer</code>, pointing at the object the function handed back.',
         lines: [5],
         memory: {
           frames: [
@@ -155,7 +155,7 @@ answer = add(2, 3)`,
           ],
           heap: [
             { id: 'addFn', pyId: ADDRS.addFn, type: 'function', value: 'add(a, b)', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'int2', pyId: ADDRS.int2, type: 'int', value: 2, refcount: '∞', mutable: false, state: 'normal', note: 'no name points here any more — and it is still not freed' },
+            { id: 'int2', pyId: ADDRS.int2, type: 'int', value: 2, refcount: '∞', mutable: false, state: 'normal', note: 'no name points here any more, and it is still not freed' },
             { id: 'int3', pyId: ADDRS.int3, type: 'int', value: 3, refcount: '∞', mutable: false, state: 'normal' },
             { id: 'int5', pyId: ADDRS.int5, type: 'int', value: 5, refcount: '∞', mutable: false, state: 'normal' },
           ],
@@ -177,8 +177,8 @@ result = show()
 print(message)`,
     steps: [
       {
-        title: 'Initial state — no names yet',
-        desc: 'This demo shows that assigning to a name inside a function creates a <strong>local</strong> binding unless you explicitly say otherwise.',
+        title: 'Initial state: no names yet',
+        desc: 'This demo shows that assigning to a name inside a function creates a <strong>local</strong> binding unless you say otherwise.',
         lines: [],
         memory: EMPTY_MEMORY,
       },
@@ -214,7 +214,7 @@ print(message)`,
       },
       {
         title: '<code>show()</code> creates a local frame',
-        desc: 'The call creates a <code>show()</code> frame. Inside that frame, <code>message = "local"</code> creates a new local name. It shadows the global name; it does not overwrite it.',
+        desc: 'The call creates a <code>show()</code> frame. Inside it, <code>message = "local"</code> creates a new local name. It shadows the global name. It doesn\'t overwrite it.',
         lines: [7, 4],
         memory: {
           frames: [
@@ -257,8 +257,8 @@ print(message)`,
         },
       },
       {
-        title: 'Summary — two names, two frames, two objects',
-        desc: 'The desk is cleared, so the local <code>message</code> is gone as a name — but the object it pointed at survives, because <code>result</code> now points at it too. The global <code>message</code> was never touched, so <code>print(message)</code> prints <code>global</code>. Same spelling, different frames, different names.',
+        title: 'Summary: two names, two frames, two objects',
+        desc: 'The desk is cleared, so the local <code>message</code> is gone as a name. The object it pointed at survives, because <code>result</code> now points at it too. The global <code>message</code> was never touched, so <code>print(message)</code> prints <code>global</code>. Same spelling, different frames, different names.',
         lines: [7, 8],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -278,7 +278,7 @@ print(message)`,
   },
 
   mutableArgs: {
-    watch: 'The parameter points at the caller\'s list. <code>append</code> is visible outside; <code>items = ...</code> is not.',
+    watch: 'The parameter points at the caller\'s list. <code>append</code> is visible outside. <code>items = ...</code> is not.',
     code: `def add_item(items):
     items.append("notebook")
     return items
@@ -290,14 +290,14 @@ print(bag)
 print(bag is same_bag)`,
     steps: [
       {
-        title: 'Initial state — preparing to pass a list',
-        desc: 'Arguments are passed by object reference. That means the parameter name receives a reference to the same object the caller passed.',
+        title: 'Initial state: about to pass a list',
+        desc: 'Arguments are passed by object reference. The parameter name receives a reference to the same object the caller passed in.',
         lines: [],
         memory: EMPTY_MEMORY,
       },
       {
         title: '<code>def add_item(items)</code> creates the function',
-        desc: 'The name <code>add_item</code> points to a function object. No list exists yet and the parameter <code>items</code> does not exist until a call begins.',
+        desc: 'The name <code>add_item</code> points to a function object. No list exists yet, and the parameter <code>items</code> doesn\'t exist until a call begins.',
         lines: [1, 2, 3],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -311,7 +311,7 @@ print(bag is same_bag)`,
       },
       {
         title: '<code>bag = []</code> creates one mutable list',
-        desc: 'The global name <code>bag</code> points to an empty list object. Because lists are mutable, the object can be changed in-place.',
+        desc: 'The global name <code>bag</code> points to an empty list object. Lists are mutable, so this object can be changed in place.',
         lines: [5],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -326,8 +326,8 @@ print(bag is same_bag)`,
         },
       },
       {
-        title: '<code>add_item(bag)</code> binds parameter <code>items</code>',
-        desc: 'No list is copied. The local name <code>items</code> points to the same list object as global name <code>bag</code>. The refcount rises because two names reference one object.',
+        title: '<code>add_item(bag)</code> binds the parameter <code>items</code>',
+        desc: 'No list is copied. The local name <code>items</code> points to the same list object as the global name <code>bag</code>. The refcount rises because two names now reference one object.',
         lines: [6],
         memory: {
           frames: [
@@ -348,7 +348,7 @@ print(bag is same_bag)`,
       },
       {
         title: '<code>items.append("notebook")</code> mutates the shared list',
-        desc: 'The append call changes the list object itself. Because <code>bag</code> and <code>items</code> point to the same object, the caller will see the new item.',
+        desc: 'The append changes the list object itself. <code>bag</code> and <code>items</code> point to the same object, so the caller will see the new item.',
         lines: [2],
         memory: {
           frames: [
@@ -364,14 +364,14 @@ print(bag is same_bag)`,
             { id: 'addItemFn', pyId: ADDRS.addItemFn, type: 'function', value: 'add_item(items)', refcount: 1, mutable: false, state: 'normal' },
             { id: 'bagList', pyId: ADDRS.bagList, type: 'list', refcount: 2, mutable: true, state: 'mutated', items: [
               { value: 'notebook', type: 'str' },
-            ], note: 'same object, same address — one item longer' },
+            ], note: 'same object, same address, one item longer' },
           ],
           highlight: ['bagList'],
         },
       },
       {
         title: '<code>return items</code> returns the same list object',
-        desc: 'The function returns the object referenced by <code>items</code>. That object is the original <code>bag</code> list, not a new list.',
+        desc: 'The function returns the object <code>items</code> refers to. That object is the original <code>bag</code> list, not a new one.',
         lines: [3],
         memory: {
           frames: [
@@ -393,8 +393,8 @@ print(bag is same_bag)`,
         },
       },
       {
-        title: '<code>same_bag</code> and <code>bag</code> share identity',
-        desc: 'The function frame is gone. Global names <code>bag</code> and <code>same_bag</code> both point to the same list, so <code>print(bag)</code> shows the item and <code>bag is same_bag</code> is <code>True</code>.',
+        title: '<code>same_bag</code> and <code>bag</code> are the same object',
+        desc: 'The function frame is gone. The global names <code>bag</code> and <code>same_bag</code> both point to the same list, so <code>print(bag)</code> shows the item and <code>bag is same_bag</code> is <code>True</code>.',
         lines: [6, 8, 9],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -415,7 +415,7 @@ print(bag is same_bag)`,
   },
 
   closure: {
-    watch: 'Look at <code>inc()</code>\'s desk: it has no locals at all. The remembered <code>count</code> lives in a <strong>cell</strong> that the function object carries.',
+    watch: 'Look at <code>inc()</code>\'s desk: it has no locals at all. The remembered <code>count</code> lives in a <strong>cell</strong> that the function object carries around.',
     code: `def make_counter():
     count = 0
 
@@ -430,14 +430,14 @@ counter = make_counter()
 value = counter()`,
     steps: [
       {
-        title: 'Initial state — nothing defined yet',
-        desc: 'A <strong>closure</strong> is what happens when an inner function still needs a name from an outer function after that outer call has finished. Nothing exists yet — just the global frame.',
+        title: 'Initial state: nothing defined yet',
+        desc: 'A <strong>closure</strong> is what you get when an inner function still needs a name from an outer function after that outer call has finished. Nothing exists yet, just the global frame.',
         lines: [],
         memory: EMPTY_MEMORY,
       },
       {
         title: '<code>def make_counter()</code> stores the whole body for later',
-        desc: 'Running the <code>def</code> builds one function object and binds <code>make_counter</code> to it. Everything indented under it — including the inner <code>def inc()</code> — is stored, not run. No <code>count</code> exists yet.',
+        desc: 'Running the <code>def</code> builds one function object and binds <code>make_counter</code> to it. Everything indented under it, including the inner <code>def inc()</code>, is stored rather than run. No <code>count</code> exists yet.',
         lines: [1, 2, 4, 5, 6, 7, 9],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -451,7 +451,7 @@ value = counter()`,
       },
       {
         title: '<code>make_counter()</code> puts <code>count</code> in a cell, not on the desk',
-        desc: 'The call opens a desk for <code>make_counter</code>. But Python already read the body at compile time and saw that <code>inc</code> uses <code>count</code>, so <code>count</code> is never stored on the desk. <code>count = 0</code> writes into a <strong>cell</strong>: a one-slot box that can outlive the desk. That is why <code>make_counter</code>\'s desk looks empty here.',
+        desc: 'The call opens a desk for <code>make_counter</code>. But Python read the body at compile time and saw that <code>inc</code> uses <code>count</code>, so <code>count</code> is never stored on the desk. <code>count = 0</code> writes into a <strong>cell</strong>, a one-slot box that can outlive the desk. That\'s why <code>make_counter</code>\'s desk looks empty here.',
         lines: [11, 2],
         memory: {
           frames: [
@@ -462,7 +462,7 @@ value = counter()`,
           ],
           heap: [
             { id: 'makeCounterFn', pyId: ADDRS.makeCounterFn, type: 'function', value: 'make_counter()', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'cellCount', pyId: ADDRS.cellCount, type: 'dict', dictLabel: 'cell — one slot, holding count', refcount: 1, mutable: true, state: 'new', pairs: [
+            { id: 'cellCount', pyId: ADDRS.cellCount, type: 'dict', dictLabel: 'cell: one slot, holding count', refcount: 1, mutable: true, state: 'new', pairs: [
               { key: 'count', value: 0, type: 'int' },
             ], note: 'drawn as a box with one named slot; in CPython this is a cell object' },
           ],
@@ -471,7 +471,7 @@ value = counter()`,
       },
       {
         title: '<code>def inc()</code> creates a function that carries the cell',
-        desc: 'The inner function object is built during the outer call. Because its body mentions <code>count</code>, Python hands it a reference to the very same cell — not a copy of the value. From here on, one box has two users.',
+        desc: 'The inner function object is built during the outer call. Because its body mentions <code>count</code>, Python hands it a reference to that same cell, not a copy of the value. From here on, one box has two users.',
         lines: [4, 5, 6, 7],
         memory: {
           frames: [
@@ -484,18 +484,18 @@ value = counter()`,
           ],
           heap: [
             { id: 'makeCounterFn', pyId: ADDRS.makeCounterFn, type: 'function', value: 'make_counter()', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'cellCount', pyId: ADDRS.cellCount, type: 'dict', dictLabel: 'cell — one slot, holding count', refcount: 2, mutable: true, state: 'normal', pairs: [
+            { id: 'cellCount', pyId: ADDRS.cellCount, type: 'dict', dictLabel: 'cell: one slot, holding count', refcount: 2, mutable: true, state: 'normal', pairs: [
               { key: 'count', value: 0, type: 'int' },
-            ], note: 'refs went 1 → 2: the running call holds it, and now inc holds it too' },
+            ], note: 'refs went from 1 to 2: the running call holds it, and now inc holds it too' },
             { id: 'incFn', pyId: ADDRS.incFn, type: 'function', value: 'inc()', refcount: 1, mutable: false, state: 'new',
-              note: '__closure__ → the cell at ' + ADDRS.cellCount },
+              note: '__closure__ points at the cell at ' + ADDRS.cellCount },
           ],
           highlight: ['incFn', 'cellCount'],
         },
       },
       {
         title: '<code>return inc</code> hands back the function object',
-        desc: 'The outer function returns the inner function itself — the object, not a call to it. Nothing is copied: the same <code>inc</code> object on the heap is handed to the caller, cell and all.',
+        desc: 'The outer function returns the inner function itself, the object rather than a call to it. Nothing is copied. The same <code>inc</code> object on the heap is handed to the caller, cell and all.',
         lines: [9],
         memory: {
           frames: [
@@ -508,18 +508,18 @@ value = counter()`,
           ],
           heap: [
             { id: 'makeCounterFn', pyId: ADDRS.makeCounterFn, type: 'function', value: 'make_counter()', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'cellCount', pyId: ADDRS.cellCount, type: 'dict', dictLabel: 'cell — one slot, holding count', refcount: 2, mutable: true, state: 'normal', pairs: [
+            { id: 'cellCount', pyId: ADDRS.cellCount, type: 'dict', dictLabel: 'cell: one slot, holding count', refcount: 2, mutable: true, state: 'normal', pairs: [
               { key: 'count', value: 0, type: 'int' },
             ] },
             { id: 'incFn', pyId: ADDRS.incFn, type: 'function', value: 'inc()', refcount: 2, mutable: false, state: 'normal',
-              note: '__closure__ → the cell at ' + ADDRS.cellCount },
+              note: '__closure__ points at the cell at ' + ADDRS.cellCount },
           ],
           highlight: ['incFn'],
         },
       },
       {
-        title: 'The desk is cleared — the cell is not',
-        desc: 'The outer call is over, so <code>make_counter</code>\'s frame is removed completely. Nothing about it is kept alive. What survives is a separate object: the cell, held by the <code>inc</code> function object, which global name <code>counter</code> now points at.',
+        title: 'The desk is cleared. The cell is not',
+        desc: 'The outer call is over, so <code>make_counter</code>\'s frame is removed completely. Nothing about it is kept alive. What survives is a separate object: the cell, held by the <code>inc</code> function object, which the global name <code>counter</code> now points at.',
         lines: [11],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -528,18 +528,18 @@ value = counter()`,
           ]}],
           heap: [
             { id: 'makeCounterFn', pyId: ADDRS.makeCounterFn, type: 'function', value: 'make_counter()', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'cellCount', pyId: ADDRS.cellCount, type: 'dict', dictLabel: 'cell — one slot, holding count', refcount: 1, mutable: true, state: 'normal', pairs: [
+            { id: 'cellCount', pyId: ADDRS.cellCount, type: 'dict', dictLabel: 'cell: one slot, holding count', refcount: 1, mutable: true, state: 'normal', pairs: [
               { key: 'count', value: 0, type: 'int' },
             ], note: 'the desk is gone; only inc still holds this box, so refs dropped back to 1' },
             { id: 'incFn', pyId: ADDRS.incFn, type: 'function', value: 'inc()', refcount: 1, mutable: false, state: 'normal',
-              note: '__closure__ → the cell at ' + ADDRS.cellCount },
+              note: '__closure__ points at the cell at ' + ADDRS.cellCount },
           ],
           highlight: ['cellCount', 'incFn'],
         },
       },
       {
         title: '<code>counter()</code> writes through to the cell',
-        desc: 'Look at <code>inc()</code>\'s desk: it is empty. <code>inc</code> has no local <code>count</code> — that is exactly what <code>nonlocal count</code> buys you. Reading and writing <code>count</code> both go straight through to the cell, so <code>count + 1</code> repoints the cell\'s one slot at <code>1</code>.',
+        desc: 'Look at <code>inc()</code>\'s desk: it\'s empty. <code>inc</code> has no local <code>count</code>, and that is what <code>nonlocal count</code> buys you. Reading and writing <code>count</code> both go straight through to the cell, so <code>count + 1</code> points the cell\'s one slot at <code>1</code>.',
         lines: [12, 5, 6],
         memory: {
           frames: [
@@ -551,9 +551,9 @@ value = counter()`,
           ],
           heap: [
             { id: 'makeCounterFn', pyId: ADDRS.makeCounterFn, type: 'function', value: 'make_counter()', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'cellCount', pyId: ADDRS.cellCount, type: 'dict', dictLabel: 'cell — one slot, holding count', refcount: 1, mutable: true, state: 'mutated', pairs: [
+            { id: 'cellCount', pyId: ADDRS.cellCount, type: 'dict', dictLabel: 'cell: one slot, holding count', refcount: 1, mutable: true, state: 'mutated', pairs: [
               { key: 'count', value: 1, type: 'int' },
-            ], note: 'same box, same address — its one slot now points at 1' },
+            ], note: 'same box, same address, its one slot now points at 1' },
             { id: 'incFn', pyId: ADDRS.incFn, type: 'function', value: 'inc()', refcount: 1, mutable: false, state: 'normal' },
             { id: 'int1', pyId: ADDRS.int1, type: 'int', value: 1, refcount: '∞', mutable: false, state: 'new', note: CACHED_INT_NOTE },
           ],
@@ -561,8 +561,8 @@ value = counter()`,
         },
       },
       {
-        title: 'Summary — the state lives in the cell, not in a frame',
-        desc: 'The inner desk is cleared too, and <code>value</code> is bound to the object <code>inc</code> returned. Every frame this demo opened has been removed; the counter still works because its memory was never in a frame. That is a closure: a function object plus the cells it carries.',
+        title: 'Summary: the state lives in the cell, not in a frame',
+        desc: 'The inner desk is cleared too, and <code>value</code> is bound to the object <code>inc</code> returned. Every frame this demo opened has been removed, and the counter still works because its memory was never in a frame. That\'s a closure: a function object plus the cells it carries.',
         lines: [7, 12],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -572,11 +572,11 @@ value = counter()`,
           ]}],
           heap: [
             { id: 'makeCounterFn', pyId: ADDRS.makeCounterFn, type: 'function', value: 'make_counter()', refcount: 1, mutable: false, state: 'normal' },
-            { id: 'cellCount', pyId: ADDRS.cellCount, type: 'dict', dictLabel: 'cell — one slot, holding count', refcount: 1, mutable: true, state: 'normal', pairs: [
+            { id: 'cellCount', pyId: ADDRS.cellCount, type: 'dict', dictLabel: 'cell: one slot, holding count', refcount: 1, mutable: true, state: 'normal', pairs: [
               { key: 'count', value: 1, type: 'int' },
             ], note: 'call counter() again and this same box goes to 2' },
             { id: 'incFn', pyId: ADDRS.incFn, type: 'function', value: 'inc()', refcount: 1, mutable: false, state: 'normal',
-              note: '__closure__ → the cell at ' + ADDRS.cellCount },
+              note: '__closure__ points at the cell at ' + ADDRS.cellCount },
             { id: 'int1', pyId: ADDRS.int1, type: 'int', value: 1, refcount: '∞', mutable: false, state: 'normal' },
           ],
           highlight: ['cellCount', 'incFn'],
@@ -586,7 +586,7 @@ value = counter()`,
   },
 
   defaultArgs: {
-    watch: 'One shared list for <code>bag=[]</code>. Then watch <code>bag=None</code> build a brand-new list on every call.',
+    watch: 'One shared list for <code>bag=[]</code>. Then watch <code>bag=None</code> build a fresh list on every call.',
     code: `def add_item(item, bag=[]):
     bag.append(item)
     return bag
@@ -604,14 +604,14 @@ one = safe_add("x")
 two = safe_add("y")`,
     steps: [
       {
-        title: 'Initial state — nothing defined yet',
-        desc: 'Two versions of the same function are coming up. The first one has the classic bug; the second one is the habit to keep. Watch how many list objects each version creates.',
+        title: 'Initial state: nothing defined yet',
+        desc: 'Two versions of the same function are coming up. The first has the classic bug, the second is the habit to keep. Count how many list objects each version creates.',
         lines: [],
         memory: EMPTY_MEMORY,
       },
       {
         title: 'The default list is built once, at <code>def</code> time',
-        desc: 'Python evaluates <code>bag=[]</code> while it is building the function object — not on each call. That one empty list is stored on the function and handed out again and again.',
+        desc: 'Python evaluates <code>bag=[]</code> while it is building the function object, not on each call. That one empty list is stored on the function and handed out again and again.',
         lines: [1, 2, 3],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -620,14 +620,14 @@ two = safe_add("y")`,
           heap: [
             { id: 'addItemDef', pyId: ADDRS.addItemDef, type: 'function', value: 'add_item(item, bag=[])', refcount: 1, mutable: false, state: 'new' },
             { id: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', refcount: 1, mutable: true, state: 'new', items: [],
-              note: 'held by the function object — this is add_item.__defaults__[0]' },
+              note: 'held by the function object: this is add_item.__defaults__[0]' },
           ],
           highlight: ['defaultBag', 'addItemDef'],
         },
       },
       {
-        title: 'First call binds <code>bag</code> to that same list',
-        desc: '<code>add_item("a")</code> does not build a new list. The local name <code>bag</code> is bound to the list already sitting on the function, and <code>append</code> mutates it in place. Note the address — it is the one from the previous step.',
+        title: 'The first call binds <code>bag</code> to that same list',
+        desc: '<code>add_item("a")</code> doesn\'t build a new list. The local name <code>bag</code> is bound to the list already sitting on the function, and <code>append</code> mutates it in place. Check the address: it\'s the one from the previous step.',
         lines: [5, 2],
         memory: {
           frames: [
@@ -667,8 +667,8 @@ two = safe_add("y")`,
         },
       },
       {
-        title: 'Second call appends to the <em>same</em> list',
-        desc: '<code>add_item("b")</code> does not start from <code>[]</code>. It reaches for the same stored list, which already holds <code>"a"</code>. That is why <code>second</code> is <code>["a", "b"]</code> — and why <code>first</code> is too. There is only one list here, wearing three names.',
+        title: 'The second call appends to the <em>same</em> list',
+        desc: '<code>add_item("b")</code> doesn\'t start from <code>[]</code>. It reaches for the same stored list, which already holds <code>"a"</code>. That\'s why <code>second</code> is <code>["a", "b"]</code>, and why <code>first</code> is too. There\'s only one list here, wearing three names.',
         lines: [6, 2],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -688,7 +688,7 @@ two = safe_add("y")`,
       },
       {
         title: 'The cure: <code>def safe_add(item, bag=None)</code>',
-        desc: 'Same idea, one change. The default is now <code>None</code> — a single immutable object with nothing to mutate. Nothing gets stored on this function that a later call could grow.',
+        desc: 'Same idea, one change. The default is now <code>None</code>, a single immutable object with nothing to mutate. Nothing gets stored on this function that a later call could grow.',
         lines: [8, 9, 10, 11, 12],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -704,14 +704,14 @@ two = safe_add("y")`,
               { value: 'b', type: 'str' },
             ] },
             { id: 'safeAddFn', pyId: ADDRS.safeAddFn, type: 'function', value: 'safe_add(item, bag=None)', refcount: 1, mutable: false, state: 'new',
-              note: 'safe_add.__defaults__ is (None,) — no list attached' },
+              note: 'safe_add.__defaults__ is (None,), no list attached' },
           ],
           highlight: ['safeAddFn'],
         },
       },
       {
         title: '<code>safe_add("x")</code> builds a list inside the call',
-        desc: 'Here is the difference, on screen. <code>bag</code> arrives as <code>None</code>, the <code>if</code> is true, and line 10 runs <code>bag = []</code> — a brand-new list object at a brand-new address, belonging to this call alone.',
+        desc: 'Here\'s the difference, on screen. <code>bag</code> arrives as <code>None</code>, the <code>if</code> is true, and line 10 runs <code>bag = []</code>: a brand-new list object at a brand-new address, belonging to this call alone.',
         lines: [14, 9, 10, 11],
         memory: {
           frames: [
@@ -735,14 +735,14 @@ two = safe_add("y")`,
             { id: 'safeAddFn', pyId: ADDRS.safeAddFn, type: 'function', value: 'safe_add(item, bag=None)', refcount: 1, mutable: false, state: 'normal' },
             { id: 'freshBag1', pyId: ADDRS.freshBag1, type: 'list', refcount: 1, mutable: true, state: 'new', items: [
               { value: 'x', type: 'str' },
-            ], note: 'created by line 10, on this call — nothing on the function points here' },
+            ], note: 'created by line 10, on this call. Nothing on the function points here' },
           ],
           highlight: ['freshBag1'],
         },
       },
       {
-        title: 'Summary — one shared list, versus a fresh one per call',
-        desc: '<code>safe_add("y")</code> runs line 10 again and gets a <em>second</em>, different list. Count the addresses: <code>first</code> and <code>second</code> are one object that keeps growing, while <code>one</code> and <code>two</code> are two separate objects. The rule behind both halves is the same — <code>def</code> runs its defaults once, so never let a mutable object be one.',
+        title: 'Summary: one shared list, or a fresh one per call',
+        desc: '<code>safe_add("y")</code> runs line 10 again and gets a <em>second</em>, different list. Count the addresses. <code>first</code> and <code>second</code> are one object that keeps growing, while <code>one</code> and <code>two</code> are two separate objects. The rule behind both halves is the same: <code>def</code> runs its defaults once, so never let a mutable object be one.',
         lines: [15, 10],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -758,7 +758,7 @@ two = safe_add("y")`,
             { id: 'defaultBag', pyId: ADDRS.defaultBag, type: 'list', refcount: 3, mutable: true, state: 'normal', items: [
               { value: 'a', type: 'str' },
               { value: 'b', type: 'str' },
-            ], note: 'one object — first, second and the stored default' },
+            ], note: 'one object: first, second and the stored default' },
             { id: 'safeAddFn', pyId: ADDRS.safeAddFn, type: 'function', value: 'safe_add(item, bag=None)', refcount: 1, mutable: false, state: 'normal' },
             { id: 'freshBag1', pyId: ADDRS.freshBag1, type: 'list', refcount: 1, mutable: true, state: 'normal', items: [
               { value: 'x', type: 'str' },
@@ -775,7 +775,7 @@ two = safe_add("y")`,
 };
 
 
-/* ── Boot ─────────────────────────────────────────────────── */
+/* Boot */
 document.addEventListener('DOMContentLoaded', () => {
   PJ.Session.mount({
     sessionId: '02-functions',

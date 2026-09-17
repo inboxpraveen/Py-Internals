@@ -3,16 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Py Internals — Learn Python from the Inside Out</title>
-  <meta name="description" content="An open-source, interactive Python course. See what Python actually does with your code — names, objects, frames, references and garbage collection, visualized step by step." />
+  <title>Py Internals: Learn How Python Really Works, Visually</title>
+  <meta name="description" content="A free, open-source Python course that shows what your code does in memory. Step through names, frames, references, classes, generators, the GIL and exceptions." />
   <meta name="theme-color" content="#1A6B5C" />
-  <link rel="canonical" href="https://inboxpraveen.github.io/Py-Internals/" />
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="Py Internals — Learn Python from the Inside Out" />
-  <meta property="og:description" content="An open-source, interactive Python course. Watch names bind, refcounts move, and frames come and go — one step at a time." />
-  <meta property="og:url" content="https://inboxpraveen.github.io/Py-Internals/" />
-  <meta property="og:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/Py-Internals.png" />
-  <meta name="twitter:card" content="summary_large_image" />
 
   <!-- CSS -->
   <link rel="icon" type="image/png" href="assets/images/Python-logo.png" />
@@ -407,6 +400,209 @@
       .feature-strip { gap: var(--sp-5); }
     }
   </style>
+  <!-- seo:head -->
+  <link rel="canonical" href="https://inboxpraveen.github.io/Py-Internals/" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Praveen Kumar" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Py Internals" />
+  <meta property="og:locale" content="en_GB" />
+  <meta property="og:url" content="https://inboxpraveen.github.io/Py-Internals/" />
+  <meta property="og:title" content="Py Internals: Learn Python from the Inside Out" />
+  <meta property="og:description" content="A free, open-source Python course that shows what your code does in memory. Step through names, frames, references, classes, generators, the GIL and exceptions." />
+  <meta property="og:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/home.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Py Internals: Learn Python from the Inside Out on Py Internals" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Py Internals: Learn Python from the Inside Out" />
+  <meta name="twitter:description" content="A free, open-source Python course that shows what your code does in memory. Step through names, frames, references, classes, generators, the GIL and exceptions." />
+  <meta name="twitter:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/home.png" />
+  <link rel="alternate" type="application/atom+xml" title="Py Internals sessions" href="https://inboxpraveen.github.io/Py-Internals/feed.xml" />
+  <link rel="manifest" href="https://inboxpraveen.github.io/Py-Internals/manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" />
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Course",
+      "@id": "https://inboxpraveen.github.io/Py-Internals/#course",
+      "name": "Py Internals: Learn Python from the Inside Out",
+      "description": "A free, open-source Python course that shows what your code does in memory. Step through names, frames, references, classes, generators, the GIL and exceptions.",
+      "url": "https://inboxpraveen.github.io/Py-Internals/",
+      "image": "https://inboxpraveen.github.io/Py-Internals/assets/images/og/home.png",
+      "provider": {
+        "@type": "Organization",
+        "name": "Py Internals",
+        "url": "https://inboxpraveen.github.io/Py-Internals/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://inboxpraveen.github.io/Py-Internals/assets/images/Python-logo.png",
+          "width": 1024,
+          "height": 1024
+        },
+        "sameAs": [
+          "https://github.com/inboxpraveen/Py-Internals"
+        ]
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Praveen Kumar",
+        "url": "https://github.com/inboxpraveen"
+      },
+      "inLanguage": "en",
+      "isAccessibleForFree": true,
+      "license": "https://github.com/inboxpraveen/Py-Internals/blob/main/LICENSE",
+      "datePublished": "2026-03-23",
+      "dateModified": "2026-09-17",
+      "educationalLevel": "Beginner",
+      "about": [
+        "Python (programming language)",
+        "CPython internals",
+        "memory model"
+      ],
+      "keywords": "python, python internals, memory model, reference counting, closures, decorators, generators, GIL, exceptions",
+      "teaches": [
+        "Python variables as names bound to objects",
+        "id() and object identity",
+        "aliasing",
+        "mutation versus rebinding",
+        "reference counting and garbage collection",
+        "mutable and immutable types",
+        "function objects",
+        "call frames and the call stack",
+        "local and global scope",
+        "LEGB name lookup",
+        "argument passing by object reference",
+        "closures and cells",
+        "mutable default arguments",
+        "containers hold references",
+        "list and dict aliasing",
+        "shallow copy versus deep copy",
+        "nested container mutation",
+        "function side effects on containers",
+        "hashable keys",
+        "what self is",
+        "instance __dict__ and class namespace",
+        "attribute lookup order",
+        "bound methods",
+        "class attributes versus instance attributes",
+        "__new__ and __init__",
+        "inheritance and the MRO",
+        "the iterator protocol",
+        "iter and next",
+        "StopIteration",
+        "generators and yield",
+        "suspended frames",
+        "lazy versus eager evaluation",
+        "decorators as f = deco(f)",
+        "wrapper functions",
+        "closure cells",
+        "functools.wraps and __wrapped__",
+        "decorator factories",
+        "stacking decorators",
+        "the Global Interpreter Lock",
+        "thread switching and the switch interval",
+        "race conditions",
+        "threading.Lock",
+        "I/O-bound versus CPU-bound work",
+        "multiprocessing",
+        "asyncio and the event loop",
+        "free-threaded Python",
+        "raise and stack unwinding",
+        "reading a traceback",
+        "try, except, else and finally",
+        "exception hierarchy",
+        "context managers and the with statement",
+        "__enter__ and __exit__",
+        "exception chaining with raise from"
+      ],
+      "offers": [
+        {
+          "@type": "Offer",
+          "category": "Free",
+          "price": 0,
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock"
+        }
+      ],
+      "hasCourseInstance": [
+        {
+          "@type": "CourseInstance",
+          "courseMode": "online",
+          "courseWorkload": "PT5H"
+        }
+      ],
+      "hasPart": [
+        {
+          "@type": "LearningResource",
+          "name": "Session 01: Variables & Mutability",
+          "url": "https://inboxpraveen.github.io/Py-Internals/sessions/01-variables/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Session 02: Functions, Scope & the Call Stack",
+          "url": "https://inboxpraveen.github.io/Py-Internals/sessions/02-functions/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Session 03: Lists, Dicts & References",
+          "url": "https://inboxpraveen.github.io/Py-Internals/sessions/03-lists-dicts/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Session 04: Classes & Objects",
+          "url": "https://inboxpraveen.github.io/Py-Internals/sessions/04-classes/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Session 05: Iterators & Generators",
+          "url": "https://inboxpraveen.github.io/Py-Internals/sessions/05-iterators/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Session 06: Decorators",
+          "url": "https://inboxpraveen.github.io/Py-Internals/sessions/06-decorators/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Session 07: The GIL & Concurrency",
+          "url": "https://inboxpraveen.github.io/Py-Internals/sessions/07-gil/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Session 08: Exceptions, Tracebacks & Context Managers",
+          "url": "https://inboxpraveen.github.io/Py-Internals/sessions/08-exceptions/"
+        }
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "name": "Py Internals",
+      "url": "https://inboxpraveen.github.io/Py-Internals/",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Py Internals",
+        "url": "https://inboxpraveen.github.io/Py-Internals/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://inboxpraveen.github.io/Py-Internals/assets/images/Python-logo.png",
+          "width": 1024,
+          "height": 1024
+        },
+        "sameAs": [
+          "https://github.com/inboxpraveen/Py-Internals"
+        ]
+      },
+      "inLanguage": "en"
+    }
+  ]
+}
+  </script>
+  <!-- /seo:head -->
 </head>
 <body>
 
@@ -443,9 +639,7 @@
       Learn Python the way it <em>actually</em> works
     </h1>
     <p class="home-hero__lead animate-fade-up delay-2">
-      Not just syntax — <strong>memory, reasoning, and mental models.</strong>
-      Every concept visualized. Every question answered.
-      Python from first principles.
+      Not just syntax, but <strong>memory, reasoning and mental models.</strong> Every concept is drawn out, every question gets answered, and it all starts from first principles.
     </p>
     <div class="home-hero__cta animate-fade-up delay-3">
       <a href="sessions/01-variables/index.html" class="btn btn--primary btn--lg" id="startCta">
@@ -463,7 +657,7 @@
   <div class="feature-strip">
     <div class="feature-strip__item">
       <span class="feature-strip__icon">🧠</span>
-      Memory model visualized
+      Memory model visualised
     </div>
     <div class="feature-strip__item">
       <span class="feature-strip__icon">▶</span>
@@ -485,22 +679,22 @@
 
   <section class="howto-section" id="how-to-learn">
     <h2>How to learn here</h2>
-    <p>The course is built so you can see Python's memory, then name what just happened.</p>
+    <p>The course is built so you can see what happens in memory first, then put a name to it.</p>
     <div class="howto-grid">
       <div class="howto-card">
         <div class="howto-card__num">01</div>
         <h3>Step the animation</h3>
-        <p>Use <kbd>→</kbd> and <kbd>←</kbd>, or Play. <kbd>Space</kbd> pauses. <kbd>R</kbd> resets. Watch which object appears, which name rebinds, and whether a refcount changes.</p>
+        <p>Use <kbd>→</kbd> and <kbd>←</kbd>, or press Play. <kbd>Space</kbd> pauses and <kbd>R</kbd> resets. Watch which object appears, which name rebinds, and whether a refcount changes.</p>
       </div>
       <div class="howto-card">
         <div class="howto-card__num">02</div>
         <h3>Read the model</h3>
-        <p>The narrative under each lab puts the same picture into words: names, objects, frames, and references — not syntax trivia.</p>
+        <p>The narrative under each lab puts the same picture into words: names, objects, frames and references, not syntax trivia.</p>
       </div>
       <div class="howto-card">
         <div class="howto-card__num">03</div>
         <h3>Check yourself</h3>
-        <p>Every session ends with a short quiz. If an answer surprises you, rewind the demo. The <a href="glossary.html" style="color:var(--clr-accent)">glossary</a> is there when a term is fuzzy.</p>
+        <p>Every session ends with a short quiz. If an answer surprises you, rewind the demo. The <a href="glossary.html" style="color:var(--clr-accent)">glossary</a> is there whenever a term feels fuzzy.</p>
       </div>
     </div>
     <div class="course-path" aria-label="How the live sessions connect">
@@ -522,7 +716,7 @@
       <a class="course-path__step" href="sessions/04-classes/">
         <div class="course-path__num">04</div>
         <div class="course-path__title">Objects</div>
-        <div class="course-path__idea">Data on the instance, behavior on the class.</div>
+        <div class="course-path__idea">Data on the instance, behaviour on the class.</div>
       </a>
       <a class="course-path__step" href="sessions/05-iterators/">
         <div class="course-path__num">05</div>
@@ -550,7 +744,7 @@
   <!-- Sessions -->
   <section class="sessions-grid" id="sessions">
     <h2 class="sessions-grid__title">Course Sessions</h2>
-    <p class="sessions-grid__subtitle">Each session builds on the last. Watch the memory, read the model, then check your understanding.</p>
+    <p class="sessions-grid__subtitle">Each session builds on the last. Watch the memory, read the model, then check that it stuck.</p>
 
     <!-- Session 01 -->
     <a href="sessions/01-variables/" class="session-card animate-fade-up" data-session="01-variables">
@@ -558,8 +752,7 @@
       <div class="session-card__body">
         <div class="session-card__title">Variables & Mutability</div>
         <div class="session-card__desc">
-          What is a variable really? What happens in memory when you write <code>x = 5</code>?
-          Why can you change a list but not a string? Understand Python's object model from the ground up.
+          What is a variable, really? What happens in memory when you write <code>x = 5</code>? Why can you change a list but not a string? This is Python's object model from the ground up.
         </div>
         <div class="session-card__tags">
           <span class="session-card__tag">int</span>
@@ -741,10 +934,7 @@
         <div class="philosophy-point__num">01</div>
         <div class="philosophy-point__title">Most courses teach syntax. This one teaches <em>understanding</em>.</div>
         <div class="philosophy-point__text">
-          You can memorize <code>list.append()</code> in five minutes.
-          But do you know <em>why</em> lists are mutable and strings aren't?
-          What actually happens in RAM when you write <code>x = x + 1</code>?
-          That's what we care about.
+          You can memorise <code>list.append()</code> in five minutes. But do you know <em>why</em> lists are mutable and strings aren't? What actually happens in memory when you write <code>x = x + 1</code>? That's what this course is about.
         </div>
       </div>
 
@@ -752,9 +942,7 @@
         <div class="philosophy-point__num">02</div>
         <div class="philosophy-point__title">Animations over slides.</div>
         <div class="philosophy-point__text">
-          Every concept is animated. You watch the variable bind to an object.
-          You see the reference count tick up. You watch the garbage collector sweep.
-          You can pause, rewind, and go at your own speed.
+          Every concept is animated. You watch the variable bind to an object, see the reference count tick up, and watch the garbage collector sweep. You can pause, rewind, and go at your own speed.
         </div>
       </div>
 
@@ -762,9 +950,7 @@
         <div class="philosophy-point__num">03</div>
         <div class="philosophy-point__title">Open source. Always free. No account needed.</div>
         <div class="philosophy-point__text">
-          Hosted on GitHub Pages. Fork it, extend it, translate it.
-          The license lets you use the visuals and content freely
-          — just give credit.
+          Hosted on GitHub Pages. Fork it, extend it, translate it. The license lets you use the visuals and content freely, as long as you give credit.
         </div>
       </div>
 
@@ -772,9 +958,7 @@
         <div class="philosophy-point__num">04</div>
         <div class="philosophy-point__title">Mobile-first, no install.</div>
         <div class="philosophy-point__text">
-          Pure HTML, CSS, and JavaScript. No build tools, no Node, no backend.
-          Works offline after first load. Open on your phone on the bus.
-          Close. Come back. It remembers where you were.
+          Pure HTML, CSS and JavaScript. No build tools, no Node, no backend. It works offline after the first load, so you can open it on your phone on the bus, close it, and come back later. It remembers where you were.
         </div>
       </div>
     </div>
@@ -783,7 +967,7 @@
 </main>
 
 <footer class="footer">
-  Py Internals — Open Source Interactive Python Course<br>
+  Py Internals, an open source interactive Python course<br>
   Created with care. Licensed under
   <a href="LICENSE">PI Community License</a>.
   <a href="glossary.html">Glossary</a>.

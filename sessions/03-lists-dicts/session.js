@@ -1,5 +1,5 @@
 /* ============================================================
-   SESSION 03 - Lists, Dicts & References
+   SESSION 03: Lists, Dicts & References
    Demos: list aliases, shallow copies, function mutation, dict references
    ============================================================ */
 
@@ -49,8 +49,8 @@ print(nums)
 print(nums is same)`,
     steps: [
       {
-        title: 'Initial state - no names, no list yet',
-        desc: 'This demo focuses on one question: when two names point to one list, what exactly changes when the list is edited?',
+        title: 'Initial state: no names, no list yet',
+        desc: 'This demo is about one question: when two names point to one list, what changes when the list is edited?',
         lines: [],
         memory: EMPTY_MEMORY,
       },
@@ -73,7 +73,7 @@ print(nums is same)`,
       },
       {
         title: '<code>same = nums</code> adds another name, not another list',
-        desc: 'Assignment copies the reference. It does not duplicate the list. Now <code>nums</code> and <code>same</code> point to the exact same heap object, so the list refcount rises to 2.',
+        desc: 'Assignment copies the reference. It doesn\'t duplicate the list. Now <code>nums</code> and <code>same</code> point to the same heap object, so the list\'s refcount rises to 2.',
         lines: [2],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -91,7 +91,7 @@ print(nums is same)`,
       },
       {
         title: '<code>nums.append(30)</code> mutates the shared object',
-        desc: '<code>append</code> changes the existing list in-place. The list address stays <code>' + ADDRS.numsList + '</code>. Because both names point there, both names see the new element.',
+        desc: '<code>append</code> changes the existing list in place. The list\'s address stays <code>0x7f530010</code>, and because both names point there, both names see the new element.',
         lines: [4],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -110,7 +110,7 @@ print(nums is same)`,
       },
       {
         title: '<code>same[0] = 99</code> mutates through the other name',
-        desc: 'Index assignment changes a slot inside the same list object. The name used for the mutation does not matter. <code>same</code> and <code>nums</code> are two paths to one object.',
+        desc: 'Index assignment changes a slot inside the same list object. It doesn\'t matter which name you used for the mutation. <code>same</code> and <code>nums</code> are two paths to one object.',
         lines: [5],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -129,7 +129,7 @@ print(nums is same)`,
       },
       {
         title: '<code>nums is same</code> is <code>True</code>',
-        desc: 'The final print shows <code>[99, 20, 30]</code>, and identity comparison confirms the mental model: one list object, two names, all mutations visible through both names.',
+        desc: 'The final print shows <code>[99, 20, 30]</code>, and the identity check confirms the picture: one list object, two names, and every mutation visible through both.',
         lines: [7, 8],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -150,7 +150,7 @@ print(nums is same)`,
   },
 
   shallowCopy: {
-    watch: 'The outer list is new. Nested objects keep the same address — that is what “shallow” means.',
+    watch: 'The outer list is new. The nested objects keep the same address, and that is what "shallow" means.',
     code: `original = [[1], [2]]
 shallow = original.copy()
 
@@ -161,8 +161,8 @@ print(original)
 print(shallow)`,
     steps: [
       {
-        title: 'Initial state - shallow copy means one level only',
-        desc: 'A shallow copy creates a new outer container, but it keeps references to the same inner objects. That single sentence explains many nested-list surprises.',
+        title: 'Initial state: a shallow copy goes one level deep',
+        desc: 'A shallow copy creates a new outer container but keeps references to the same inner objects. That one sentence explains most nested-list surprises.',
         lines: [],
         memory: EMPTY_MEMORY,
       },
@@ -265,8 +265,8 @@ print(shallow)`,
         },
       },
       {
-        title: 'Summary - shallow copies separate the container, not the contents',
-        desc: '<code>original</code> prints as <code>[[1, 99], [2]]</code> and <code>shallow</code> as <code>[[1, 99], [2], [3]]</code>. Two outer lists, one shared inner list. When you truly need independent nested objects, reach for the <code>copy</code> module: <code>copy.deepcopy(original)</code>. Demo 5 walks through it.',
+        title: 'Summary: a shallow copy separates the container, not the contents',
+        desc: '<code>original</code> prints as <code>[[1, 99], [2]]</code> and <code>shallow</code> as <code>[[1, 99], [2], [3]]</code>. Two outer lists, one shared inner list. When you really need independent nested objects, use the <code>copy</code> module: <code>copy.deepcopy(original)</code>. Demo 5 walks through it.',
         lines: [7, 8],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -310,8 +310,8 @@ print(book)
 print(new_book)`,
     steps: [
       {
-        title: 'Initial state - function arguments bind names to objects',
-        desc: 'This demo combines session 2 with containers: passing a dict to a function binds the parameter name to the same dict object the caller passed.',
+        title: 'Initial state: arguments bind names to objects',
+        desc: 'This demo joins Session 02 up with containers. Passing a dict to a function binds the parameter name to the same dict object the caller passed.',
         lines: [],
         memory: EMPTY_MEMORY,
       },
@@ -349,8 +349,8 @@ print(new_book)`,
         },
       },
       {
-        title: '<code>add_score(book)</code> creates a frame; <code>scores</code> points to <code>book</code>',
-        desc: 'No dictionary is copied. Global name <code>book</code> and local parameter <code>scores</code> point to the same dict object.',
+        title: '<code>add_score(book)</code> creates a frame, and <code>scores</code> points at <code>book</code>',
+        desc: 'No dictionary is copied. The global name <code>book</code> and the local parameter <code>scores</code> point to the same dict object.',
         lines: [7],
         memory: {
           frames: [
@@ -374,7 +374,7 @@ print(new_book)`,
       },
       {
         title: '<code>scores["math"].append(95)</code> mutates the caller-visible list',
-        desc: 'Python looks up <code>"math"</code>, finds the list object, then appends to that list. Since the list is inside the same dict object <code>book</code> uses, the caller will see the score.',
+        desc: 'Python looks up <code>"math"</code>, finds the list object, then appends to that list. The list sits inside the same dict object <code>book</code> uses, so the caller will see the score.',
         lines: [2],
         memory: {
           frames: [
@@ -398,7 +398,7 @@ print(new_book)`,
       },
       {
         title: '<code>scores = {"math": []}</code> rebinds only the local name',
-        desc: 'This line does not replace <code>book</code>. It makes the local name <code>scores</code> point to a new dict. The original <code>book</code> still points to the old dict containing <code>[95]</code>.',
+        desc: 'This line doesn\'t replace <code>book</code>. It makes the local name <code>scores</code> point to a new dict. The original <code>book</code> still points to the old dict, which now contains <code>[95]</code>.',
         lines: [3],
         memory: {
           frames: [
@@ -426,7 +426,7 @@ print(new_book)`,
       },
       {
         title: '<code>return scores</code> hands back the new dict',
-        desc: 'The frame is gone, so the local name <code>scores</code> is gone with it. What travelled out is the object it pointed to at return time: the new empty dict, now also named <code>new_book</code> in the caller.',
+        desc: 'The frame is gone, and the local name <code>scores</code> is gone with it. What travelled out is the object it pointed to at return time: the new, empty dict, which the caller now calls <code>new_book</code>.',
         lines: [4],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -449,7 +449,7 @@ print(new_book)`,
         },
       },
       {
-        title: 'Summary - the mutation travelled, the rebinding did not',
+        title: 'Summary: the mutation travelled, the rebinding did not',
         desc: 'Two dicts, two outcomes. <code>print(book)</code> shows <code>{\'math\': [95]}</code> because the append changed the object the caller still holds. <code>print(new_book)</code> shows <code>{\'math\': []}</code> because <code>scores = {...}</code> only moved a local name onto a brand-new dict.',
         lines: [9, 10],
         memory: {
@@ -487,8 +487,8 @@ print(profile)
 print(alias is profile)`,
     steps: [
       {
-        title: 'Initial state - dicts are mutable containers of references',
-        desc: 'A dictionary stores key-value associations. At the Python level, keys and values are objects, and the dict keeps references to them.',
+        title: 'Initial state: a dict is a mutable container of references',
+        desc: 'A dictionary stores key-value pairs. At the Python level the keys and values are objects, and the dict keeps references to them.',
         lines: [],
         memory: EMPTY_MEMORY,
       },
@@ -514,7 +514,7 @@ print(alias is profile)`,
       },
       {
         title: '<code>alias = profile</code> shares the dict',
-        desc: 'Like lists, dictionaries are not copied by assignment. <code>alias</code> becomes a second name for the same dict object.',
+        desc: 'Like lists, dictionaries aren\'t copied by assignment. <code>alias</code> becomes a second name for the same dict object.',
         lines: [2],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -535,7 +535,7 @@ print(alias is profile)`,
       },
       {
         title: '<code>profile["skills"].append("debugging")</code> mutates the nested list',
-        desc: 'Python first retrieves the list stored under <code>"skills"</code>, then mutates that list. The dict still points to the same list object, but the list contents changed.',
+        desc: 'Python first fetches the list stored under <code>"skills"</code>, then mutates it. The dict still points to the same list object, but the list\'s contents have changed.',
         lines: [4],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -557,7 +557,7 @@ print(alias is profile)`,
       },
       {
         title: '<code>alias["city"] = "London"</code> mutates the shared dict',
-        desc: 'Adding a key-value pair changes the dict object itself. Since <code>alias</code> and <code>profile</code> are the same dict, both names see the new <code>"city"</code> key.',
+        desc: 'Adding a key-value pair changes the dict object itself. <code>alias</code> and <code>profile</code> are the same dict, so both names see the new <code>"city"</code> key.',
         lines: [5],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -580,7 +580,7 @@ print(alias is profile)`,
       },
       {
         title: '<code>alias is profile</code> is <code>True</code>',
-        desc: 'The final state confirms the rule: dictionary mutation through any alias updates the one shared dictionary. To avoid sharing, make an explicit copy and remember that <code>dict.copy()</code> is shallow.',
+        desc: 'The final state confirms the rule: a dictionary mutation through any alias updates the one shared dictionary. To avoid sharing, make a copy on purpose, and remember that <code>dict.copy()</code> is shallow.',
         lines: [7, 8],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -605,7 +605,7 @@ print(alias is profile)`,
   },
 
   deepCopy: {
-    watch: 'Nested objects get new addresses. Independence costs a full walk of the tree.',
+    watch: 'The nested objects get new addresses. Independence costs a full walk of the tree.',
     code: `import copy
 original = [[1]]
 shallow = original.copy()
@@ -615,14 +615,14 @@ original[0].append(2)
 print(original, shallow, deep)`,
     steps: [
       {
-        title: 'Initial state - nothing allocated yet',
+        title: 'Initial state: nothing allocated yet',
         desc: 'One question drives this demo: which of the three names survives a change to the original? Nothing exists yet, so we start from an empty namespace and an empty heap.',
         lines: [],
         memory: EMPTY_MEMORY,
       },
       {
         title: '<code>original = [[1]]</code> creates two list objects, not one',
-        desc: 'Line 1 pulls in the standard-library <code>copy</code> module for later. Line 2 builds the data: an outer list whose single slot points at an inner list. Two containers, two addresses - that is the whole reason copying has a depth at all.',
+        desc: 'Line 1 pulls in the standard-library <code>copy</code> module for later. Line 2 builds the data: an outer list whose single slot points at an inner list. Two containers, two addresses, and that is the whole reason copying has a depth at all.',
         lines: [1, 2],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -641,7 +641,7 @@ print(original, shallow, deep)`,
       },
       {
         title: '<code>original.copy()</code> shares the inner list',
-        desc: 'A new outer list appears. Its slot still points at the same inner list. This is the shallow-copy rule from demo 2, and the inner list refcount rising to 2 is the visible proof.',
+        desc: 'A new outer list appears. Its slot still points at the same inner list. This is the shallow-copy rule from demo 2, and the inner list\'s refcount rising to 2 is the proof.',
         lines: [3],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -694,7 +694,7 @@ print(original, shallow, deep)`,
       },
       {
         title: 'Mutating the original inner list leaves <code>deep</code> alone',
-        desc: '<code>original[0].append(2)</code> changes the shared inner list at <code>' + ADDRS.deepInner + '</code>, so <code>shallow</code> sees the <code>2</code> as well - it was pointing there all along. <code>deep</code> still holds <code>[1]</code>, because its inner list is a different object at <code>' + ADDRS.deepCopyInner + '</code>.',
+        desc: '<code>original[0].append(2)</code> changes the shared inner list at <code>0x7f5a1010</code>, so <code>shallow</code> sees the <code>2</code> as well. It was pointing there all along. <code>deep</code> still holds <code>[1]</code>, because its inner list is a different object at <code>0x7f5a4010</code>.',
         lines: [5],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -724,8 +724,8 @@ print(original, shallow, deep)`,
         },
       },
       {
-        title: 'Summary - only the deep copy is independent',
-        desc: 'The print gives <code>[[1, 2]] [[1, 2]] [[1]]</code>. Three outer lists, but only two inner lists: <code>original</code> and <code>shallow</code> still share one, and <code>deep</code> owns its own. Depth of copy is a choice, and this line is where you find out which one you made.',
+        title: 'Summary: only the deep copy is independent',
+        desc: 'The print gives <code>[[1, 2]] [[1, 2]] [[1]]</code>. Three outer lists but only two inner lists: <code>original</code> and <code>shallow</code> still share one, and <code>deep</code> owns its own. How deep a copy goes is a choice, and this line is where you find out which one you made.',
         lines: [7],
         memory: {
           frames: [{ name: 'global', vars: [
@@ -759,7 +759,7 @@ print(original, shallow, deep)`,
 };
 
 
-/* ── Boot ─────────────────────────────────────────────────── */
+/* Boot */
 document.addEventListener('DOMContentLoaded', () => {
   PJ.Session.mount({
     sessionId: '03-lists-dicts',

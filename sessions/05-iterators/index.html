@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Session 05: Iterators & Generators — Py Internals</title>
-  <meta name="description" content="See how Python for-loops, iterators, yield, and lazy evaluation work in memory." />
+  <title>Python Iterators and Generators: iter, next and yield</title>
+  <meta name="description" content="How a for loop uses iter and next, what StopIteration does, how yield pauses a frame and what lazy evaluation costs in memory compared with a list." />
   <meta name="theme-color" content="#1A6B5C" />
   <link rel="icon" type="image/png" href="../../assets/images/Python-logo.png" />
   <link rel="apple-touch-icon" href="../../assets/images/Python-logo.png" />
@@ -14,6 +14,116 @@
   <link rel="stylesheet" href="../../assets/css/memory-viz.css" />
   <link rel="stylesheet" href="../../assets/css/animations.css" />
   <link rel="stylesheet" href="../../assets/css/session.css" />
+  <!-- seo:head -->
+  <link rel="canonical" href="https://inboxpraveen.github.io/Py-Internals/sessions/05-iterators/" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Praveen Kumar" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="Py Internals" />
+  <meta property="og:locale" content="en_GB" />
+  <meta property="og:url" content="https://inboxpraveen.github.io/Py-Internals/sessions/05-iterators/" />
+  <meta property="og:title" content="Python Iterators and Generators: iter, next and yield" />
+  <meta property="og:description" content="How a for loop uses iter and next, what StopIteration does, how yield pauses a frame and what lazy evaluation costs in memory compared with a list." />
+  <meta property="og:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/05-iterators.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Python Iterators and Generators: iter, next and yield on Py Internals" />
+  <meta property="article:published_time" content="2026-08-15" />
+  <meta property="article:modified_time" content="2026-09-17" />
+  <meta property="article:section" content="Control flow" />
+  <meta property="article:author" content="https://github.com/inboxpraveen" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Python Iterators and Generators: iter, next and yield" />
+  <meta name="twitter:description" content="How a for loop uses iter and next, what StopIteration does, how yield pauses a frame and what lazy evaluation costs in memory compared with a list." />
+  <meta name="twitter:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/05-iterators.png" />
+  <link rel="alternate" type="application/atom+xml" title="Py Internals sessions" href="https://inboxpraveen.github.io/Py-Internals/feed.xml" />
+  <link rel="manifest" href="https://inboxpraveen.github.io/Py-Internals/manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" />
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": [
+        "Article",
+        "LearningResource"
+      ],
+      "@id": "https://inboxpraveen.github.io/Py-Internals/sessions/05-iterators/#lesson",
+      "mainEntityOfPage": "https://inboxpraveen.github.io/Py-Internals/sessions/05-iterators/",
+      "headline": "Session 05: Iterators & Generators",
+      "name": "Session 05: Iterators & Generators",
+      "description": "How a for loop uses iter and next, what StopIteration does, how yield pauses a frame and what lazy evaluation costs in memory compared with a list.",
+      "image": "https://inboxpraveen.github.io/Py-Internals/assets/images/og/05-iterators.png",
+      "author": {
+        "@type": "Person",
+        "name": "Praveen Kumar",
+        "url": "https://github.com/inboxpraveen"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Py Internals",
+        "url": "https://inboxpraveen.github.io/Py-Internals/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://inboxpraveen.github.io/Py-Internals/assets/images/Python-logo.png",
+          "width": 1024,
+          "height": 1024
+        },
+        "sameAs": [
+          "https://github.com/inboxpraveen/Py-Internals"
+        ]
+      },
+      "datePublished": "2026-08-15",
+      "dateModified": "2026-09-17",
+      "inLanguage": "en",
+      "isAccessibleForFree": true,
+      "license": "https://github.com/inboxpraveen/Py-Internals/blob/main/LICENSE",
+      "isPartOf": {
+        "@type": "Course",
+        "@id": "https://inboxpraveen.github.io/Py-Internals/#course",
+        "name": "Py Internals",
+        "url": "https://inboxpraveen.github.io/Py-Internals/"
+      },
+      "position": 5,
+      "learningResourceType": "Interactive lesson",
+      "educationalLevel": "Beginner",
+      "timeRequired": "PT35M",
+      "teaches": [
+        "the iterator protocol",
+        "iter and next",
+        "StopIteration",
+        "generators and yield",
+        "suspended frames",
+        "lazy versus eager evaluation"
+      ],
+      "about": [
+        "Python (programming language)"
+      ],
+      "keywords": "the iterator protocol, iter and next, StopIteration, generators and yield, suspended frames, lazy versus eager evaluation"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://inboxpraveen.github.io/Py-Internals/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Session 05: Iterators & Generators",
+          "item": "https://inboxpraveen.github.io/Py-Internals/sessions/05-iterators/"
+        }
+      ]
+    }
+  ]
+}
+  </script>
+  <!-- /seo:head -->
 </head>
 <body>
 
@@ -125,10 +235,7 @@
       <div class="session-hero__eyebrow">Control flow · Session 05</div>
       <h1 class="session-hero__title">Iterators &amp; Generators</h1>
       <p class="session-hero__subtitle">
-        A <code>for</code> loop does not walk the list itself. It quietly asks for
-        a bookmark, and the bookmark is the thing that remembers “I am on item 2.”
-        The list never moves. A generator is a function that takes a nap
-        mid-sentence and wakes up where it left off — notes still on the desk.
+        A <code>for</code> loop doesn't walk the list itself. It asks for a bookmark, and the bookmark is the thing that remembers "I'm on item 2". The list never moves. A generator is a function that takes a nap mid-sentence and wakes up where it left off, with its notes still on the desk.
       </p>
       <div class="session-meta">
         <div class="session-meta__item">~35 minutes</div>
@@ -144,10 +251,7 @@
         <div class="learning-card__label">Learning goal</div>
         <h2 class="learning-card__title">The shelf stays. The bookmark moves.</h2>
         <p class="learning-card__body">
-          The collection is the shelf of books. The iterator is the bookmark.
-          A generator is a reader who dozes off mid-page and keeps their finger
-          on the line. Once that feels true, <code>iter</code>, <code>next</code>,
-          and <code>yield</code> are just names for those two objects.
+          The collection is the shelf of books. The iterator is the bookmark. A generator is a reader who dozes off mid-page and keeps a finger on the line. Once that feels true, <code>iter</code>, <code>next</code> and <code>yield</code> are just names for those two objects.
         </p>
         <div class="concept-chip-row">
           <span class="type-chip type-chip--list">iterable</span>
@@ -182,15 +286,11 @@
           <div class="stage-intro__label">Interactive lab</div>
           <h2 id="stage-title">Watch the bookmark, not just the loop</h2>
           <p>
-            The list does not walk itself. A second object remembers the place.
-            Rows named <code>index</code>, <code>over</code> and <code>pending</code> are
-            our labels for bookkeeping CPython keeps to itself — there is no attribute to
-            read them off. <code>n</code> is different: it is a real variable living in the
-            generator's paused frame, and <code>g.gi_frame.f_locals</code> will print it for you.
+            The list doesn't walk itself. A second object remembers the place. Rows named <code>index</code>, <code>over</code> and <code>pending</code> are our labels for bookkeeping CPython keeps to itself, so there's no attribute to read them off. <code>n</code> is different. It's a real variable living in the generator's paused frame, and <code>g.gi_frame.f_locals</code> will print it for you.
           </p>
         </div>
         <div class="stage-intro__hint">
-          Tip: after a loop ends, ask whether the iterator is exhausted and whether the original collection still exists.
+          Tip: after a loop ends, ask whether the iterator is used up and whether the original collection still exists.
         </div>
       </section>
 
@@ -281,7 +381,7 @@
       <div class="explanation-strip" aria-live="polite">
         <div class="explanation-strip__step-num" id="stepNum">1</div>
         <div class="explanation-strip__content">
-          <h3 id="stepTitle" class="explanation-text">A list is iterable — it is not itself the iterator</h3>
+          <h3 id="stepTitle" class="explanation-text">A list is iterable, but it isn't the iterator</h3>
           <p id="stepDesc" class="explanation-text">Press Play or use Next to watch <code>for</code> create an iterator.</p>
         </div>
       </div>
@@ -291,9 +391,7 @@
       <h2 id="protocol">The iterator protocol</h2>
       <p class="in-plain">
         <span class="in-plain__label">In plain words</span>
-        A <code>for</code> loop is three polite questions: “May I have a bookmark?”
-        “What’s next?” and “Are we done?” When the bookmark says there is nothing
-        left, the loop stops. Anything you can <code>for</code> over answers those questions.
+        A <code>for</code> loop is three polite questions: "May I have a bookmark?", "What's next?" and "Are we done?" When the bookmark says there's nothing left, the loop stops. Anything you can <code>for</code> over answers those questions.
       </p>
       <p class="narrative-lede then-precise">
         Those questions are <code>iter</code>, <code>next</code>, and
@@ -323,12 +421,7 @@
         <div>
           <div class="callout__title">Iterable vs iterator</div>
           <div class="callout__body">
-            An <strong>iterable</strong> can produce an iterator (<code>list</code>, <code>str</code>, <code>dict</code>).
-            An <strong>iterator</strong> produces values and holds the walk state. Every iterator is also
-            iterable, and this is the part that catches people: <code>iter(it)</code> hands back
-            <em>the same object</em>, not a fresh one. Ask a list for a bookmark twice and you get two
-            bookmarks; ask a generator and you get the same spent bookmark back. That is why looping
-            over a generator a second time gets you nothing.
+            An <strong>iterable</strong> can produce an iterator (<code>list</code>, <code>str</code>, <code>dict</code>). An <strong>iterator</strong> produces values and holds the walk state. Every iterator is also iterable, and this is the part that catches people: <code>iter(it)</code> hands back <em>the same object</em>, not a fresh one. Ask a list for a bookmark twice and you get two bookmarks. Ask a generator and you get the same spent bookmark back. That's why looping over a generator a second time gets you nothing.
           </div>
         </div>
       </div>
@@ -338,13 +431,10 @@
         <h2><code>yield</code> pauses a frame instead of destroying it</h2>
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
-          A normal function finishes the whole job, then throws its notes away.
-          A generator says “here is one answer” and takes a nap with the notes still out.
-          The next time you ask, it wakes up on the same line.
+          A normal function finishes the whole job, then throws its notes away. A generator says "here's one answer" and takes a nap with the notes still out. The next time you ask, it wakes up on the same line.
         </p>
         <p class="then-precise">
-          Calling a generator function returns a generator object immediately — it does not
-          run the body yet. Each <code>next()</code> resumes the suspended frame until the
+          Calling a generator function returns a generator object straight away. It doesn't run the body yet. Each <code>next()</code> resumes the suspended frame until the
           next <code>yield</code>. Locals such as <code>n</code> stay alive on that object.
         </p>
 
@@ -366,8 +456,7 @@
           <div>
             <div class="callout__title">Calling a generator function is cheap</div>
             <div class="callout__body">
-              <code>count_up()</code> does not compute a list of numbers. It allocates a generator.
-              Work happens later, one <code>next</code> at a time. That is the same idea as lazy evaluation.
+              <code>count_up()</code> doesn't compute a list of numbers. It allocates a generator. The work happens later, one <code>next</code> at a time, which is the same idea as lazy evaluation.
             </div>
           </div>
         </div>
@@ -384,9 +473,7 @@
           if you only wanted the first two.
         </p>
         <p class="then-precise">
-          A list comprehension is eager: every value exists before you use the list.
-          A generator expression is lazy: values appear as you pull them.
-          Eager gives length, indexing, and reuse. Lazy saves work when you only need a prefix.
+          A list comprehension is eager: every value exists before you use the list. A generator expression is lazy: values appear as you pull them. Eager gives you length, indexing and reuse. Lazy saves work when you only need the first few.
         </p>
 
         <div style="overflow-x:auto">
@@ -423,7 +510,7 @@
           <p>
             <code>g = (x for x in [1, 2])</code> then <code>list(g)</code> twice.
             The second call is <code>[]</code> because the generator was exhausted.
-            Compare with <code>r = range(2)</code> and <code>list(r)</code> twice — both succeed.
+            Compare that with <code>r = range(2)</code> and <code>list(r)</code> twice, where both calls succeed.
           </p>
         </div>
 
@@ -433,8 +520,7 @@
             <div class="callout__title">Exhausted is a state on the iterator, not the collection</div>
             <div class="callout__body">
               After a <code>for</code> loop, the list is still there. The hidden iterator is spent.
-              A second <code>for nums</code> creates a <em>new</em> iterator. A second loop over the
-              same generator object does not — generators are their own iterator and do not rewind.
+              A second <code>for nums</code> creates a <em>new</em> iterator. A second loop over the same generator object doesn't, because generators are their own iterator and don't rewind.
             </div>
           </div>
         </div>
@@ -445,9 +531,7 @@
         <h2>The bugs this model prevents</h2>
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
-          When a loop behaves strangely, ask three everyday questions: did I move the
-          books around while someone was reading them? Did two people try to share one
-          bookmark? And am I treating a bookmark as if it were the shelf?
+          When a loop behaves strangely, ask three everyday questions. Did I move the books around while someone was reading them? Did two people try to share one bookmark? Am I treating a bookmark as if it were the shelf?
         </p>
         <p class="then-precise">
           Those are: mutating a sequence during iteration, sharing one exhausted iterator
@@ -459,20 +543,14 @@
           <div class="mistake-item">
             <h3>Removing items from a list while you loop over it</h3>
             <p>
-              The iterator holds a plain integer index into a list it does not own. Delete an
-              element and everything after it slides down one slot — but the cursor still moves
-              forward, so it steps straight over the item that took the vacant place.
-              <code>xs = [1, 2, 3, 4]</code>, then removing <code>1</code> on the first pass,
-              visits <code>[1, 3, 4]</code>: the <code>2</code> is silently skipped and no error
-              is raised. Loop over a copy (<code>for x in xs[:]</code>) or build a new list.
+              The iterator holds a plain integer index into a list it does not own. Delete an element and everything after it slides down one slot, but the cursor still moves forward, so it steps straight over the item that took the vacant place. With <code>xs = [1, 2, 3, 4]</code>, removing <code>1</code> on the first pass visits <code>[1, 3, 4]</code>. The <code>2</code> is skipped and no error is raised. Loop over a copy (<code>for x in xs[:]</code>) or build a new list.
             </p>
           </div>
           <div class="mistake-item">
             <h3>Handing the same generator to two consumers</h3>
             <p>
               <code>g = (x for x in [1, 2, 3])</code>, then <code>sum(g)</code> gives <code>6</code>
-              and <code>list(g)</code> gives <code>[]</code>. The first consumer drained it. Nothing
-              was deleted and nothing raised — there is simply nothing left to yield. If two pieces
+              and <code>list(g)</code> gives <code>[]</code>. The first consumer drained it. Nothing was deleted and nothing raised. There's just nothing left to yield. If two pieces
               of code need the values, materialise them once with <code>list(...)</code>, or build
               a fresh generator for each.
             </p>
@@ -481,10 +559,7 @@
             <h3>Asking a generator for its length or its third item</h3>
             <p>
               <code>len(g)</code> raises <code>TypeError: object of type 'generator' has no len()</code>
-              and <code>g[0]</code> raises <code>'generator' object is not subscriptable</code>. That is
-              honest, not stingy: the generator genuinely does not know how many values are coming,
-              because it has not computed them. Length and indexing are exactly what you buy when
-              you pay eagerly for a list.
+              and <code>g[0]</code> raises <code>'generator' object is not subscriptable</code>. That's honest rather than stingy. The generator really doesn't know how many values are coming, because it hasn't computed them yet. Length and indexing are what you buy when you pay up front for a list.
             </p>
           </div>
         </div>
@@ -492,8 +567,7 @@
         <div class="recap-box">
           <div class="recap-box__label">What you should be able to draw</div>
           <p>
-            A collection (the shelf), a separate iterator (the bookmark) holding a link and an
-            index, and — for generators — a paused frame whose locals survive between yields.
+            A collection (the shelf), a separate iterator (the bookmark) holding a link and an index, and, for generators, a paused frame whose locals survive between yields.
             If you can draw those three, <code>for</code>, <code>yield</code>, and lazy
             expressions all fit the same picture.
           </p>
@@ -504,7 +578,7 @@
     <section class="quiz" id="quiz" data-session="05-iterators">
       <div class="section-divider"><div class="section-divider__label">Check your understanding</div></div>
       <h2>Can you predict the memory?</h2>
-      <p class="quiz__lede">Ask where the bookmark lives — on the shelf, or on a separate cursor.</p>
+      <p class="quiz__lede">Ask where the bookmark lives: on the shelf, or on a separate cursor.</p>
 
       <div class="quiz-card" data-answer="1">
         <div class="quiz-card__q">1. In <code>for n in nums</code>, what object remembers how far the loop has gone?</div>
@@ -539,7 +613,7 @@
       <div class="quiz-card" data-answer="0">
         <div class="quiz-card__q">4. Right after <code>eager = [x*x for x in [20, 30]]</code> and <code>lazy = (x*x for x in [20, 30])</code>, what exists on the heap?</div>
         <button class="quiz-option" data-choice="0">A full list of two squares, and a generator that has not computed them yet</button>
-        <button class="quiz-option" data-choice="1">Nothing — both wait until you loop</button>
+        <button class="quiz-option" data-choice="1">Nothing, because both wait until you loop</button>
         <button class="quiz-option" data-choice="2">Two identical lists; the parentheses are only style</button>
         <div class="quiz-explain">
           Square brackets are eager. Parentheses make a generator expression. Memory cost is the difference.
@@ -547,20 +621,36 @@
       </div>
       <div class="quiz-card" data-answer="2">
         <div class="quiz-card__q">5. <code>xs = [1, 2, 3, 4]</code>, and inside <code>for x in xs:</code> you call <code>xs.remove(x)</code> when <code>x == 1</code>. Which values does the loop visit?</div>
-        <button class="quiz-option" data-choice="0"><code>1, 2, 3, 4</code> — the iterator took a snapshot of the list first</button>
+        <button class="quiz-option" data-choice="0"><code>1, 2, 3, 4</code>, because the iterator took a snapshot of the list first</button>
         <button class="quiz-option" data-choice="1">It raises an error as soon as the list changes size</button>
-        <button class="quiz-option" data-choice="2"><code>1, 3, 4</code> — removing <code>1</code> slides <code>2</code> into the slot the cursor has already passed</button>
-        <div class="quiz-explain">The list iterator holds an index into a list it does not own. After the removal, index 1 holds <code>3</code>, so <code>2</code> is never visited and nothing complains. Loop over a copy, <code>for x in xs[:]</code>, when you need to remove while iterating.</div>
+        <button class="quiz-option" data-choice="2"><code>1, 3, 4</code>, because removing <code>1</code> slides <code>2</code> into the slot the cursor has already passed</button>
+        <div class="quiz-explain">The list iterator holds an index into a list it doesn't own. After the removal, index 1 holds <code>3</code>, so <code>2</code> is never visited and nothing complains. Loop over a copy, <code>for x in xs[:]</code>, when you need to remove while iterating.</div>
       </div>
 
       <div class="quiz-card" data-answer="1">
         <div class="quiz-card__q">6. <code>g = (x for x in [1, 2, 3])</code>, then <code>sum(g)</code>, then <code>list(g)</code>. What does the second call return?</div>
-        <button class="quiz-option" data-choice="0"><code>[1, 2, 3]</code> — the generator restarts for each consumer</button>
-        <button class="quiz-option" data-choice="1"><code>[]</code> — <code>sum</code> drained the generator, and a generator does not rewind</button>
+        <button class="quiz-option" data-choice="0"><code>[1, 2, 3]</code>, because the generator restarts for each consumer</button>
+        <button class="quiz-option" data-choice="1"><code>[]</code>, because <code>sum</code> drained the generator, and a generator doesn't rewind</button>
         <button class="quiz-option" data-choice="2">A <code>StopIteration</code> error escapes to your code</button>
-        <div class="quiz-explain">A generator is its own iterator. <code>sum</code> pulled every value until <code>StopIteration</code>, which it handled quietly; <code>list</code> then asks the same exhausted object and gets nothing. Build a fresh generator, or materialise the values once with <code>list(...)</code>.</div>
+        <div class="quiz-explain">A generator is its own iterator. <code>sum</code> pulled every value until <code>StopIteration</code>, which it handled for you, and <code>list</code> then asks the same exhausted object and gets nothing. Build a fresh generator, or materialise the values once with <code>list(...)</code>.</div>
       </div>
     </section>
+
+    <!-- seo:sessions-nav -->
+    <nav class="sessions-nav" aria-label="All sessions">
+      <div class="sessions-nav__label">All sessions</div>
+      <ul>
+        <li><a href="../01-variables/"><span>01</span> Variables &amp; Mutability</a></li>
+        <li><a href="../02-functions/"><span>02</span> Functions, Scope &amp; the Call Stack</a></li>
+        <li><a href="../03-lists-dicts/"><span>03</span> Lists, Dicts &amp; References</a></li>
+        <li><a href="../04-classes/"><span>04</span> Classes &amp; Objects</a></li>
+        <li class="is-current"><a href="../05-iterators/"><span>05</span> Iterators &amp; Generators</a></li>
+        <li><a href="../06-decorators/"><span>06</span> Decorators</a></li>
+        <li><a href="../07-gil/"><span>07</span> The GIL &amp; Concurrency</a></li>
+        <li><a href="../08-exceptions/"><span>08</span> Exceptions, Tracebacks &amp; Context Managers</a></li>
+      </ul>
+    </nav>
+    <!-- /seo:sessions-nav -->
 
     <div class="session-footer">
       <a href="../04-classes/" class="btn btn--secondary">← Session 04: Classes</a>

@@ -7,7 +7,7 @@
 
 <br /><br />
 
-# 🐍 Py Internals — Learn Python from the Inside Out
+# 🐍 Py Internals: Learn Python from the Inside Out
 
 **An open-source, interactive Python course that shows you what Python is *actually* doing**
 
@@ -26,7 +26,7 @@
 
 <br />
 
-<img width="860" alt="Py Internals — memory visualization of variable rebinding" src="./assets/images/Py-Internals.png" />
+<img width="860" alt="Py Internals: memory visualisation of variable rebinding" src="./assets/images/Py-Internals.png" />
 
 </div>
 
@@ -36,9 +36,9 @@
 
 Most Python tutorials teach you *what* to type. Py Internals teaches you *what Python does with it.*
 
-When you write `x = 42`, Python doesn't "store 42 in x". It creates an integer **object** on the heap, then binds the name `x` to it in the current namespace. When you write `x = 100`, the old `42` object doesn't disappear immediately — it waits until its reference count hits zero, then gets garbage collected.
+When you write `x = 42`, Python doesn't "store 42 in x". It creates an integer **object** on the heap, then binds the name `x` to it in the current namespace. When you write `x = 100`, the old `42` object doesn't disappear on the spot. It waits until its reference count hits zero, then gets garbage collected.
 
-This course makes all of that **visible**. Every concept is paired with an animated memory diagram that shows stack frames, heap objects, reference counts, and garbage collection — step by step, at your pace.
+This course makes all of that **visible**. Every concept is paired with an animated memory diagram that shows stack frames, heap objects, reference counts and garbage collection, step by step, at your own pace.
 
 ---
 
@@ -46,27 +46,27 @@ This course makes all of that **visible**. Every concept is paired with an anima
 
 > "I know *how* to use Python. I don't know *why* it works this way."
 
-That gap — between using a tool and understanding it — is where bugs hide. It's why `a = b; b.append(1)` surprises you. It's why passing a list to a function sometimes mutates the original and sometimes doesn't. It's why your "optimization" did nothing.
+That gap, between using a tool and understanding it, is where bugs hide. It's why `a = b; b.append(1)` surprises you. It's why passing a list to a function sometimes mutates the original and sometimes doesn't. It's why your "optimisation" did nothing.
 
-Py Internals closes that gap, visually, for free.
+Py Internals closes that gap, visually, and for free.
 
 ---
 
 ## Features
 
-- 🎞️ **Step-by-step animations** — walk through code execution one step at a time, or let it autoplay
-- 🧠 **Real memory diagrams** — see the actual heap, stack frames, reference counts, and GC cycles
-- 🔒 **Runtime state, too** — Session 07 draws the interpreter itself, so you can watch the GIL change hands
-- 🧨 **Exceptions in flight** — Session 08 draws a frame being torn down and the traceback growing as an exception climbs the stack
-- 🔬 **Type explorer** — the nine types you meet first, their mutability, and how each behaves in memory
-- ✅ **Check-your-understanding quizzes** — predict the memory, then see why
-- 📚 **Glossary** — plain-English definitions you can search mid-lesson
-- ⌨️ **Keyboard playback** — `→` `←` Space `R` to step the lab
-- 📖 **Narrative articles** — each session pairs the visual with a clear written explanation
-- 📱 **Fully responsive** — reads well on mobile, animates beautifully on desktop
-- ⚡ **No login, no account, no tracking** — just open and learn
-- 💾 **Progress saved locally** — your completed sessions are remembered via `localStorage`
-- 🌐 **Nothing to install** — pure static files; after the first load only the web fonts need the network
+- 🎞️ **Step-by-step animations**: walk through code execution one step at a time, or let it autoplay
+- 🧠 **Real memory diagrams**: see the heap, stack frames, reference counts and GC cycles
+- 🔒 **Runtime state, too**: Session 07 draws the interpreter itself, so you can watch the GIL change hands
+- 🧨 **Exceptions in flight**: Session 08 draws a frame being torn down and the traceback growing as an exception climbs the stack
+- 🔬 **Type explorer**: the nine types you meet first, their mutability, and how each behaves in memory
+- ✅ **Check-your-understanding quizzes**: predict the memory, then see why
+- 📚 **Glossary**: plain-English definitions you can search mid-lesson
+- ⌨️ **Keyboard playback**: `→` `←` Space `R` to step the lab
+- 📖 **Narrative articles**: each session pairs the visual with a clear written explanation
+- 📱 **Fully responsive**: reads well on a phone, animates nicely on a desktop
+- ⚡ **No login, no account, no tracking**: just open it and learn
+- 💾 **Progress saved locally**: your completed sessions are remembered in `localStorage`
+- 🌐 **Nothing to install**: pure static files, and after the first load only the web fonts need the network
 
 ---
 
@@ -110,6 +110,9 @@ Py-Internals/
 │       └── syntax.js            ← Python syntax highlighter (PJ.Syntax)
 │
 ├── glossary.html                ← Searchable term list
+├── 404.html                     ← Not-found page with every session linked
+├── robots.txt, sitemap.xml, feed.xml, llms.txt, llms-full.txt, manifest.webmanifest
+├── tools/build_seo.py           ← Regenerates all of the above plus each page's head tags and share card
 │
 └── sessions/
     ├── 01-variables/            ← Names, objects, mutation, GC
@@ -132,22 +135,22 @@ No build tools. No npm install. No webpack. Just:
 git clone https://github.com/inboxpraveen/Py-Internals.git
 cd Py-Internals
 
-# Option 1 — Python (most systems)
+# Option 1: Python (most systems)
 python -m http.server 8000
 
-# Option 2 — Node
+# Option 2: Node
 npx serve .
 
-# Option 3 — VS Code
+# Option 3: VS Code
 # Install the "Live Server" extension, right-click index.html → Open with Live Server
 ```
 
 Then open [http://localhost:8000](http://localhost:8000).
 
 > **Why a server?** Opening the files straight from disk mostly works, but a
-> local server keeps the root-relative paths, the browser cache, and the
-> `localStorage` origin behaving the way they will in production. It is one
-> command and saves confusing surprises.
+> local server keeps the root-relative paths, the browser cache and the
+> `localStorage` origin behaving the way they will in production. It's one
+> command and it saves some confusing surprises.
 
 ---
 
@@ -161,14 +164,15 @@ Then open [http://localhost:8000](http://localhost:8000).
 
 ## Contributing
 
-Contributions are very welcome — especially new sessions.
+Contributions are very welcome, especially new sessions.
 
 ### Adding a session
 
-1. Read [`IMPLEMENTATION_GUIDE.md`](IMPLEMENTATION_GUIDE.md) — it covers everything
-2. Copy `sessions/06-decorators/` as a starting point — it is the leanest complete shell; read `sessions/07-gil/` for the widest range of components and `sessions/08-exceptions/` for frames being torn down
+1. Read [`IMPLEMENTATION_GUIDE.md`](IMPLEMENTATION_GUIDE.md). It covers everything
+2. Copy `sessions/06-decorators/` as a starting point, since it's the leanest complete shell. Read `sessions/07-gil/` for the widest range of components and `sessions/08-exceptions/` for frames being torn down
 3. Create your demo steps in `session.js` following the memory snapshot format
-4. Submit a PR against `main`
+4. Add the session to `PAGES` in `tools/build_seo.py` and run `python tools/build_seo.py`. That regenerates the page's head tags, its share card, the sitemap, the feed and `llms.txt`
+5. Submit a PR against `main`
 
 ### Good first issues
 
@@ -180,10 +184,19 @@ Contributions are very welcome — especially new sessions.
 ### Standards
 
 - All new sessions must follow the step design rules in the implementation guide (first step = empty state, last step = summary, one concept per step)
-- CSS changes must use the existing design token system — no hardcoded hex values
+- CSS changes must use the existing design token system, with no hardcoded hex values
 - JS changes must not introduce external dependencies
 
 ---
+
+## Finding the course
+
+Everything a search engine, a social network or a language model needs is generated into the repo by `tools/build_seo.py`, so the site stays plain static files:
+
+- every page has a canonical URL, a description, Open Graph and Twitter tags, and JSON-LD (`Course` on the homepage, `Article` + `LearningResource` with breadcrumbs on each session, `DefinedTermSet` on the glossary)
+- a share card per page in `assets/images/og/`
+- `sitemap.xml`, `robots.txt`, an Atom `feed.xml`, and a web app manifest
+- [`llms.txt`](https://inboxpraveen.github.io/Py-Internals/llms.txt) and [`llms-full.txt`](https://inboxpraveen.github.io/Py-Internals/llms-full.txt), the whole course as Markdown for AI assistants and anyone who wants the text without the animations
 
 ## Tech stack
 
@@ -200,19 +213,19 @@ Contributions are very welcome — especially new sessions.
 
 ## Design philosophy
 
-**Show, don't just tell.** Every concept in this course has a visual representation. If you can't draw a memory diagram for it, the explanation isn't done yet.
+**Show, don't just tell.** Every concept in this course has a picture. If you can't draw a memory diagram for it, the explanation isn't done yet.
 
-**One thing per step.** Each animation step introduces exactly one new idea. No step ever asks you to track two changes at once.
+**One thing per step.** Each animation step introduces one new idea. No step ever asks you to track two changes at once.
 
-**Beautiful enough to take seriously.** The design is intentional — warm cream backgrounds, editorial typography, restrained color. Learning tools don't have to look like homework.
+**Beautiful enough to take seriously.** The design is deliberate: warm cream backgrounds, editorial typography, restrained colour. Learning tools don't have to look like homework.
 
-**Zero friction to fork.** You can clone this, remove the attribution (wait, keep the attribution — it's in the license), and build your own course on top of it. The implementation guide exists so this is a 20-minute job, not a 20-hour one.
+**Zero friction to fork.** You can clone this, remove the attribution (actually, keep the attribution, it's in the license), and build your own course on top of it. The implementation guide exists so this is a 20-minute job, not a 20-hour one.
 
 ---
 
 ## License
 
-This project is published under the **PI Community License v1.0** (Py Internals Community License) — see [`LICENSE`](LICENSE) for the full text.
+This project is published under the **PI Community License v1.0** (Py Internals Community License). See [`LICENSE`](LICENSE) for the full text.
 
 **Short version:**
 - ✅ Free to use, share, and adapt for educational purposes
@@ -227,15 +240,15 @@ This project is published under the **PI Community License v1.0** (Py Internals 
 
 Inspired by the incredible work of:
 
-- [Python Tutor](https://pythontutor.com/) by Philip Guo — the original Python visualizer
-- [CPython internals documentation](https://devguide.python.org/) — the source of truth
-- [Fluent Python](https://www.oreilly.com/library/view/fluent-python-2nd/9781492056348/) by Luciano Ramalho — the book that made Python's object model click
+- [Python Tutor](https://pythontutor.com/) by Philip Guo, the original Python visualiser
+- [CPython internals documentation](https://devguide.python.org/), the source of truth
+- [Fluent Python](https://www.oreilly.com/library/view/fluent-python-2nd/9781492056348/) by Luciano Ramalho, the book that made Python's object model click
 
 ---
 
 <div align="center">
 
 Made with patience and obsessive attention to spacing.<br />
-If this helped you, consider starring the repo ⭐ — it helps others find it.
+If this helped you, consider starring the repo ⭐. It helps others find it.
 
 </div>

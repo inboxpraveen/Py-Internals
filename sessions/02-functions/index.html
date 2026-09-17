@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Session 02: Functions, Scope &amp; the Call Stack — Py Internals</title>
-  <meta name="description" content="Understand Python functions, call frames, local scope, argument passing, returns, and closures through interactive memory diagrams." />
+  <title>Python Functions, Scope and the Call Stack | Py Internals</title>
+  <meta name="description" content="Watch a call frame appear and disappear. Local scope, LEGB lookup, arguments passed by reference, closures with real cells and the mutable default trap." />
   <meta name="theme-color" content="#1A6B5C" />
 
   <link rel="icon" type="image/png" href="../../assets/images/Python-logo.png" />
@@ -16,6 +16,117 @@
   <link rel="stylesheet" href="../../assets/css/memory-viz.css" />
   <link rel="stylesheet" href="../../assets/css/animations.css" />
   <link rel="stylesheet" href="../../assets/css/session.css" />
+  <!-- seo:head -->
+  <link rel="canonical" href="https://inboxpraveen.github.io/Py-Internals/sessions/02-functions/" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Praveen Kumar" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="Py Internals" />
+  <meta property="og:locale" content="en_GB" />
+  <meta property="og:url" content="https://inboxpraveen.github.io/Py-Internals/sessions/02-functions/" />
+  <meta property="og:title" content="Python Functions, Scope and the Call Stack" />
+  <meta property="og:description" content="Watch a call frame appear and disappear. Local scope, LEGB lookup, arguments passed by reference, closures with real cells and the mutable default trap." />
+  <meta property="og:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/02-functions.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Python Functions, Scope and the Call Stack on Py Internals" />
+  <meta property="article:published_time" content="2026-05-05" />
+  <meta property="article:modified_time" content="2026-09-17" />
+  <meta property="article:section" content="Foundations" />
+  <meta property="article:author" content="https://github.com/inboxpraveen" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Python Functions, Scope and the Call Stack" />
+  <meta name="twitter:description" content="Watch a call frame appear and disappear. Local scope, LEGB lookup, arguments passed by reference, closures with real cells and the mutable default trap." />
+  <meta name="twitter:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/02-functions.png" />
+  <link rel="alternate" type="application/atom+xml" title="Py Internals sessions" href="https://inboxpraveen.github.io/Py-Internals/feed.xml" />
+  <link rel="manifest" href="https://inboxpraveen.github.io/Py-Internals/manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" />
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": [
+        "Article",
+        "LearningResource"
+      ],
+      "@id": "https://inboxpraveen.github.io/Py-Internals/sessions/02-functions/#lesson",
+      "mainEntityOfPage": "https://inboxpraveen.github.io/Py-Internals/sessions/02-functions/",
+      "headline": "Session 02: Functions, Scope & the Call Stack",
+      "name": "Session 02: Functions, Scope & the Call Stack",
+      "description": "Watch a call frame appear and disappear. Local scope, LEGB lookup, arguments passed by reference, closures with real cells and the mutable default trap.",
+      "image": "https://inboxpraveen.github.io/Py-Internals/assets/images/og/02-functions.png",
+      "author": {
+        "@type": "Person",
+        "name": "Praveen Kumar",
+        "url": "https://github.com/inboxpraveen"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Py Internals",
+        "url": "https://inboxpraveen.github.io/Py-Internals/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://inboxpraveen.github.io/Py-Internals/assets/images/Python-logo.png",
+          "width": 1024,
+          "height": 1024
+        },
+        "sameAs": [
+          "https://github.com/inboxpraveen/Py-Internals"
+        ]
+      },
+      "datePublished": "2026-05-05",
+      "dateModified": "2026-09-17",
+      "inLanguage": "en",
+      "isAccessibleForFree": true,
+      "license": "https://github.com/inboxpraveen/Py-Internals/blob/main/LICENSE",
+      "isPartOf": {
+        "@type": "Course",
+        "@id": "https://inboxpraveen.github.io/Py-Internals/#course",
+        "name": "Py Internals",
+        "url": "https://inboxpraveen.github.io/Py-Internals/"
+      },
+      "position": 2,
+      "learningResourceType": "Interactive lesson",
+      "educationalLevel": "Beginner",
+      "timeRequired": "PT35M",
+      "teaches": [
+        "function objects",
+        "call frames and the call stack",
+        "local and global scope",
+        "LEGB name lookup",
+        "argument passing by object reference",
+        "closures and cells",
+        "mutable default arguments"
+      ],
+      "about": [
+        "Python (programming language)"
+      ],
+      "keywords": "function objects, call frames and the call stack, local and global scope, LEGB name lookup, argument passing by object reference, closures and cells, mutable default arguments"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://inboxpraveen.github.io/Py-Internals/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Session 02: Functions, Scope & the Call Stack",
+          "item": "https://inboxpraveen.github.io/Py-Internals/sessions/02-functions/"
+        }
+      ]
+    }
+  ]
+}
+  </script>
+  <!-- /seo:head -->
 </head>
 <body>
 
@@ -139,9 +250,7 @@
       <div class="session-hero__eyebrow">Foundations · Session 02</div>
       <h1 class="session-hero__title">Functions, Scope &amp; the Call Stack</h1>
       <p class="session-hero__subtitle">
-        Calling a function is like opening a temporary desk, doing the work, then packing it away.
-        We will watch that desk appear — then get precise about function objects, frames,
-        arguments, returns, and closures.
+        Calling a function is like opening a temporary desk, doing the work, then packing it away. We'll watch that desk appear, then get precise about function objects, frames, arguments, returns and closures.
       </p>
       <div class="session-meta">
         <div class="session-meta__item">~35 minutes</div>
@@ -159,9 +268,7 @@
           A call opens a temporary desk, then clears it away.
         </h2>
         <p class="learning-card__body">
-          That is the everyday picture. The technical steps are: create a function object,
-          create a call frame, bind arguments to local names, run the body, return an object,
-          then remove the frame.
+          That's the everyday picture. The technical steps are: create a function object, create a call frame, bind the arguments to local names, run the body, return an object, then remove the frame.
         </p>
         <div class="concept-chip-row">
           <span class="type-chip type-chip--function">function object</span>
@@ -198,9 +305,7 @@
           <div class="stage-intro__label">Interactive lab</div>
           <h2 id="stage-title">Watch the temporary desk appear</h2>
           <p>
-            Pick a demo and step line by line. A new call opens a desk on top of the stack.
-            When the function returns, that desk is packed away. The top frame is the
-            function running right now.
+            Pick a demo and step through it line by line. A new call opens a desk on top of the stack, and when the function returns that desk is packed away. The top frame is the function running right now.
           </p>
         </div>
         <div class="stage-intro__hint">
@@ -220,8 +325,8 @@
       </div>
 
       <div class="mem-legend" aria-label="How to read the memory diagram">
-        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--stack"></span> Call stack — the top frame is running</div>
-        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--heap"></span> Heap — function objects and values</div>
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--stack"></span> Call stack: the top frame is the one running</div>
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--heap"></span> Heap: function objects and values</div>
         <div class="mem-legend__item"><kbd>→</kbd> next <kbd>←</kbd> back <kbd>Space</kbd> play <kbd>R</kbd> reset</div>
       </div>
 
@@ -298,9 +403,9 @@
       <div class="explanation-strip" aria-live="polite">
         <div class="explanation-strip__step-num" id="stepNum">1</div>
         <div class="explanation-strip__content">
-          <h3 id="stepTitle" class="explanation-text">Initial state — only the global frame exists</h3>
+          <h3 id="stepTitle" class="explanation-text">Initial state: only the global frame exists</h3>
           <p id="stepDesc" class="explanation-text">
-            Before code runs, there is one namespace: global. Press Play or use Next to step through the call.
+            Before any code runs there is one namespace, global. Press Play or use Next to step through the call.
           </p>
         </div>
       </div>
@@ -310,14 +415,10 @@
       <h2 id="call-stack">What happens when Python calls a function?</h2>
       <p class="in-plain">
         <span class="in-plain__label">In plain words</span>
-        You write <code>add(2, 3)</code> and expect an answer. Behind the scenes Python
-        pulls up a short-lived desk, does the math there, hands the answer back,
-        and clears the desk. Local names live on that desk — not forever.
+        You write <code>add(2, 3)</code> and expect an answer. Behind the scenes Python pulls up a short-lived desk, does the maths there, hands the answer back, and clears the desk. Local names live on that desk, and only for as long as it exists.
       </p>
       <p class="narrative-lede then-precise">
-        That desk is a <strong>frame</strong>. Python creates it on the call,
-        runs the body inside it, then removes it on return. Every time, with no exceptions —
-        the objects that were on it can outlive it, but the frame itself never does.
+        That desk is a <strong>frame</strong>. Python creates it on the call, runs the body inside it, then removes it on return. Every time, without exception. The objects that were on it can outlive it, but the frame itself never does.
       </p>
 
       <div class="flow-grid">
@@ -325,8 +426,7 @@
           <div class="section-label">Step 1</div>
           <h3>Function object</h3>
           <p>
-            Running <code>def</code> creates a function object and binds a name to it.
-            The body is stored for later; it does not execute at definition time.
+            Running <code>def</code> creates a function object and binds a name to it. The body is stored for later. It doesn't run at definition time.
           </p>
         </div>
         <div class="flow-card">
@@ -341,9 +441,7 @@
           <div class="section-label">Step 3</div>
           <h3>Return path</h3>
           <p>
-            <code>return</code> hands an object back to the caller, then the frame is removed —
-            always. If an inner function captured a name, that one name lives on in a separate
-            little box the inner function carries; the desk is still cleared.
+            <code>return</code> hands an object back to the caller, and then the frame is removed, always. If an inner function captured a name, that one name lives on in a separate little box the inner function carries. The desk is still cleared.
           </p>
         </div>
       </div>
@@ -354,9 +452,7 @@
           <div class="callout__title">A frame is Python's desk for one call</div>
           <div class="callout__body">
             A frame is where Python tracks the local names of one call, the line it is currently on,
-            and the way back to the caller. The exact low-level layout belongs to the runtime, but the
-            mental model is stable: each active call has its own frame, and calls stack up — the top
-            frame is the one running right now.
+            and the way back to the caller. The exact low-level layout belongs to the runtime, but the mental model is stable. Each active call has its own frame, calls stack up, and the top frame is the one running right now.
           </div>
         </div>
       </div>
@@ -366,21 +462,18 @@
         <h2>Local names are separate from global names</h2>
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
-          A name inside a function is not automatically the same as a name outside,
-          even if they are spelled the same. Think of two sticky notes that both say
-          <code>message</code>, stuck on two different desks.
+          A name inside a function isn't automatically the same as a name outside, even if they're spelled the same. Think of two sticky notes that both say <code>message</code>, stuck on two different desks.
         </p>
         <p class="then-precise">
           A <strong>scope</strong> is where Python looks up a name. Reading works outward
           through four rings, and the first one that has the name wins:
           <strong>L</strong>ocal, <strong>E</strong>nclosing functions, <strong>G</strong>lobal,
-          <strong>B</strong>uilt-ins — <strong>LEGB</strong>. Assignment is the opposite: it always
+          <strong>B</strong>uilt-ins, or <strong>LEGB</strong> for short. Assignment is the opposite: it always
           writes to the innermost ring unless you declare <code>global</code> or <code>nonlocal</code>.
         </p>
 
         <p>
-          Here are all four rings in one program. Nothing about <code>len</code> is special —
-          it is just a name, and Python has to walk out to the last ring to find it:
+          Here are all four rings in one program. There's nothing special about <code>len</code>. It's just a name, and Python has to walk out to the last ring to find it:
         </p>
 
         <div class="code-block">
@@ -393,13 +486,13 @@
             <span class="code-block__lang">python</span>
           </div>
           <div class="code-block__body">
-<span class="tok-var">TAX</span> <span class="tok-op">=</span> <span class="tok-num">0.2</span>                  <span class="tok-cmt"># G — global</span>
+<span class="tok-var">TAX</span> <span class="tok-op">=</span> <span class="tok-num">0.2</span>                  <span class="tok-cmt"># G: global</span>
 
 <span class="tok-kw">def</span> <span class="tok-fn">outer</span>():
-    <span class="tok-var">rate</span> <span class="tok-op">=</span> <span class="tok-num">0.1</span>             <span class="tok-cmt"># E — enclosing, as seen from inner</span>
+    <span class="tok-var">rate</span> <span class="tok-op">=</span> <span class="tok-num">0.1</span>             <span class="tok-cmt"># E: enclosing, as seen from inner</span>
 
     <span class="tok-kw">def</span> <span class="tok-fn">inner</span>():
-        <span class="tok-var">total</span> <span class="tok-op">=</span> <span class="tok-num">100</span>        <span class="tok-cmt"># L — local to inner</span>
+        <span class="tok-var">total</span> <span class="tok-op">=</span> <span class="tok-num">100</span>        <span class="tok-cmt"># L: local to inner</span>
         <span class="tok-kw">return</span> <span class="tok-fn">len</span>(<span class="tok-fn">str</span>(<span class="tok-var">total</span>)) <span class="tok-op">*</span> <span class="tok-var">rate</span> <span class="tok-op">*</span> <span class="tok-var">TAX</span>
     <span class="tok-kw">return</span> <span class="tok-var">inner</span>
           </div>
@@ -408,32 +501,28 @@
         <div class="lookup-path" aria-label="How Python resolves the name len inside inner">
           <div class="lookup-path__step is-miss">
             <span class="lookup-path__where">L · inner</span>
-            <span>its own locals — only <code>total</code> is here</span>
+            <span>its own locals, where only <code>total</code> lives</span>
             <span class="lookup-path__result">miss</span>
           </div>
           <div class="lookup-path__step is-miss">
             <span class="lookup-path__where">E · outer</span>
-            <span>the enclosing function — holds <code>rate</code>, which <em>is</em> found this way</span>
+            <span>the enclosing function, which holds <code>rate</code> (that one <em>is</em> found this way)</span>
             <span class="lookup-path__result">miss</span>
           </div>
           <div class="lookup-path__step is-miss">
             <span class="lookup-path__where">G · module</span>
-            <span>the global frame — holds <code>TAX</code> and <code>outer</code></span>
+            <span>the global frame, which holds <code>TAX</code> and <code>outer</code></span>
             <span class="lookup-path__result">miss</span>
           </div>
           <div class="lookup-path__step is-hit">
             <span class="lookup-path__where">B · builtins</span>
-            <span>the last ring, always there — <code>len</code>, <code>print</code>, <code>range</code>, <code>str</code></span>
+            <span>the last ring, always there: <code>len</code>, <code>print</code>, <code>range</code>, <code>str</code></span>
             <span class="lookup-path__result">hit</span>
           </div>
         </div>
 
         <p>
-          <code>rate</code> stops at ring E; <code>TAX</code> stops at ring G. That E ring is not a
-          footnote — it is exactly the machinery behind closures, which demo 4 takes apart. And
-          because the last ring is a real namespace you can shadow, writing
-          <code>list = [1, 2]</code> at the top of a file quietly hides the built-in <code>list</code>
-          for the rest of that module.
+          <code>rate</code> stops at ring E and <code>TAX</code> stops at ring G. That E ring isn't a footnote. It's the machinery behind closures, which demo 4 takes apart. And because the last ring is a real namespace you can shadow, writing <code>list = [1, 2]</code> at the top of a file hides the built-in <code>list</code> for the rest of that module.
         </p>
 
         <div class="rule-grid">
@@ -473,14 +562,10 @@
         <h2>Arguments bind parameter names to existing objects</h2>
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
-          Passing a list into a function is like handing someone the same notebook,
-          not a photocopy. If they write on a page, you will see it.
-          If they put the notebook down and pick up a new one, yours is unchanged.
+          Passing a list into a function is like handing someone your notebook rather than a photocopy. If they write on a page, you'll see it. If they put the notebook down and pick up a new one, yours is unchanged.
         </p>
         <p class="then-precise">
-          When you call <code>add_item(bag)</code>, Python does not copy the list.
-          It binds the local name <code>items</code> to the same object <code>bag</code> already
-          references. Mutation is visible to the caller. Rebinding the parameter is not.
+          When you call <code>add_item(bag)</code>, Python doesn't copy the list. It binds the local name <code>items</code> to the same object <code>bag</code> already refers to. Mutation is visible to the caller. Rebinding the parameter isn't.
         </p>
 
         <div style="overflow-x:auto">
@@ -514,10 +599,7 @@
 
         <h3>How Python decides which name gets which object</h3>
         <p>
-          The binding above is the same whatever the call looks like — but which parameter name
-          each object lands on depends on how you wrote the call. Python fills the desk in a fixed
-          order: positional arguments first, left to right; then anything passed by keyword; then
-          defaults for whatever is still unfilled. A <code>*name</code> parameter sweeps up the
+          The binding above is the same whatever the call looks like, but which parameter name each object lands on depends on how you wrote the call. Python fills the desk in a fixed order: positional arguments first, left to right, then anything passed by keyword, then defaults for whatever is still unfilled. A <code>*name</code> parameter sweeps up the
           leftover positionals into a tuple, and <code>**name</code> sweeps up the leftover keywords
           into a dict.
         </p>
@@ -560,7 +642,7 @@
               <tr>
                 <td><code>order(qty=2, item="tea")</code></td>
                 <td>Identical to the row above</td>
-                <td>Keywords are matched by name, so their order does not matter. Written the other way round, <code>order(qty=2, "tea")</code>, it is a syntax error — positionals may never follow keywords.</td>
+                <td>Keywords are matched by name, so their order does not matter. Written the other way round, <code>order(qty=2, "tea")</code>, it's a syntax error, because positionals may never follow keywords.</td>
               </tr>
               <tr>
                 <td><code>order("tea", 2, "hot", "large", note="rush", size="L")</code></td>
@@ -579,8 +661,7 @@
         <p>
           Nothing here changes the model. However an object arrives, the result is the same:
           a local name on the call's desk, pointing at an object the caller already had.
-          <code>*extras</code> and <code>**tags</code> are the only exception worth noting — those two
-          objects, a fresh tuple and a fresh dict, really are built for that one call.
+          <code>*extras</code> and <code>**tags</code> are the one exception worth noting. Those two objects, a fresh tuple and a fresh dict, really are built for that one call.
         </p>
       </div>
 
@@ -589,18 +670,14 @@
         <h2>Closures let a function remember an outer name</h2>
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
-          Usually, when a function finishes, the desk is cleared and its notes go with it.
-          A closure is the exception: before the outer desk is cleared, one note is
-          taken along by the inner function, which keeps it in its pocket.
+          Usually, when a function finishes, the desk is cleared and its notes go with it. A closure is the exception. Before the outer desk is cleared, the inner function takes one note along and keeps it in its pocket.
         </p>
         <p class="then-precise">
           That pocket is real and it has a name. When Python compiles an outer function
-          and sees that an inner one uses one of its names, it does not store that name on
-          the desk at all — it puts it in a <strong>cell</strong>: a one-slot box that the inner
-          function object holds a reference to. You can look at them:
+          and sees that an inner one uses one of its names, it doesn't store that name on the desk at all. It puts it in a <strong>cell</strong>, a one-slot box that the inner function object holds a reference to. You can look at them:
           <code>inc.__closure__</code> is a tuple of cells, one per captured name, and
           <code>inc.__closure__[0].cell_contents</code> is the value in the first one.
-          The frame is still removed on return; only the cells survive.
+          The frame is still removed on return. Only the cells survive.
         </p>
 
         <div class="callout callout--insight">
@@ -608,8 +685,7 @@
           <div>
             <div class="callout__title"><code>nonlocal</code> means "write through to the cell"</div>
             <div class="callout__body">
-              Reading an outer name needs no declaration — that is the <strong>E</strong> in LEGB,
-              the enclosing ring. <code>nonlocal count</code> is only needed to <em>assign</em>:
+              Reading an outer name needs no declaration. That's the <strong>E</strong> in LEGB, the enclosing ring. <code>nonlocal count</code> is only needed to <em>assign</em>:
               without it, <code>count = count + 1</code> would make a brand-new local name inside
               <code>inc</code> (and fail, because it would be read before assignment). With it,
               both the read and the write go straight to the shared cell. Step demo 4 and watch
@@ -621,13 +697,12 @@
         <div class="callout callout--warn">
           <div class="callout__icon">Care</div>
           <div>
-            <div class="callout__title">Closures capture the cell, not the value — the loop trap</div>
+            <div class="callout__title">Closures capture the cell, not the value: the loop trap</div>
             <div class="callout__body">
               <code>fs = [lambda: i for i in range(3)]</code> then <code>[f() for f in fs]</code>
               gives <code>[2, 2, 2]</code>, not <code>[0, 1, 2]</code>. All three functions share
               <em>one</em> cell for <code>i</code>, and by the time you call them the loop has
-              finished and that cell holds <code>2</code>. This is the closure bug people actually
-              hit — callbacks registered in a loop all firing with the last value. The fix is to
+              finished and that cell holds <code>2</code>. This is the closure bug people actually hit: callbacks registered in a loop all firing with the last value. The fix is to
               copy the value at definition time with a default argument,
               <code>lambda i=i: i</code>, or with <code>functools.partial(lambda i: i, i)</code>.
               Both give <code>[0, 1, 2]</code>.
@@ -651,7 +726,7 @@
               </tr>
               <tr>
                 <td><strong>Frame</strong></td>
-                <td>The temporary desk — one namespace — belonging to one active call.</td>
+                <td>The temporary desk (one namespace) belonging to one active call.</td>
               </tr>
               <tr>
                 <td><strong>Local scope</strong></td>
@@ -675,13 +750,11 @@
         <h2>Mutable defaults are created once</h2>
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
-          The empty list in <code>def add_item(item, bag=[])</code> is packed when you
-          <em>write</em> the function — not each time you call it. Every call that skips
+          The empty list in <code>def add_item(item, bag=[])</code> is packed when you <em>write</em> the function, not each time you call it. Every call that skips
           <code>bag</code> reuses that one list, so it keeps growing.
         </p>
         <p class="then-precise">
-          Default values are evaluated at definition time and stored on the function object.
-          Immutable defaults (numbers, strings) are safe to share. Mutable ones are the classic surprise.
+          Default values are evaluated at definition time and stored on the function object. Immutable defaults (numbers, strings) are safe to share. Mutable ones are the classic surprise.
         </p>
         <div class="callout callout--warn">
           <div class="callout__icon">Care</div>
@@ -700,7 +773,7 @@
           <p>
             Define <code>def add_item(item, bag=[]): bag.append(item); return bag</code>,
             then call it twice with <code>"a"</code> and <code>"b"</code>. Print both results.
-            Then inspect <code>add_item.__defaults__[0]</code> — that is the shared list. (<code>__defaults__</code> itself is a <em>tuple</em> of every default value, so you will see <code>(['a', 'b'],)</code> with a trailing comma — that is a one-item tuple, not an error.) Then do the same with the <code>bag=None</code> version and check <code>one is two</code>.
+            Then inspect <code>add_item.__defaults__[0]</code>, which is the shared list. (<code>__defaults__</code> itself is a <em>tuple</em> of every default value, so you'll see <code>(['a', 'b'],)</code> with a trailing comma. That's a one-item tuple, not an error.) Then do the same with the <code>bag=None</code> version and check <code>one is two</code>.
           </p>
         </div>
 
@@ -708,8 +781,7 @@
           <div class="recap-box__label">What you should be able to draw</div>
           <p>
             A function object on the heap, a call frame that appears and disappears,
-            parameters as extra names for the caller's objects, and — for closures —
-            the cells that outlive the outer frame and hold the names it captured.
+            parameters as extra names for the caller's objects, and, for closures, the cells that outlive the outer frame and hold the names it captured.
           </p>
         </div>
       </div>
@@ -718,8 +790,7 @@
         <h2>Five ways this goes wrong</h2>
         <p class="in-plain">
           <span class="in-plain__label">In plain words</span>
-          Each of these comes from forgetting one of the three desk rules: a call gets its own
-          desk, assignment writes on the desk you are at, and the desk is cleared on the way out.
+          Each of these comes from forgetting one of the three desk rules: a call gets its own desk, assignment writes on the desk you're at, and the desk is cleared on the way out.
         </p>
 
         <div class="mistake-list">
@@ -730,19 +801,14 @@
               function, fails with <code>UnboundLocalError: cannot access local variable 'count'
               where it is not associated with a value</code> (Python 3.10 words it
               <em>referenced before assignment</em>). Because the function <em>assigns</em>
-              to <code>count</code>, Python decided at compile time that <code>count</code> is local
-              to that desk — and the read on the right-hand side happens before anything was written
-              there. Declare <code>global count</code> if you really mean the module name, or, more
+              to <code>count</code>, Python decided at compile time that <code>count</code> is local to that desk, and the read on the right-hand side happens before anything was written there. Declare <code>global count</code> if you really mean the module name, or, more
               often, return the new value instead of reaching outside.
             </p>
           </div>
           <div class="mistake-item">
             <h3>Forgetting <code>return</code></h3>
             <p>
-              A function that only <code>print</code>s hands back <code>None</code>. The error
-              shows up one line later — <code>TypeError: 'NoneType' object is not subscriptable</code>
-              or <code>unsupported operand type(s) for +: 'NoneType' and 'int'</code> — when the
-              caller tries to use the result. If a variable is unexpectedly <code>None</code>, look at
+              A function that only <code>print</code>s hands back <code>None</code>. The error shows up one line later, as <code>TypeError: 'NoneType' object is not subscriptable</code> or <code>unsupported operand type(s) for +: 'NoneType' and 'int'</code>, when the caller tries to use the result. If a variable is unexpectedly <code>None</code>, look at
               the last line of the function that produced it.
             </p>
           </div>
@@ -769,10 +835,10 @@
             <h3>Calling the function when you meant to pass it</h3>
             <p>
               <code>Thread(target=work())</code> runs <code>work</code> right now, on the current
-              desk, and passes its <em>return value</em> — usually <code>None</code> — as the target.
+              desk, and passes its <em>return value</em>, usually <code>None</code>, as the target.
               The thread then starts and does nothing. The same slip hides in
               <code>button.on_click(save())</code> and <code>sorted(items, key=priority())</code>.
-              A function object is a value like any other; the parentheses are what run it.
+              A function object is a value like any other. The parentheses are what run it.
             </p>
           </div>
         </div>
@@ -782,10 +848,7 @@
           <div>
             <div class="callout__title">Two questions catch nearly all of it</div>
             <div class="callout__body">
-              <strong>Which desk is this name on?</strong> — that finds the shadowed global and the
-              <code>UnboundLocalError</code>. <strong>What object came back from the call?</strong> —
-              that finds the missing <code>return</code>, the shared default list and the
-              accidentally-called function.
+              <strong>Which desk is this name on?</strong> That finds the shadowed global and the <code>UnboundLocalError</code>. <strong>What object came back from the call?</strong> That finds the missing <code>return</code>, the shared default list and the function that was called by accident.
             </div>
           </div>
         </div>
@@ -807,8 +870,8 @@
 
       <div class="quiz-card" data-answer="0">
         <div class="quiz-card__q">2. A function does <code>items.append("x")</code> on a list the caller passed. Does the caller see it?</div>
-        <button class="quiz-option" data-choice="0">Yes — the parameter is another name for the same list</button>
-        <button class="quiz-option" data-choice="1">No — arguments are always copied</button>
+        <button class="quiz-option" data-choice="0">Yes, because the parameter is another name for the same list</button>
+        <button class="quiz-option" data-choice="1">No, because arguments are always copied</button>
         <button class="quiz-option" data-choice="2">Only if the function also returns the list</button>
         <div class="quiz-explain">Mutation is visible through every alias. Rebinding <code>items = []</code> would not change the caller.</div>
       </div>
@@ -824,26 +887,42 @@
         <div class="quiz-card__q">4. <code>count = 0</code> at module level, then <code>def bump(): count += 1</code>. What does <code>bump()</code> do?</div>
         <button class="quiz-option" data-choice="0">Increments the global <code>count</code> to <code>1</code></button>
         <button class="quiz-option" data-choice="1">Creates a local <code>count</code> equal to <code>1</code> and leaves the global alone</button>
-        <button class="quiz-option" data-choice="2">Raises <code>UnboundLocalError</code> — the assignment made <code>count</code> local, and it is read before it is written</button>
-        <div class="quiz-explain">Assignment anywhere in the body makes the name local to that desk for the whole call. The <code>count + 1</code> on the right then reads a local that has no value yet. <code>global count</code> changes the rule; returning a value avoids the question.</div>
+        <button class="quiz-option" data-choice="2">Raises <code>UnboundLocalError</code>, because the assignment made <code>count</code> local and it's read before it's written</button>
+        <div class="quiz-explain">Assignment anywhere in the body makes the name local to that desk for the whole call. The <code>count + 1</code> on the right then reads a local that has no value yet. <code>global count</code> changes the rule, and returning a value avoids the question altogether.</div>
       </div>
 
       <div class="quiz-card" data-answer="1">
         <div class="quiz-card__q">5. <code>def greet(): print("hi")</code>, then <code>x = greet()</code>. What is <code>x</code>?</div>
-        <button class="quiz-option" data-choice="0"><code>"hi"</code> — the printed text is returned</button>
-        <button class="quiz-option" data-choice="1"><code>None</code> — a function with no <code>return</code> hands back <code>None</code></button>
+        <button class="quiz-option" data-choice="0"><code>"hi"</code>, because the printed text is returned</button>
+        <button class="quiz-option" data-choice="1"><code>None</code>, because a function with no <code>return</code> hands back <code>None</code></button>
         <button class="quiz-option" data-choice="2">The function object <code>greet</code> itself</button>
-        <div class="quiz-explain"><code>print</code> writes to the screen and returns <code>None</code>; so does a function that falls off its last line. The value you see printed and the value handed back to the caller are two different things.</div>
+        <div class="quiz-explain"><code>print</code> writes to the screen and returns <code>None</code>, and so does a function that falls off its last line. The value you see printed and the value handed back to the caller are two different things.</div>
       </div>
 
       <div class="quiz-card" data-answer="0">
         <div class="quiz-card__q">6. <code>fs = [lambda: i for i in range(3)]</code>, then <code>[f() for f in fs]</code>. What comes out?</div>
-        <button class="quiz-option" data-choice="0"><code>[2, 2, 2]</code> — all three closures share one cell for <code>i</code>, and the loop finished on <code>2</code></button>
-        <button class="quiz-option" data-choice="1"><code>[0, 1, 2]</code> — each lambda captured the value of <code>i</code> when it was created</button>
+        <button class="quiz-option" data-choice="0"><code>[2, 2, 2]</code>, because all three closures share one cell for <code>i</code>, and the loop finished on <code>2</code></button>
+        <button class="quiz-option" data-choice="1"><code>[0, 1, 2]</code>, because each lambda captured the value of <code>i</code> when it was created</button>
         <button class="quiz-option" data-choice="2">A <code>NameError</code>, because <code>i</code> no longer exists after the loop</button>
         <div class="quiz-explain">A closure captures the cell, not the value. There is one <code>i</code> cell for the whole comprehension, and by the time any lambda is called it holds <code>2</code>. <code>lambda i=i: i</code> copies the value at definition time and gives <code>[0, 1, 2]</code>.</div>
       </div>
     </section>
+
+    <!-- seo:sessions-nav -->
+    <nav class="sessions-nav" aria-label="All sessions">
+      <div class="sessions-nav__label">All sessions</div>
+      <ul>
+        <li><a href="../01-variables/"><span>01</span> Variables &amp; Mutability</a></li>
+        <li class="is-current"><a href="../02-functions/"><span>02</span> Functions, Scope &amp; the Call Stack</a></li>
+        <li><a href="../03-lists-dicts/"><span>03</span> Lists, Dicts &amp; References</a></li>
+        <li><a href="../04-classes/"><span>04</span> Classes &amp; Objects</a></li>
+        <li><a href="../05-iterators/"><span>05</span> Iterators &amp; Generators</a></li>
+        <li><a href="../06-decorators/"><span>06</span> Decorators</a></li>
+        <li><a href="../07-gil/"><span>07</span> The GIL &amp; Concurrency</a></li>
+        <li><a href="../08-exceptions/"><span>08</span> Exceptions, Tracebacks &amp; Context Managers</a></li>
+      </ul>
+    </nav>
+    <!-- /seo:sessions-nav -->
 
     <div class="session-footer">
       <a href="../01-variables/" class="btn btn--secondary">

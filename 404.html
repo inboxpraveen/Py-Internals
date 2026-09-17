@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Page not found | Py Internals</title>
+  <meta name="description" content="That page isn't here. Pick a session below to keep learning how Python works." />
+  <meta name="robots" content="noindex, follow" />
+  <meta name="theme-color" content="#1A6B5C" />
+  <link rel="icon" type="image/png" href="/Py-Internals/assets/images/Python-logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" />
+  <link rel="stylesheet" href="/Py-Internals/assets/css/base.css" />
+  <link rel="stylesheet" href="/Py-Internals/assets/css/layout.css" />
+  <link rel="stylesheet" href="/Py-Internals/assets/css/components.css" />
+  <link rel="stylesheet" href="/Py-Internals/assets/css/animations.css" />
+  <style>
+    .lost {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: var(--sp-16) var(--sp-6) var(--sp-20);
+    }
+    .lost__eyebrow {
+      font-family: var(--font-mono);
+      font-size: var(--fs-sm);
+      color: var(--clr-accent);
+      margin-bottom: var(--sp-3);
+    }
+    .lost h1 {
+      font-size: clamp(2rem, 5vw, 2.75rem);
+      margin-bottom: var(--sp-4);
+    }
+    .lost p {
+      color: var(--clr-text-2);
+      font-size: var(--fs-md);
+      line-height: var(--lh-loose);
+      margin-bottom: var(--sp-6);
+    }
+    .lost ol {
+      display: grid;
+      gap: var(--sp-2);
+      counter-reset: none;
+    }
+    .lost li a {
+      display: flex;
+      align-items: baseline;
+      gap: var(--sp-3);
+      padding: var(--sp-3) var(--sp-4);
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius-lg);
+      background: var(--clr-surface);
+      color: var(--clr-text);
+      transition: border-color var(--dur-fast) var(--ease-out);
+    }
+    .lost li a:hover { border-color: var(--clr-accent); }
+    .lost li a span {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      font-weight: 700;
+      color: var(--clr-accent);
+    }
+    .lost__links {
+      margin-top: var(--sp-8);
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sp-3);
+    }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar__logo">
+    <a href="/Py-Internals/" class="topbar__home" aria-label="Py Internals home">
+      <div class="topbar__logo-mark">Py</div>
+      <span class="topbar__brand">Py<span>Internals</span></span>
+    </a>
+  </div>
+  <div class="topbar__actions">
+    <a href="/Py-Internals/glossary.html" class="btn btn--ghost btn--sm">Glossary</a>
+  </div>
+</header>
+
+<main class="lost">
+  <div class="lost__eyebrow">404: name 'page' is not defined</div>
+  <h1>That page isn't here</h1>
+  <p>
+    The link may be old, or a session may have moved. Every live session is listed below,
+    and the course always starts with Session 01.
+  </p>
+  <ol aria-label="All sessions">
+    <!-- seo:404-sessions -->
+    <li><a href="/Py-Internals/sessions/01-variables/"><span>01</span> Variables &amp; Mutability</a></li>
+    <li><a href="/Py-Internals/sessions/02-functions/"><span>02</span> Functions, Scope &amp; the Call Stack</a></li>
+    <li><a href="/Py-Internals/sessions/03-lists-dicts/"><span>03</span> Lists, Dicts &amp; References</a></li>
+    <li><a href="/Py-Internals/sessions/04-classes/"><span>04</span> Classes &amp; Objects</a></li>
+    <li><a href="/Py-Internals/sessions/05-iterators/"><span>05</span> Iterators &amp; Generators</a></li>
+    <li><a href="/Py-Internals/sessions/06-decorators/"><span>06</span> Decorators</a></li>
+    <li><a href="/Py-Internals/sessions/07-gil/"><span>07</span> The GIL &amp; Concurrency</a></li>
+    <li><a href="/Py-Internals/sessions/08-exceptions/"><span>08</span> Exceptions, Tracebacks &amp; Context Managers</a></li>
+    <!-- /seo:404-sessions -->
+  </ol>
+  <div class="lost__links">
+    <a href="/Py-Internals/" class="btn btn--primary">Back to the course</a>
+    <a href="/Py-Internals/glossary.html" class="btn btn--secondary">Open the glossary</a>
+    <a href="https://github.com/inboxpraveen/Py-Internals/issues" class="btn btn--ghost" target="_blank" rel="noopener">Report a broken link</a>
+  </div>
+</main>
+
+</body>
+</html>
