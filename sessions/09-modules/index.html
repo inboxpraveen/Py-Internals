@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Python Modules and Imports: sys.modules, __main__, Circular Imports</title>
+  <meta name="description" content="What import really does: find a file, run it once, cache it in sys.modules and bind a name. Why from-imports go stale, what __name__ is, and how circular imports break." />
+  <meta name="theme-color" content="#1A6B5C" />
+  <link rel="icon" type="image/png" href="../../assets/images/Python-logo.png" />
+  <link rel="apple-touch-icon" href="../../assets/images/Python-logo.png" />
+  <link rel="stylesheet" href="../../assets/css/base.css" />
+  <link rel="stylesheet" href="../../assets/css/layout.css" />
+  <link rel="stylesheet" href="../../assets/css/components.css" />
+  <link rel="stylesheet" href="../../assets/css/memory-viz.css" />
+  <link rel="stylesheet" href="../../assets/css/animations.css" />
+  <link rel="stylesheet" href="../../assets/css/session.css" />
+  <!-- seo:head -->
+  <link rel="canonical" href="https://inboxpraveen.github.io/Py-Internals/sessions/09-modules/" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Praveen Kumar" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="Py Internals" />
+  <meta property="og:locale" content="en_GB" />
+  <meta property="og:url" content="https://inboxpraveen.github.io/Py-Internals/sessions/09-modules/" />
+  <meta property="og:title" content="Python Modules and Imports: sys.modules, __main__, Circular Imports" />
+  <meta property="og:description" content="What import really does: find a file, run it once, cache it in sys.modules and bind a name. Why from-imports go stale, what __name__ is, and how circular imports break." />
+  <meta property="og:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/09-modules.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Python Modules and Imports: sys.modules, __main__, Circular Imports on Py Internals" />
+  <meta property="article:published_time" content="2026-10-17" />
+  <meta property="article:modified_time" content="2026-10-17" />
+  <meta property="article:section" content="Program structure" />
+  <meta property="article:author" content="https://github.com/inboxpraveen" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Python Modules and Imports: sys.modules, __main__, Circular Imports" />
+  <meta name="twitter:description" content="What import really does: find a file, run it once, cache it in sys.modules and bind a name. Why from-imports go stale, what __name__ is, and how circular imports break." />
+  <meta name="twitter:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/09-modules.png" />
+  <link rel="alternate" type="application/atom+xml" title="Py Internals sessions" href="https://inboxpraveen.github.io/Py-Internals/feed.xml" />
+  <link rel="manifest" href="https://inboxpraveen.github.io/Py-Internals/manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" />
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": [
+        "Article",
+        "LearningResource"
+      ],
+      "@id": "https://inboxpraveen.github.io/Py-Internals/sessions/09-modules/#lesson",
+      "mainEntityOfPage": "https://inboxpraveen.github.io/Py-Internals/sessions/09-modules/",
+      "headline": "Session 09: Modules & Imports",
+      "name": "Session 09: Modules & Imports",
+      "description": "What import really does: find a file, run it once, cache it in sys.modules and bind a name. Why from-imports go stale, what __name__ is, and how circular imports break.",
+      "image": "https://inboxpraveen.github.io/Py-Internals/assets/images/og/09-modules.png",
+      "author": {
+        "@type": "Person",
+        "name": "Praveen Kumar",
+        "url": "https://github.com/inboxpraveen"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Py Internals",
+        "url": "https://inboxpraveen.github.io/Py-Internals/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://inboxpraveen.github.io/Py-Internals/assets/images/Python-logo.png",
+          "width": 1024,
+          "height": 1024
+        },
+        "sameAs": [
+          "https://github.com/inboxpraveen/Py-Internals"
+        ]
+      },
+      "datePublished": "2026-10-17",
+      "dateModified": "2026-10-17",
+      "inLanguage": "en",
+      "isAccessibleForFree": true,
+      "license": "https://github.com/inboxpraveen/Py-Internals/blob/main/LICENSE",
+      "isPartOf": {
+        "@type": "Course",
+        "@id": "https://inboxpraveen.github.io/Py-Internals/#course",
+        "name": "Py Internals",
+        "url": "https://inboxpraveen.github.io/Py-Internals/"
+      },
+      "position": 9,
+      "learningResourceType": "Interactive lesson",
+      "educationalLevel": "Beginner",
+      "timeRequired": "PT40M",
+      "teaches": [
+        "what import does",
+        "module objects and their __dict__",
+        "sys.modules and the import cache",
+        "from-import versus import",
+        "the __name__ == \"__main__\" guard",
+        "circular imports",
+        "sys.path and shadowed modules",
+        "packages and __pycache__"
+      ],
+      "about": [
+        "Python (programming language)"
+      ],
+      "keywords": "what import does, module objects and their __dict__, sys.modules and the import cache, from-import versus import, the __name__ == \"__main__\" guard, circular imports, sys.path and shadowed modules, packages and __pycache__"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://inboxpraveen.github.io/Py-Internals/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Session 09: Modules & Imports",
+          "item": "https://inboxpraveen.github.io/Py-Internals/sessions/09-modules/"
+        }
+      ]
+    }
+  ]
+}
+  </script>
+  <!-- /seo:head -->
+</head>
+<body>
+
+<a class="skip-link" href="#demo-once">Skip to the interactive lab</a>
+
+<header class="topbar">
+  <div class="topbar__logo">
+    <button class="menu-toggle" aria-label="Open session menu">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+        <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <a href="../../index.html" class="topbar__home" aria-label="Py Internals home">
+      <div class="topbar__logo-mark">Py</div>
+      <span class="topbar__brand">Py<span>Internals</span></span>
+    </a>
+  </div>
+  <div class="topbar__actions">
+    <a href="../../glossary.html" class="btn btn--ghost btn--sm">Glossary</a>
+    <span class="session-count" data-role="session-count">Session 09 of 09</span>
+  </div>
+</header>
+
+<div class="sidebar-overlay"></div>
+
+<div class="app-shell" style="grid-template-rows:unset">
+  <aside class="sidebar" aria-label="Session sections">
+    <div class="sidebar__section">
+      <div class="sidebar__label">Session 09</div>
+      <a href="#intro" class="sidebar__item active">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <circle cx="9" cy="9" r="7"/><path d="M9 6v4l2 2"/>
+        </svg>
+        Introduction
+      </a>
+      <a href="#demo-once" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M2 9h14M9 2v14"/>
+        </svg>
+        Interactive Lab
+      </a>
+      <a href="#import" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M9 3v8M5.5 7.5L9 11l3.5-3.5"/><path d="M3 12v3h12v-3"/>
+        </svg>
+        What <code>import</code> does
+      </a>
+      <a href="#from-import" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <rect x="2.5" y="3" width="6" height="12" rx="1.5"/><rect x="9.5" y="3" width="6" height="12" rx="1.5"/><path d="M5.5 9h7"/>
+        </svg>
+        from x import y
+      </a>
+      <a href="#main-guard" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M9 2.5l5.5 2v4c0 3.5-2.4 6-5.5 7-3.1-1-5.5-3.5-5.5-7v-4z" stroke-linejoin="round"/>
+        </svg>
+        The main guard
+      </a>
+      <a href="#circular" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M14 9a5 5 0 01-8.5 3.5"/><path d="M4 9a5 5 0 018.5-3.5"/><path d="M12.5 2.5v3h-3M5.5 15.5v-3h3"/>
+        </svg>
+        Circular imports
+      </a>
+      <a href="#search-path" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <circle cx="8" cy="8" r="5"/><path d="M12 12l3.5 3.5"/>
+        </svg>
+        Where Python looks
+      </a>
+      <a href="#mistakes" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M9 2.5l6.5 12h-13z" stroke-linejoin="round"/><path d="M9 7v3.5M9 12.5h.01"/>
+        </svg>
+        Common mistakes
+      </a>
+      <a href="#quiz" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <circle cx="9" cy="9" r="7"/><path d="M7 7a2 2 0 113 1.8v1.2M9 13h.01"/>
+        </svg>
+        Check yourself
+      </a>
+    </div>
+    <div class="sidebar__section">
+      <div class="sidebar__label">Course</div>
+      <a href="../08-exceptions/" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M11 5l-4 4 4 4"/>
+        </svg>
+        Previous Session
+      </a>
+      <a href="../../glossary.html" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M4 3.5h8a2 2 0 012 2V15H6a2 2 0 01-2-2z"/><path d="M4 13a2 2 0 012-2h8"/>
+        </svg>
+        Glossary
+      </a>
+      <a href="../../index.html" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M3 9L9 3l6 6M5 7v8h8V7"/>
+        </svg>
+        All Sessions
+      </a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <div class="session-hero" id="intro">
+      <div class="session-hero__breadcrumb">
+        <a href="../../index.html">Home</a>
+        <span>&rsaquo;</span>
+        Session 09
+      </div>
+      <div class="session-hero__eyebrow">Program structure &middot; Session 09</div>
+      <h1 class="session-hero__title">Modules &amp; Imports</h1>
+      <p class="session-hero__subtitle">
+        Nearly every Python file you'll ever write starts with <code>import</code>, and most people never see what that line does. It finds a file, runs it once, keeps the result in a cache and binds a name to it. Once you can see those four moves, the odd cases (a setting that won't update, a circular import, a file called <code>random.py</code> that breaks everything) stop being odd.
+      </p>
+      <div class="session-meta">
+        <div class="session-meta__item">~40 minutes</div>
+        <div class="session-meta__item">5 interactive demos</div>
+        <div class="session-meta__item">Builds on Sessions 01, 02 and 08</div>
+      </div>
+    </div>
+
+    <div class="progress-bar"><div class="progress-bar__fill" id="readProgress" style="width:0%"></div></div>
+
+    <section class="learning-overview">
+      <div class="learning-card">
+        <div class="learning-card__label">Learning goal</div>
+        <h2 class="learning-card__title">A module is an object, built once and kept in <code>sys.modules</code>.</h2>
+        <p class="learning-card__body">
+          <code>import</code> checks a cache, runs the file into a new module object if it has to, and binds a name in your file. Everything else in this session (from-imports, the main guard, circular imports, a file that hides a library) is one of those moves happening at a moment you didn't expect.
+        </p>
+        <div class="concept-chip-row">
+          <span class="type-chip type-chip--instance">module</span>
+          <span class="type-chip type-chip--dict">sys.modules</span>
+          <span class="type-chip type-chip--str">__name__</span>
+          <span class="type-chip type-chip--list">sys.path</span>
+          <span class="type-chip type-chip--function">__globals__</span>
+        </div>
+      </div>
+      <div class="learning-card">
+        <div class="learning-card__label">Recommended path</div>
+        <div class="learning-path">
+          <div class="learning-path__step">
+            <span class="learning-path__num">1</span>
+            <span><strong>Watch one import.</strong> Demo 1 runs a file once and then finds it in the cache. Keep an eye on <code>sys.modules</code>.</span>
+          </div>
+          <div class="learning-path__step">
+            <span class="learning-path__num">2</span>
+            <span><strong>Then the two surprises.</strong> Demo 2 is a from-import that goes stale, and demo 3 is a file that behaves differently depending on who loads it.</span>
+          </div>
+          <div class="learning-path__step">
+            <span class="learning-path__num">3</span>
+            <span><strong>Then the two classic bugs.</strong> Demos 4 and 5 are a circular import and a file that hides a standard module. In both, the cache is only doing its job.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="demo-once">
+      <section class="stage-intro" aria-labelledby="stage-title">
+        <div>
+          <div class="stage-intro__label">Interactive lab</div>
+          <h2 id="stage-title">Each frame is a file running its top-level code</h2>
+          <p>
+            When a module is imported, its code runs in a frame of its own, named here after the file. A module object appears on the heap with a <code>__class__</code> link to <code>module</code> and its <code>__dict__</code> underneath. While the file runs, that dict <em>is</em> the frame's global namespace, so a new name shows up in both places at once. The dict labelled <code>sys.modules</code> is the cache every import checks first.
+          </p>
+        </div>
+        <div class="stage-intro__hint">
+          Tip: at every <code>import</code> line, ask one question before anything else. Is this name already in <code>sys.modules</code>?
+        </div>
+      </section>
+
+      <div class="demo-guide">
+        <div class="demo-guide__step"><span class="demo-guide__badge">1</span> Choose a demo</div>
+        <span class="demo-guide__arrow">&rsaquo;</span>
+        <div class="demo-guide__step"><span class="demo-guide__badge">2</span> Step with <kbd>&rarr;</kbd> or Play</div>
+        <span class="demo-guide__arrow">&rsaquo;</span>
+        <div class="demo-guide__step"><span class="demo-guide__badge">3</span> Watch <code>sys.modules</code></div>
+        <span class="demo-guide__arrow">&rsaquo;</span>
+        <div class="demo-guide__step"><span class="demo-guide__badge">4</span> Read the model below</div>
+      </div>
+
+      <div class="mem-legend" aria-label="How to read the memory diagram">
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--stack"></span> Call stack: one frame per file whose top-level code is running</div>
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--heap"></span> Module objects, <code>sys.modules</code> and what they hold</div>
+        <div class="mem-legend__item"><kbd>&rarr;</kbd> next <kbd>&larr;</kbd> back <kbd>Space</kbd> play <kbd>R</kbd> reset</div>
+      </div>
+
+      <div class="demo-selector">
+        <button class="demo-pill active" data-demo="once">1 &middot; import runs it once</button>
+        <button class="demo-pill" data-demo="fromImport">2 &middot; from x import y</button>
+        <button class="demo-pill" data-demo="mainGuard">3 &middot; __name__ and the guard</button>
+        <button class="demo-pill" data-demo="circular">4 &middot; circular import</button>
+        <button class="demo-pill" data-demo="shadow">5 &middot; a file named random.py</button>
+      </div>
+
+      <div class="demo-watch" id="demoWatch"></div>
+
+      <div class="stage" id="stage">
+        <div class="stage__code-panel">
+          <div class="panel-header panel-header--dark">
+            <span>python</span>
+            <div style="display:flex;align-items:center;gap:6px" aria-hidden="true">
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+            </div>
+          </div>
+          <div class="code-panel-body" id="codePanel"></div>
+          <div class="step-track" data-role="step-track" id="stepTrack" role="group" aria-label="Jump to a step"></div>
+          <div class="playback-controls" id="controls">
+            <div class="playback-controls__left">
+              <button class="step-btn" data-action="prev" title="Previous step" aria-label="Previous step" disabled>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M8 2L4 6l4 4"/></svg>
+              </button>
+              <button class="play-btn" data-action="play" title="Play / Pause" aria-label="Play the walkthrough">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true"><path d="M3 2.5l8 4.5-8 4.5z"/></svg>
+              </button>
+              <button class="step-btn" data-action="next" title="Next step" aria-label="Next step">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M4 2l4 4-4 4"/></svg>
+              </button>
+              <button class="btn btn--ghost btn--sm" data-action="reset" title="Reset" aria-label="Reset to the first step">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path d="M10 6A4 4 0 112 6" stroke-linecap="round"/>
+                  <path d="M2 3v3h3" fill="currentColor" stroke="none"/>
+                </svg>
+                Reset
+              </button>
+            </div>
+            <div class="playback-controls__right">
+              <div class="speed-control">
+                <label for="speedSelect">Speed:</label>
+                <select class="speed-select" id="speedSelect" data-action="speed">
+                  <option value="1700">0.5&times;</option>
+                  <option value="900" selected>1&times;</option>
+                  <option value="600">1.5&times;</option>
+                  <option value="400">2&times;</option>
+                </select>
+              </div>
+              <span class="step-counter" data-role="step-counter">1 / 1</span>
+            </div>
+          </div>
+        </div>
+        <div class="stage__memory-panel">
+          <div class="panel-header">
+            <span style="color:var(--clr-text-3)">Memory</span>
+            <div style="display:flex;align-items:center;gap:6px;font-size:var(--fs-xs);color:var(--clr-text-3)">
+              <span style="display:inline-block;width:8px;height:8px;background:var(--clr-mem-stack);border-radius:2px;opacity:.6"></span>
+              stack
+              <span style="display:inline-block;width:8px;height:8px;background:var(--clr-mem-heap);border-radius:2px;opacity:.6;margin-left:4px"></span>
+              heap
+            </div>
+          </div>
+          <div class="mem-panel-body" id="memPanel"></div>
+        </div>
+      </div>
+
+      <div class="explanation-strip" aria-live="polite">
+        <div class="explanation-strip__step-num" id="stepNum">1</div>
+        <div class="explanation-strip__content">
+          <h3 id="stepTitle" class="explanation-text">Nothing has run yet</h3>
+          <p id="stepDesc" class="explanation-text">Press Play or use Next to watch a module being imported.</p>
+        </div>
+      </div>
+    </div>
+
+    <article class="narrative">
+      <h2 id="import">What <code>import</code> actually does</h2>
+      <p class="in-plain">
+        <span class="in-plain__label">In plain words</span>
+        Think of a workshop with a tool wall. The first time anyone asks for a drill, somebody fetches it from the store room and hangs it on the wall. After that, everyone who asks for a drill gets the one on the wall. Nobody fetches a second drill. <code>sys.modules</code> is the wall, and <code>import</code> is the asking.
+      </p>
+      <p class="narrative-lede then-precise">
+        <code>import config</code> does four things. It looks up <code>"config"</code> in <code>sys.modules</code>, and if it's there, it skips straight to the last step. Otherwise it searches <code>sys.path</code> for <code>config.py</code> (or a <code>config/</code> package), creates an empty module object and stores it in <code>sys.modules</code>, then runs the file's code with the module's <code>__dict__</code> as its global namespace. Last, it binds the name <code>config</code> in the namespace that ran the <code>import</code>. The module is cached before its body runs, not after, and that's what makes circular imports possible at all.
+      </p>
+
+      <div class="flow-grid">
+        <div class="flow-card">
+          <div class="section-label">1 &middot; Check</div>
+          <h3>Already in the cache?</h3>
+          <p>
+            <code>sys.modules</code> is a plain dict from names to module objects. A hit costs one lookup, so the second <code>import</code> of a module, anywhere in the program, is nearly free.
+          </p>
+        </div>
+        <div class="flow-card">
+          <div class="section-label">2 &middot; Load</div>
+          <h3>Run the file once</h3>
+          <p>
+            A new module object is registered, then the file runs top to bottom in a frame whose globals are the module's <code>__dict__</code>. Every top-level <code>def</code>, class and assignment becomes an attribute.
+          </p>
+        </div>
+        <div class="flow-card">
+          <div class="section-label">3 &middot; Bind</div>
+          <h3>A name in your file</h3>
+          <p>
+            <code>import config</code> binds <code>config</code>. <code>import config as cfg</code> binds <code>cfg</code>. <code>from config import retries</code> binds <code>retries</code>, and doesn't bind <code>config</code> at all.
+          </p>
+        </div>
+      </div>
+
+      <div class="callout callout--info">
+        <div class="callout__icon">Read</div>
+        <div>
+          <div class="callout__title">A module's attributes are its globals</div>
+          <div class="callout__body">
+            <code>config.TIMEOUT</code> from outside and the name <code>TIMEOUT</code> inside <code>config.py</code> are the same dict entry, seen from two sides. That's also why <code>global</code> in Session 02 means <em>module level</em>, not program-wide. A function looks up its globals in the module where it was defined (its <code>__globals__</code>), whichever file happens to call it.
+          </div>
+        </div>
+      </div>
+
+      <div class="rule-grid">
+        <div class="rule-card rule-card--mutate">
+          <div class="rule-card__label">Runs once</div>
+          <h3>Top-level code, on the first import</h3>
+          <p>
+            Prints, opened connections, files read, settings parsed. All of it runs the first time the module is imported and never again in this process, however many files import it afterwards.
+          </p>
+        </div>
+        <div class="rule-card rule-card--rebind">
+          <div class="rule-card__label">Doesn't rerun</div>
+          <h3>Edits to the file while it's running</h3>
+          <p>
+            Changing <code>config.py</code> under a running program changes nothing. <code>importlib.reload(config)</code> runs the body again into the <em>same</em> module object, but names that other files copied with <code>from config import ...</code> still point at the old objects.
+          </p>
+        </div>
+      </div>
+
+      <div class="callout callout--warn">
+        <div class="callout__icon">Care</div>
+        <div>
+          <div class="callout__title">Keep import-time work small</div>
+          <div class="callout__body">
+            A module's body runs the moment someone imports it, so slow or risky work at the top level (a network call, loading a large file, connecting to a database) happens before the importer's next line runs. That includes a test that only wanted one small function. Put that work in a function and call it when you actually need it.
+          </div>
+        </div>
+      </div>
+
+      <div class="try-this">
+        <div class="try-this__label">Try this in a REPL</div>
+        <p>
+          <code>import sys, json</code>, then <code>sys.modules["json"] is json</code> gives <code>True</code>. <code>len(sys.modules)</code> shows how many modules were loaded before you typed anything, and <code>json.__file__</code> shows which file this one came from. Finally <code>type(json)</code>: <code>&lt;class 'module'&gt;</code>, an ordinary class with ordinary instances.
+        </p>
+      </div>
+
+      <div id="from-import">
+        <div class="section-divider"><div class="section-divider__label">Import forms</div></div>
+        <h2><code>from x import y</code> copies a name</h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          <code>import config</code> gives you the office's phone number. <code>from config import retries</code> is writing down what the office told you this morning. If the office changes its answer at lunchtime, the person with the phone number hears the new one. The person with the note doesn't.
+        </p>
+        <p class="then-precise">
+          <code>from config import retries</code> imports <code>config</code> as usual, then does the equivalent of <code>retries = config.retries</code> in your namespace and stops. It doesn't create an alias or a link. If code later rebinds <code>config.retries</code> to a new object, your <code>retries</code> still points at the old one. If code <em>mutates</em> the object instead, say by appending to a list both names share, both names see it. That's Session 01's rule again, with the two names living in different files.
+        </p>
+
+        <div style="overflow-x:auto">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>You write</th>
+                <th>Names bound in your file</th>
+                <th>Sees the module rebind it later?</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>import config</code></td>
+                <td><code>config</code></td>
+                <td>Yes, <code>config.retries</code> is looked up every time</td>
+              </tr>
+              <tr>
+                <td><code>import config as cfg</code></td>
+                <td><code>cfg</code> only</td>
+                <td>Yes, the same module under another name</td>
+              </tr>
+              <tr>
+                <td><code>from config import retries</code></td>
+                <td><code>retries</code> only, not <code>config</code></td>
+                <td>No, it's a copy of one binding</td>
+              </tr>
+              <tr>
+                <td><code>from config import *</code></td>
+                <td>every public name, or just the ones listed in <code>__all__</code></td>
+                <td>No, and a reader can't tell where each name came from</td>
+              </tr>
+              <tr>
+                <td><code>import os.path</code></td>
+                <td><code>os</code></td>
+                <td>Yes. The package is bound, and <code>os.path</code> is reached through it</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout--warn">
+          <div class="callout__icon">Care</div>
+          <div>
+            <div class="callout__title"><code>mock.patch</code> aims at a name, not at a module</div>
+            <div class="callout__body">
+              This is why tests sometimes patch the wrong thing. If <code>user.py</code> does <code>from config import retries</code>, then <code>patch("config.retries", 99)</code> changes the module's slot, and <code>user.py</code> never looks there again. Patch <code>"user.retries"</code>, the name your code actually reads. The <code>unittest.mock</code> docs put it as: patch where an object is looked up, not where it's defined.
+            </div>
+          </div>
+        </div>
+
+        <div class="try-this">
+          <div class="try-this__label">Try this in a REPL</div>
+          <p>
+            Save <code>retries = 3</code> as <code>config.py</code>. Then <code>from config import retries</code>, then <code>import config</code>, then <code>config.retries = 5</code>. <code>retries</code> is still <code>3</code>, and <code>retries is config.retries</code> is <code>False</code>. Before the <code>import config</code> line, typing <code>config</code> would have given <code>NameError</code>, even though <code>"config"</code> was already in <code>sys.modules</code>.
+          </p>
+        </div>
+      </div>
+
+      <div id="main-guard">
+        <div class="section-divider"><div class="section-divider__label">The main guard</div></div>
+        <h2><code>__name__</code> and <code>if __name__ == "__main__":</code></h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          A file can't tell from its own name whether it's the whole program or just a part of one. Python tells it, by setting <code>__name__</code> before the first line runs: <code>"__main__"</code> if you started it, and its module name if something imported it.
+        </p>
+        <p class="then-precise">
+          The script you run is executed as a module registered in <code>sys.modules</code> under the key <code>"__main__"</code>, with <code>__name__</code> set to <code>"__main__"</code>. The same goes for <code>python -m pkg.tool</code>. When it's imported instead, the same file gets <code>__name__ == "pkg.tool"</code>. The guard is an ordinary <code>if</code> comparing two strings, and it separates what a file <em>defines</em> from what it <em>does</em> when you start it.
+        </p>
+
+        <div class="code-block">
+          <div class="code-block__header">
+            <div class="code-block__dots">
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+            </div>
+            <span class="code-block__lang">python</span>
+          </div>
+          <div class="code-block__body"><span class="tok-kw">import</span> sys
+
+<span class="tok-kw">def</span> <span class="tok-fn">main</span>(argv):
+    <span class="tok-fn">print</span>(<span class="tok-str">"hello"</span>, *argv)
+
+<span class="tok-kw">if</span> __name__ == <span class="tok-str">"__main__"</span>:
+    main(sys.argv[<span class="tok-num">1</span>:])   <span class="tok-cmt"># python greet.py Sam prints: hello Sam</span>
+                         <span class="tok-cmt"># import greet defines main and runs nothing</span></div>
+        </div>
+
+        <div class="callout callout--insight">
+          <div class="callout__icon">Key</div>
+          <div>
+            <div class="callout__title">One file can turn into two modules</div>
+            <div class="callout__body">
+              If <code>app.py</code> is the script you run <em>and</em> some other module does <code>import app</code>, the file runs twice: once as <code>__main__</code> and once as <code>app</code>. Those are two separate module objects with two separate sets of globals, so a counter or a cache at the top of <code>app.py</code> now exists twice, and changes to one don't show in the other. Keep the file you run thin, and import the real code from somewhere else.
+            </div>
+          </div>
+        </div>
+
+        <div class="try-this">
+          <div class="try-this__label">Try this in a REPL</div>
+          <p>
+            Type <code>__name__</code> in a fresh REPL: <code>'__main__'</code>. The REPL is a module too. Then <code>import json; json.__name__</code> gives <code>'json'</code>, and <code>import sys; sys.modules["__main__"]</code> shows the module you're typing into.
+          </p>
+        </div>
+      </div>
+
+      <div id="circular">
+        <div class="section-divider"><div class="section-divider__label">Circular imports</div></div>
+        <h2>Two modules that need each other</h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Two people each wait for the other to finish a sentence before they finish their own. Python breaks the deadlock by letting the second person carry on with whatever the first had said so far. That works fine, as long as the second person doesn't need the part that hasn't been said yet.
+        </p>
+        <p class="then-precise">
+          Because a module goes into <code>sys.modules</code> before its body runs, an import that comes back round to it finds the partly run module and returns it without running anything. Names defined above the import line are there. Names below it don't exist yet, and reading one of them during the import raises <code>AttributeError</code> (for <code>a.NAME</code>) or <code>ImportError: cannot import name</code> (for <code>from a import NAME</code>). When an import fails, every module whose body didn't finish is removed from <code>sys.modules</code> again, so nothing is left half built in the cache.
+        </p>
+
+        <div class="key-idea">
+          <div class="key-idea__icon">1</div>
+          <p>
+            <strong>Read names later.</strong> Keep <code>import a</code> at the top, but use <code>a.VALUE</code> inside functions. By the time a function is called, both modules have finished loading.
+          </p>
+        </div>
+        <div class="key-idea">
+          <div class="key-idea__icon">2</div>
+          <p>
+            <strong>Move the shared part out.</strong> If both modules need <code>VALUE</code>, put it in a third module that imports neither of them. This is usually the real fix, because the cycle was a sign the code wanted splitting.
+          </p>
+        </div>
+        <div class="key-idea">
+          <div class="key-idea__icon">3</div>
+          <p>
+            <strong>Import inside the function.</strong> <code>def f(): from a import VALUE</code> waits until the call. It's a fair last resort, and after the first call it costs one dict lookup.
+          </p>
+        </div>
+
+        <div class="callout callout--info">
+          <div class="callout__icon">Read</div>
+          <div>
+            <div class="callout__title">Reading the error on Python 3.13</div>
+            <div class="callout__body">
+              Python 3.13 ends the message with a hint in brackets. For modules inside a package it usually says <em>partially initialized module ... (most likely due to a circular import)</em>, which is right. For files sitting next to the script you ran, as in demo 4, it says <em>consider renaming ... if it has the same name as a library you intended to import</em>, which sends you the wrong way. If the traceback shows two of your own modules importing each other, it's circular, whatever the hint says.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="search-path">
+        <div class="section-divider"><div class="section-divider__label">The search</div></div>
+        <h2>Where Python looks: <code>sys.path</code></h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Finding <code>random.py</code> is like calling a name down a corridor of rooms, nearest room first. The first room that answers wins, even if the person you wanted was further down.
+        </p>
+        <p class="then-precise">
+          On a cache miss, Python asks the modules built into the interpreter first (<code>sys</code>, for one), then walks <code>sys.path</code>, a plain list of folders, in order, and takes the first match: a <code>random.py</code> file, a <code>random/</code> package folder, or a compiled extension. Entry 0 is the folder of the script you ran (the current folder for <code>python -m</code>, and an empty string meaning the current folder in the REPL). After it come the standard library and then <code>site-packages</code>, where <code>pip</code> installs things.
+        </p>
+
+        <div class="lookup-path" aria-label="Where import looks, in order">
+          <div class="lookup-path__step is-hit">
+            <span class="lookup-path__where">sys.modules</span>
+            <span>Already loaded? Then you get that object, and the search never starts.</span>
+            <span class="lookup-path__result">cache</span>
+          </div>
+          <div class="lookup-path__step is-hit">
+            <span class="lookup-path__where">built in</span>
+            <span>Modules compiled into the interpreter, such as <code>sys</code>, and a few frozen copies of standard modules it needs at startup.</span>
+            <span class="lookup-path__result">interpreter</span>
+          </div>
+          <div class="lookup-path__step is-hit">
+            <span class="lookup-path__where">sys.path[0]</span>
+            <span>The script's own folder. Your files live here, which is why one of them can hide anything further down.</span>
+            <span class="lookup-path__result">your code</span>
+          </div>
+          <div class="lookup-path__step is-hit">
+            <span class="lookup-path__where">stdlib</span>
+            <span>The standard library folders, such as <code>lib/python3.13</code> and <code>lib-dynload</code>.</span>
+            <span class="lookup-path__result">batteries</span>
+          </div>
+          <div class="lookup-path__step is-hit">
+            <span class="lookup-path__where">site-packages</span>
+            <span>Everything <code>pip</code> installed, inside your virtual environment if one is active.</span>
+            <span class="lookup-path__result">third party</span>
+          </div>
+        </div>
+
+        <div class="callout callout--warn">
+          <div class="callout__icon">Care</div>
+          <div>
+            <div class="callout__title">Don't name your files after modules you use</div>
+            <div class="callout__body">
+              <code>random.py</code>, <code>json.py</code>, <code>email.py</code>, <code>test.py</code>, <code>requests.py</code>: each one hides the real module from every import in the program, including imports made inside the standard library itself. Python 3.13 notices the standard-library case and says so in the error. For a <code>pip</code> package like <code>requests</code> you only get the plain <code>AttributeError</code>.
+            </div>
+          </div>
+        </div>
+
+        <div class="diagram-grid">
+          <div class="diagram-card">
+            <h3>Packages are modules with a <code>__path__</code></h3>
+            <p>
+              A folder with an <code>__init__.py</code> is a package. <code>import shop.orders</code> runs <code>shop/__init__.py</code> first, then <code>shop/orders.py</code>, registers both <code>"shop"</code> and <code>"shop.orders"</code> in <code>sys.modules</code>, and binds only <code>shop</code> in your file. The package's <code>__path__</code> is the list of folders its submodules are searched in, a small <code>sys.path</code> of its own.
+            </p>
+          </div>
+          <div class="diagram-card">
+            <h3>What <code>__pycache__</code> is</h3>
+            <p>
+              The first import of <code>config.py</code> compiles it to bytecode and saves that as <code>__pycache__/config.cpython-313.pyc</code>. Next time, if the source hasn't changed, Python loads the saved bytecode and skips compiling. It speeds up start-up, not running time, and it's safe to delete. The script you run directly isn't saved this way.
+            </p>
+          </div>
+        </div>
+
+        <div class="try-this">
+          <div class="try-this__label">Try this in a REPL</div>
+          <p>
+            <code>import sys; print(*sys.path, sep="\n")</code> prints the search order on your own machine. Then <code>import random; random.__file__</code> shows where the real <code>random</code> lives. If that path is inside your project, you've found a shadow.
+          </p>
+        </div>
+
+        <div class="recap-box">
+          <div class="recap-box__label">What you should be able to draw</div>
+          <p>
+            A <code>sys.modules</code> dict with one entry per loaded module, each pointing at a module object whose <code>__dict__</code> holds that file's top-level names. A frame that exists only while a file's body runs. Two names in two files pointing at one object, which is all a from-import leaves behind. And a module that sits in the cache half built while its own imports are still running. Draw those four and you can predict every case in this session.
+          </p>
+        </div>
+      </div>
+
+      <div id="mistakes">
+        <div class="section-divider"><div class="section-divider__label">Common mistakes</div></div>
+        <h2>Six ways this goes wrong</h2>
+
+        <div class="mistake-list">
+          <div class="mistake-item">
+            <h3>Naming a file after a module you import</h3>
+            <p>
+              A <code>random.py</code> or <code>requests.py</code> in your project folder wins the search, and the real module never loads. The error shows up somewhere else entirely, as a missing attribute. <code>print(module.__file__)</code> settles it in one line.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Expecting a from-imported name to update</h3>
+            <p>
+              <code>from config import retries</code> takes a copy of one binding at import time. If the module rebinds <code>retries</code> later, your copy doesn't move. Use <code>config.retries</code>, or a function that returns the current value.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Doing real work at import time</h3>
+            <p>
+              Top-level code runs for everyone who imports the module, including tests and tools that only wanted one function. Connections, big file loads and prints belong in a function, called from the main guard or by whoever needs them.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Running a file inside a package directly</h3>
+            <p>
+              <code>python shop/orders.py</code> with a relative import such as <code>from . import users</code> fails with <code>ImportError: attempted relative import with no known parent package</code>, because a file run directly is <code>__main__</code>, not part of <code>shop</code>. Run it from the project folder as <code>python -m shop.orders</code>.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Re-importing to pick up an edit</h3>
+            <p>
+              In a REPL or a notebook, a second <code>import config</code> after you edit the file does nothing, because the old module is still in the cache. <code>importlib.reload(config)</code> runs it again, but from-imported names and instances of old classes keep pointing at the old objects. Restarting is the honest fix.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Two modules that need each other at import time</h3>
+            <p>
+              A circular import is fine until one side reads the other's names during loading. Read them inside functions instead, or move the shared names into a third module. The traceback's tell is two of your modules importing each other.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout callout--success">
+          <div class="callout__icon">Check</div>
+          <div>
+            <div class="callout__title">Two questions catch nearly all of it</div>
+            <div class="callout__body">
+              <strong>Is it already in <code>sys.modules</code>?</strong> If it is, nothing runs and you get that object. <strong>Which namespace does this name live in?</strong> A from-import put a copy in yours, and <code>module.name</code> reads theirs.
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <section class="quiz" id="quiz" data-session="09-modules">
+      <div class="section-divider"><div class="section-divider__label">Check your understanding</div></div>
+      <h2>Can you predict the memory?</h2>
+      <p class="quiz__lede">Every question comes back to the cache and to which namespace a name lives in.</p>
+
+      <div class="quiz-card" data-answer="1">
+        <div class="quiz-card__q">1. <code>config.py</code> starts with <code>print("loading")</code>. Three different files in one program each run <code>import config</code>. How many times is <code>loading</code> printed?</div>
+        <button class="quiz-option" data-choice="0">Three times, once for each <code>import</code></button>
+        <button class="quiz-option" data-choice="1">Once, because the later imports find the module in <code>sys.modules</code> and don't run the file</button>
+        <button class="quiz-option" data-choice="2">Never, because importing a module only reads its definitions</button>
+        <div class="quiz-explain">
+          The first import runs the whole file into a new module object and caches it. Every import after that, in any file, is a lookup in <code>sys.modules</code> plus a name binding. Nothing runs again unless you call <code>importlib.reload</code>.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="0">
+        <div class="quiz-card__q">2. When is a new module added to <code>sys.modules</code>?</div>
+        <button class="quiz-option" data-choice="0">Before its body runs, as soon as the empty module object exists</button>
+        <button class="quiz-option" data-choice="1">After its body finishes, so only complete modules are ever cached</button>
+        <button class="quiz-option" data-choice="2">Only when the program exits</button>
+        <div class="quiz-explain">
+          Registering first is what lets a circular import find the module instead of loading it forever. It's also why the other module can see it half built. If the body then fails, the entry is removed again.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="2">
+        <div class="quiz-card__q">3. <code>main.py</code> runs <code>from config import retries</code>, and later <code>config.set_retries(5)</code> rebinds the module's <code>retries</code> from 3 to 5. What does <code>retries</code> in <code>main.py</code> hold now?</div>
+        <button class="quiz-option" data-choice="0"><code>5</code>, because <code>retries</code> is an alias for <code>config.retries</code></button>
+        <button class="quiz-option" data-choice="1">It raises <code>NameError</code>, because the original binding was replaced</button>
+        <button class="quiz-option" data-choice="2"><code>3</code>, because the from-import made a separate name pointing at the object <code>config.retries</code> held at the time</button>
+        <div class="quiz-explain">
+          <code>from config import retries</code> works like <code>retries = config.retries</code>. Rebinding the module's name moves that one name only. If the object had been mutated instead (a list appended to, say), both names would see the change, because they share it.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="1">
+        <div class="quiz-card__q">4. After <code>from config import retries</code> and nothing else, you type <code>config</code>. What happens?</div>
+        <button class="quiz-option" data-choice="0">You get the module, because importing anything from it binds its name too</button>
+        <button class="quiz-option" data-choice="1"><code>NameError</code>. The module is in <code>sys.modules</code>, but the only name bound in your file is <code>retries</code></button>
+        <button class="quiz-option" data-choice="2"><code>None</code>, because the module was only partly imported</button>
+        <div class="quiz-explain">
+          The whole module was loaded and cached, but a from-import binds only the names you list. <code>import config</code> is what binds <code>config</code>. Being in the cache and being a name in your namespace are two different things.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="0">
+        <div class="quiz-card__q">5. You start a program with <code>python tools.py</code>. Inside <code>tools.py</code>, what is <code>__name__</code>?</div>
+        <button class="quiz-option" data-choice="0"><code>"__main__"</code>, because it's the file you ran</button>
+        <button class="quiz-option" data-choice="1"><code>"tools"</code>, because that's the file's name</button>
+        <button class="quiz-option" data-choice="2"><code>"tools.py"</code></button>
+        <div class="quiz-explain">
+          Python sets <code>__name__</code> from how the file was loaded. The script you start, or the one you run with <code>python -m</code>, is <code>"__main__"</code>. The same file imported by another module gets <code>"tools"</code>, and then its guarded block doesn't run.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="2">
+        <div class="quiz-card__q">6. <code>a.py</code> is <code>import b</code> then <code>VALUE = 1</code>. <code>b.py</code> is <code>import a</code> then <code>print(a.VALUE)</code>. You run <code>import a</code>. What happens?</div>
+        <button class="quiz-option" data-choice="0">It prints <code>1</code>, because Python loads the two files in the right order for you</button>
+        <button class="quiz-option" data-choice="1">It loops forever, each module importing the other</button>
+        <button class="quiz-option" data-choice="2"><code>AttributeError</code>: <code>b</code> gets the half-built <code>a</code> from the cache, and <code>VALUE</code> hasn't been defined yet</button>
+        <div class="quiz-explain">
+          <code>a</code> is registered, starts running, and pauses on <code>import b</code>. <code>b</code>'s <code>import a</code> finds <code>a</code> in <code>sys.modules</code> and gets it as it is, before line 2 of <code>a.py</code> has run. The cache stops the loop, and it's also what hands over an unfinished module.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="1">
+        <div class="quiz-card__q">7. Your project folder has <code>game.py</code> and a helper you saved as <code>random.py</code>. <code>game.py</code> runs <code>import random</code>. Which file is loaded?</div>
+        <button class="quiz-option" data-choice="0">The standard library's <code>random</code>, because built-in names always win</button>
+        <button class="quiz-option" data-choice="1">Yours, because <code>sys.path[0]</code> is the script's folder and the first match wins</button>
+        <button class="quiz-option" data-choice="2">Python raises an error, because two modules have the same name</button>
+        <div class="quiz-explain">
+          The search walks <code>sys.path</code> in order and stops at the first match, and your script's folder comes before the standard library. From then on <code>sys.modules["random"]</code> is your file, for every import in the process. Rename the helper.
+        </div>
+      </div>
+    </section>
+
+    <!-- seo:sessions-nav -->
+    <nav class="sessions-nav" aria-label="All sessions">
+      <div class="sessions-nav__label">All sessions</div>
+      <ul>
+        <li><a href="../01-variables/"><span>01</span> Variables &amp; Mutability</a></li>
+        <li><a href="../02-functions/"><span>02</span> Functions, Scope &amp; the Call Stack</a></li>
+        <li><a href="../03-lists-dicts/"><span>03</span> Lists, Dicts &amp; References</a></li>
+        <li><a href="../04-classes/"><span>04</span> Classes &amp; Objects</a></li>
+        <li><a href="../05-iterators/"><span>05</span> Iterators &amp; Generators</a></li>
+        <li><a href="../06-decorators/"><span>06</span> Decorators</a></li>
+        <li><a href="../07-gil/"><span>07</span> The GIL &amp; Concurrency</a></li>
+        <li><a href="../08-exceptions/"><span>08</span> Exceptions, Tracebacks &amp; Context Managers</a></li>
+        <li class="is-current"><a href="../09-modules/"><span>09</span> Modules &amp; Imports</a></li>
+      </ul>
+    </nav>
+    <!-- /seo:sessions-nav -->
+
+    <div class="session-footer">
+      <a href="../08-exceptions/" class="btn btn--secondary">&larr; Session 08: Exceptions</a>
+      <div style="text-align:center;font-size:var(--fs-xs);color:var(--clr-text-3)" data-role="session-count">Session 09 of 09</div>
+      <a href="../../index.html" class="btn btn--primary">Back to course</a>
+    </div>
+  </main>
+</div>
+
+<script src="../../assets/js/core.js"></script>
+<script src="../../assets/js/syntax.js"></script>
+<script src="../../assets/js/memory-viz.js"></script>
+<script src="../../assets/js/animator.js"></script>
+<script src="session.js"></script>
+</body>
+</html>

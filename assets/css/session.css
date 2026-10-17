@@ -285,7 +285,9 @@
 
 .lookup-path__step {
   display: grid;
-  grid-template-columns: 72px 1fr auto;
+  /* wide enough for a 13-character mono label such as "site-packages" or
+     "B · builtins"; at 72px those ran into the text beside them */
+  grid-template-columns: 6.5rem 1fr auto;
   gap: var(--sp-3);
   align-items: center;
   padding: var(--sp-3) var(--sp-5);

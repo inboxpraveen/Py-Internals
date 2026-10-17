@@ -210,31 +210,11 @@ and rebound.
 
 | Operation | Example | Creates new object? | id() changes? | Other aliases see change? |
 | --- | --- | --- | --- | --- |
-
-****
-``
-
-| Rebind | x = 99 | Yes | Yes | No |
-
-****
-``
-
-| Augmented rebind | x += 1 (int) | Yes | Yes | No |
-
-****
-``
-
-| Mutate (append) | lst.append(x) | No | No | Yes |
-
-****
-``
-
-| Mutate (index) | lst[0] = x | No | No | Yes |
-
-****
-``
-
-| Augmented rebind | lst += [x] (list) | No* | No* | Yes* |
+| **Rebind** | `x = 99` | Yes | Yes | No |
+| **Augmented rebind** | `x += 1` (int) | Yes | Yes | No |
+| **Mutate (append)** | `lst.append(x)` | No | No | Yes |
+| **Mutate (index)** | `lst[0] = x` | No | No | Yes |
+| **Augmented rebind** | `lst += [x]` (list) | No* | No* | Yes* |
 
 * For lists, `+=` calls `__iadd__` which mutates in-place (unlike with immutable types).
 
@@ -331,46 +311,15 @@ An unordered collection of unique items. Mutable, so you can add and remove, but
 
 | Type | Literal | Mutable? | Why it matters |
 | --- | --- | --- | --- |
-
-``
-
-````
-
-| int | 42 | No | x += 1 rebinds x to a new object |
-
-``
-
-| float | 3.14 | No | Any arithmetic produces a new float |
-
-``
-
-| str | "hello" | No | String methods return new strings; you can't change characters in-place |
-
-``
-
-| bool | True | No | Only two boolean objects exist; they're singletons |
-
-``
-
-``
-
-| NoneType | None | No | One None object exists; always use is None to check |
-
-``
-
-| tuple | (1, 2) | No | Can't add/remove/change; safe to use as dict keys |
-
-``
-
-| list | [1, 2] | Yes | A function can modify the list you passed in, so be careful with aliases |
-
-``
-
-| dict | {"k": v} | Yes | A function gets a second name for the same dict, so changes made inside it are visible to the caller |
-
-``
-
-| set | {1, 2} | Yes | Can grow/shrink; elements must be immutable/hashable |
+| int | `42` | No | `x += 1` rebinds `x` to a new object |
+| float | `3.14` | No | Any arithmetic produces a new float |
+| str | `"hello"` | No | String methods return new strings; you can't change characters in-place |
+| bool | `True` | No | Only two boolean objects exist; they're singletons |
+| NoneType | `None` | No | One None object exists; always use `is None` to check |
+| tuple | `(1, 2)` | No | Can't add/remove/change; safe to use as dict keys |
+| list | `[1, 2]` | Yes | A function can modify the list you passed in, so be careful with aliases |
+| dict | `{"k": v}` | Yes | A function gets a second name for the same dict, so changes made inside it are visible to the caller |
+| set | `{1, 2}` | Yes | Can grow/shrink; elements must be immutable/hashable |
 
 **The aliasing trap**
 
@@ -730,18 +679,9 @@ When you call `add_item(bag)`, Python doesn't copy the list. It binds the local 
 
 | Operation inside function | What changes? | Caller sees it? |
 | --- | --- | --- |
-
-``
-
-| items.append("x") | The list object is mutated in-place. | Yes, because caller and parameter point to the same list. |
-
-``
-
-| items = ["x"] | The local name is rebound to a new list. | No, the caller's name still points to the original list. |
-
-``
-
-| return items | The referenced object is handed back to the caller. | Only if the caller stores or uses the returned object. |
+| `items.append("x")` | The list object is mutated in-place. | Yes, because caller and parameter point to the same list. |
+| `items = ["x"]` | The local name is rebound to a new list. | No, the caller's name still points to the original list. |
+| `return items` | The referenced object is handed back to the caller. | Only if the caller stores or uses the returned object. |
 
 ### How Python decides which name gets which object
 
@@ -756,35 +696,11 @@ def order(item, qty=1, *extras, note=None, **tags):
 
 | The call | What lands on the desk | Why |
 | --- | --- | --- |
-
-``
-````````````````````
-``
-
-| order("tea") | item → "tea", qty → 1, note → None, extras → (), tags → {} | One positional fills item; the rest fall back to defaults, and the two sweepers come up empty. |
-
-``
-````````
-
-| order("tea", 2) | item → "tea", qty → 2 | Positionals are matched strictly left to right, so the second one goes to the second parameter. |
-
-``
-
-``
-
-| order(qty=2, item="tea") | Identical to the row above | Keywords are matched by name, so their order does not matter. Written the other way round, order(qty=2, "tea"), it's a syntax error, because positionals may never follow keywords. |
-
-``
-````````````
-````````
-
-| order("tea", 2, "hot", "large", note="rush", size="L") | extras → ("hot", "large"), note → "rush", tags → {"size": "L"} | Leftover positionals collect into the *extras tuple; note is named so it binds directly, and the unrecognised size collects into the **tags dict. |
-
-``
-
-``````
-
-| order(*pair, **opts) | Same as spelling the items out by hand | At the call site the stars mean "unpack": * spreads a sequence into positionals, ** spreads a dict into keywords. Same two stars, opposite direction from the def. |
+| `order("tea")` | `item` → `"tea"`, `qty` → `1`, `note` → `None`, `extras` → `()`, `tags` → `{}` | One positional fills `item`; the rest fall back to defaults, and the two sweepers come up empty. |
+| `order("tea", 2)` | `item` → `"tea"`, `qty` → `2` | Positionals are matched strictly left to right, so the second one goes to the second parameter. |
+| `order(qty=2, item="tea")` | Identical to the row above | Keywords are matched by name, so their order does not matter. Written the other way round, `order(qty=2, "tea")`, it's a syntax error, because positionals may never follow keywords. |
+| `order("tea", 2, "hot", "large", note="rush", size="L")` | `extras` → `("hot", "large")`, `note` → `"rush"`, `tags` → `{"size": "L"}` | Leftover positionals collect into the `*extras` tuple; `note` is named so it binds directly, and the unrecognised `size` collects into the `**tags` dict. |
+| `order(*pair, **opts)` | Same as spelling the items out by hand | At the call site the stars mean "unpack": `*` spreads a sequence into positionals, `**` spreads a dict into keywords. Same two stars, opposite direction from the `def`. |
 
 ```
 
@@ -829,28 +745,11 @@ Both give `[0, 1, 2]`.
 
 | Concept | Plain-English meaning |
 | --- | --- |
-
-****
-``
-
-| Function object | The object created by def; a name can point to it like any other object. |
-
-****
-
-| Frame | The temporary desk (one namespace) belonging to one active call. |
-
-****
-
-| Local scope | The names that belong to a particular call frame. |
-
-****
-
-| Argument passing | Parameter names are bound to the objects supplied by the caller. |
-
-****
-****``
-
-| Closure | An inner function object plus the cells holding the outer names it captured. Reachable at fn.__closure__. |
+| **Function object** | The object created by `def`; a name can point to it like any other object. |
+| **Frame** | The temporary desk (one namespace) belonging to one active call. |
+| **Local scope** | The names that belong to a particular call frame. |
+| **Argument passing** | Parameter names are bound to the objects supplied by the caller. |
+| **Closure** | An inner function object plus the **cells** holding the outer names it captured. Reachable at `fn.__closure__`. |
 
 ---
 
@@ -1201,28 +1100,11 @@ inner lists.
 
 | Operation | New outer container? | Nested objects shared? | Common use |
 | --- | --- | --- | --- |
-
-``
-
-| b = a | No | Yes, because everything is the same object | Create another name for the same container |
-
-``
-
-| b = a.copy() | Yes | Yes | Copy a flat list or dict |
-
-``
-
-``
-
-| b = a[:] | Yes | Yes | The classic slice copy, with the same result as list(a) |
-
-``
-
-| b = list(a) | Yes | Yes | Make a shallow list copy from any iterable |
-
-``
-
-| b = copy.deepcopy(a) | Yes | No, mutable nested objects are cloned | Independent nested data, used deliberately |
+| `b = a` | No | Yes, because everything is the same object | Create another name for the same container |
+| `b = a.copy()` | Yes | Yes | Copy a flat list or dict |
+| `b = a[:]` | Yes | Yes | The classic slice copy, with the same result as `list(a)` |
+| `b = list(a)` | Yes | Yes | Make a shallow list copy from any iterable |
+| `b = copy.deepcopy(a)` | Yes | No, mutable nested objects are cloned | Independent nested data, used deliberately |
 
 **Deep copy is powerful, but not always the right default**
 
@@ -1322,20 +1204,10 @@ Keys must be **hashable**, which for built-ins usually means immutable
 
 | Question | Plain answer | Why it matters |
 | --- | --- | --- |
-
-``
-
-| Can two names point to one dict? | Yes. alias = profile creates another reference. | Mutating through either name changes one shared dict. |
-
-``
-
-| Can a dict value be a list? | Yes. Values can be mutable objects. | profile["skills"].append(...) mutates the nested list. |
-
+| Can two names point to one dict? | Yes. `alias = profile` creates another reference. | Mutating through either name changes one shared dict. |
+| Can a dict value be a list? | Yes. Values can be mutable objects. | `profile["skills"].append(...)` mutates the nested list. |
 | Can a list be a dict key? | No. Lists are mutable and unhashable. | If a key could change after insertion, lookup would become unreliable. |
-
-``
-
-| Does dict.copy() copy nested values? | No. It is shallow. | Nested lists and dicts remain shared unless you copy them deliberately. |
+| Does `dict.copy()` copy nested values? | No. It is shallow. | Nested lists and dicts remain shared unless you copy them deliberately. |
 
 **The practical rule**
 
@@ -1540,7 +1412,7 @@ print(original, shallow, deep)
 ```
 
 1. **Initial state: nothing allocated yet** One question drives this demo: which of the three names survives a change to the original? Nothing exists yet, so we start from an empty namespace and an empty heap.
-2. **original = [[1]] creates two list objects, not one** Line 1 pulls in the standard-library copy module for later. Line 2 builds the data: an outer list whose single slot points at an inner list. Two containers, two addresses, and that is the whole reason copying has a depth at all.
+2. **original = [[1]] creates two list objects, not one** Line 1 pulls in the standard-library copy module for later. Line 2 builds the data: an outer list whose single slot points at an inner list. Two containers, two addresses, and that's why copying has a depth at all.
 3. **original.copy() shares the inner list** A new outer list appears. Its slot still points at the same inner list. This is the shallow-copy rule from demo 2, and the inner list's refcount rising to 2 is the proof.
 4. **copy.deepcopy clones the inner list too** deep is a new outer list whose slot points at a new inner list holding the same value. Deepcopy walked the whole tree instead of stopping at the first level, so no nested object is shared any more.
 5. **Mutating the original inner list leaves deep alone** original[0].append(2) changes the shared inner list at 0x7f5a1010, so shallow sees the 2 as well. It was pointing there all along. deep still holds [1], because its inner list is a different object at 0x7f5a4010.
@@ -1692,26 +1564,11 @@ The greeting function lives on the recipe, shared by every greeter. When you say
 `g.hello` is a **bound method**: a small object that remembers
 the function and the instance. Calling it supplies `self` automatically.
 
-``
-
-| Expression | What you get | Who fills self? |
+| Expression | What you get | Who fills `self`? |
 | --- | --- | --- |
-
-``
-
-``
-
-| Greeter.hello | The raw function on the class | You must pass the instance: Greeter.hello(g, "Ada") |
-
-``
-
-``
-
-| g.hello | A bound method | The method object already holds g |
-
-``
-
-| g.hello("Ada") | A call through that bound method | Python, automatically |
+| `Greeter.hello` | The raw function on the class | You must pass the instance: `Greeter.hello(g, "Ada")` |
+| `g.hello` | A bound method | The method object already holds `g` |
+| `g.hello("Ada")` | A call through that bound method | Python, automatically |
 
 **Try this in a REPL**
 
@@ -2096,18 +1953,9 @@ A list comprehension is eager: every value exists before you use the list. A gen
 
 | Form | What exists immediately | Can you reuse it? |
 | --- | --- | --- |
-
-``
-
-| [x * x for x in xs] | A full list of results | Yes. Index it, loop twice, pass it around. |
-
-``
-
-| (x * x for x in xs) | A generator object | Once. After exhaustion, another loop sees nothing. |
-
-``
-
-| range(1_000_000) | A small range object, not a million ints | Yes. It is iterable and can produce a fresh iterator. |
+| `[x * x for x in xs]` | A full list of results | Yes. Index it, loop twice, pass it around. |
+| `(x * x for x in xs)` | A generator object | Once. After exhaustion, another loop sees nothing. |
+| `range(1_000_000)` | A small range object, not a million ints | Yes. It is iterable and can produce a fresh iterator. |
 
 **Try this in a REPL**
 
@@ -2391,33 +2239,12 @@ It copies `__name__`, `__qualname__`, `__doc__`,
 the wrapper, updates `__dict__`, and sets `__wrapped__` to
 the original object so tools can unwrap it.
 
-``
-``
-
-| You call | Without wraps | With wraps |
+| You call | Without `wraps` | With `wraps` |
 | --- | --- | --- |
-
-``
-``
-``
-
-| greet.__name__ | 'wrapper' | 'greet' |
-
-``
-``
-
-| greet.__doc__ | None | Your docstring |
-
-``
-``
-
-| greet.__wrapped__ | AttributeError | The undecorated function |
-
-``
-``
-``
-
-| greet("ada") | 'HI ADA' | 'HI ADA', the behaviour is identical |
+| `greet.__name__` | `'wrapper'` | `'greet'` |
+| `greet.__doc__` | `None` | Your docstring |
+| `greet.__wrapped__` | `AttributeError` | The undecorated function |
+| `greet("ada")` | `'HI ADA'` | `'HI ADA'`, the behaviour is identical |
 
 **Skipping `wraps` is a debugging tax you pay later**
 
@@ -2820,15 +2647,9 @@ The GIL guarantees that one *bytecode* completes before another begins. It makes
 
 | What the GIL promises | What it does not promise |
 | --- | --- |
-
 | One bytecode finishes before the next starts | One line of your code finishes before another thread runs |
-
-**
-
-| Reference counts stay correct | Your counters, totals and caches stay correct |
-
+| Reference counts stay correct | *Your* counters, totals and caches stay correct |
 | The interpreter never corrupts its own structures | Your dictionary is in a sensible state halfway through an update |
-
 | You will not get a segfault from plain Python code | You will not get a wrong answer |
 
 **Why it is easy to miss**
@@ -2912,22 +2733,10 @@ serially and **2.49 s** across two threads.
 
 | Your bottleneck | Reach for | Why it works | What it costs |
 | --- | --- | --- | --- |
-
-````
-
-| Waiting on network, disk, database, a subprocess | threading, or ThreadPoolExecutor | Every blocking call releases the GIL, so the waits overlap | Shared objects mean you now own the race conditions |
-
-``
-
-| Thousands of simultaneous network waits | asyncio | One thread, one loop, no OS thread per connection | Async all the way down, since one blocking call stalls everything |
-
-````
-
-| Heavy computation in pure Python | multiprocessing, or ProcessPoolExecutor | A second interpreter has a second GIL, so a second core is usable | Startup time, and every argument and result is copied |
-
-``
-
-| Heavy computation inside NumPy, hashing, compression | threading is fine here | Those libraries release the GIL while they work in C | Only applies while you are inside the library, not around it |
+| Waiting on network, disk, database, a subprocess | `threading`, or `ThreadPoolExecutor` | Every blocking call releases the GIL, so the waits overlap | Shared objects mean you now own the race conditions |
+| Thousands of simultaneous network waits | `asyncio` | One thread, one loop, no OS thread per connection | Async all the way down, since one blocking call stalls everything |
+| Heavy computation in pure Python | `multiprocessing`, or `ProcessPoolExecutor` | A second interpreter has a second GIL, so a second core is usable | Startup time, and every argument and result is copied |
+| Heavy computation inside NumPy, hashing, compression | `threading` is fine here | Those libraries release the GIL while they work in C | Only applies while you are inside the library, not around it |
 
 **You can test the answer by changing one word**
 
@@ -3059,24 +2868,10 @@ There is one thread. A synchronous call that blocks it blocks the loop, and ever
 
 | Blocks the whole loop | Use instead |
 | --- | --- |
-
-``
-``
-
-| time.sleep(1) | await asyncio.sleep(1) |
-
-``
-
-| requests.get(url) | An async client, awaited |
-
-``
-``
-
-| open(path).read() on a slow disk | await asyncio.to_thread(read_it, path) |
-
-``
-
-| A long pure-Python computation | A process pool, awaited through run_in_executor |
+| `time.sleep(1)` | `await asyncio.sleep(1)` |
+| `requests.get(url)` | An async client, awaited |
+| `open(path).read()` on a slow disk | `await asyncio.to_thread(read_it, path)` |
+| A long pure-Python computation | A process pool, awaited through `run_in_executor` |
 
 **A forgotten `await` fails quietly**
 
@@ -3526,36 +3321,11 @@ Exceptions are classes, and `except` matches by inheritance. A handful of parent
 
 | You raise or meet | Its parents | So this clause catches it |
 | --- | --- | --- |
-
-````
-````
-``
-
-| KeyError, IndexError | LookupError → Exception | except LookupError |
-
-````
-````
-``
-
-| ZeroDivisionError, OverflowError | ArithmeticError → Exception | except ArithmeticError |
-
-````
-````
-``
-
-| FileNotFoundError, PermissionError | OSError → Exception | except OSError |
-
-``````
-``
-``
-
-| ValueError, TypeError, StopIteration | Exception | except Exception |
-
-````
-``
-``
-
-| KeyboardInterrupt, SystemExit | BaseException only | a bare except:, and almost never on purpose |
+| `KeyError`, `IndexError` | `LookupError` → `Exception` | `except LookupError` |
+| `ZeroDivisionError`, `OverflowError` | `ArithmeticError` → `Exception` | `except ArithmeticError` |
+| `FileNotFoundError`, `PermissionError` | `OSError` → `Exception` | `except OSError` |
+| `ValueError`, `TypeError`, `StopIteration` | `Exception` | `except Exception` |
+| `KeyboardInterrupt`, `SystemExit` | `BaseException` only | a bare `except:`, and almost never on purpose |
 
 **A bare `except:` catches Ctrl-C**
 
@@ -3656,39 +3426,13 @@ exit_(mgr, None, None, None)
 
 ### Managers you already use
 
-``
-``
-
-| Expression | as gives you | __exit__ does |
+| Expression | `as` gives you | `__exit__` does |
 | --- | --- | --- |
-
-``
-
-````
-
-| open(path) | the file object itself | closes it, which is why with open(...) is the idiom rather than f = open(...) |
-
-``
-````
-``
-
-| threading.Lock() | True, so nobody writes as | releases the lock, which is why Session 07 said to always take it with with |
-
-``
-
-| tempfile.TemporaryDirectory() | the path, as a string | deletes the whole directory |
-
-``
-
-**
-
-| sqlite3.connect(...) | the connection | commits on success, rolls back on an exception, and does not close the connection |
-
-``
-``
-``
-
-| contextlib.suppress(FileNotFoundError) | None | returns True for the named classes, swallowing them |
+| `open(path)` | the file object itself | closes it, which is why `with open(...)` is the idiom rather than `f = open(...)` |
+| `threading.Lock()` | `True`, so nobody writes `as` | releases the lock, which is why Session 07 said to always take it with `with` |
+| `tempfile.TemporaryDirectory()` | the path, as a string | deletes the whole directory |
+| `sqlite3.connect(...)` | the connection | commits on success, rolls back on an exception, and does *not* close the connection |
+| `contextlib.suppress(FileNotFoundError)` | `None` | returns `True` for the named classes, swallowing them |
 
 **Session 05's generator, cut at the `yield`**
 
@@ -3714,32 +3458,12 @@ Sometimes the person who receives the card can't fix the problem, but can descri
 
 Any exception raised while another is being handled gets `__context__` set to the one being handled, automatically. `raise New from old` also sets `__cause__` and `__suppress_context__ = True`. The printer uses those attributes to choose its sentence, and `from None` hides the first exception from the output while leaving it reachable through `__context__`.
 
-``
-
-| Inside an except block | Attributes on the new exception | The traceback says |
+| Inside an `except` block | Attributes on the new exception | The traceback says |
 | --- | --- | --- |
-
-``
-``
-**
-
-| raise RuntimeError("bad input") | __context__ → the original | During handling of the above exception, another exception occurred: |
-
-``
-````
-**
-
-| raise RuntimeError("bad input") from err | __cause__ and __context__ → the original | The above exception was the direct cause of the following exception: |
-
-``
-``
-
-| raise RuntimeError("bad input") from None | __context__ → the original, but suppressed | only the new exception is printed |
-
-``
-**
-
-| raise (bare) | the same object, unchanged | the original traceback, continued from here |
+| `raise RuntimeError("bad input")` | `__context__` → the original | *During handling of the above exception, another exception occurred:* |
+| `raise RuntimeError("bad input") from err` | `__cause__` and `__context__` → the original | *The above exception was the direct cause of the following exception:* |
+| `raise RuntimeError("bad input") from None` | `__context__` → the original, but suppressed | only the new exception is printed |
+| `raise` (bare) | the *same* object, unchanged | the original traceback, continued from here |
 
 **`raise`, not `raise err`, to re-raise**
 
@@ -4006,6 +3730,424 @@ Why: from err sets __cause__ on the new exception, which keeps the old one alive
 
 ---
 
+# Session 09: Modules & Imports
+
+URL: https://inboxpraveen.github.io/Py-Internals/sessions/09-modules/
+
+Summary: What import really does: find a file, run it once, cache it in sys.modules and bind a name. Why from-imports go stale, what __name__ is, and how circular imports break.
+
+Nearly every Python file you'll ever write starts with `import`, and most people never see what that line does. It finds a file, runs it once, keeps the result in a cache and binds a name to it. Once you can see those four moves, the odd cases (a setting that won't update, a circular import, a file called `random.py` that breaks everything) stop being odd.
+
+**Learning goal**
+
+## A module is an object, built once and kept in `sys.modules`.
+
+`import` checks a cache, runs the file into a new module object if it has to, and binds a name in your file. Everything else in this session (from-imports, the main guard, circular imports, a file that hides a library) is one of those moves happening at a moment you didn't expect.
+
+**Recommended path**
+
+**Watch one import.** Demo 1 runs a file once and then finds it in the cache. Keep an eye on `sys.modules`.
+
+**Then the two surprises.** Demo 2 is a from-import that goes stale, and demo 3 is a file that behaves differently depending on who loads it.
+
+**Then the two classic bugs.** Demos 4 and 5 are a circular import and a file that hides a standard module. In both, the cache is only doing its job.
+
+## What `import` actually does
+
+**In plain words**
+Think of a workshop with a tool wall. The first time anyone asks for a drill, somebody fetches it from the store room and hangs it on the wall. After that, everyone who asks for a drill gets the one on the wall. Nobody fetches a second drill. `sys.modules` is the wall, and `import` is the asking.
+
+`import config` does four things. It looks up `"config"` in `sys.modules`, and if it's there, it skips straight to the last step. Otherwise it searches `sys.path` for `config.py` (or a `config/` package), creates an empty module object and stores it in `sys.modules`, then runs the file's code with the module's `__dict__` as its global namespace. Last, it binds the name `config` in the namespace that ran the `import`. The module is cached before its body runs, not after, and that's what makes circular imports possible at all.
+
+**1 · Check**
+
+### Already in the cache?
+
+`sys.modules` is a plain dict from names to module objects. A hit costs one lookup, so the second `import` of a module, anywhere in the program, is nearly free.
+
+**2 · Load**
+
+### Run the file once
+
+A new module object is registered, then the file runs top to bottom in a frame whose globals are the module's `__dict__`. Every top-level `def`, class and assignment becomes an attribute.
+
+**3 · Bind**
+
+### A name in your file
+
+`import config` binds `config`. `import config as cfg` binds `cfg`. `from config import retries` binds `retries`, and doesn't bind `config` at all.
+
+**A module's attributes are its globals**
+
+`config.TIMEOUT` from outside and the name `TIMEOUT` inside `config.py` are the same dict entry, seen from two sides. That's also why `global` in Session 02 means *module level*, not program-wide. A function looks up its globals in the module where it was defined (its `__globals__`), whichever file happens to call it.
+
+**Runs once**
+
+### Top-level code, on the first import
+
+Prints, opened connections, files read, settings parsed. All of it runs the first time the module is imported and never again in this process, however many files import it afterwards.
+
+**Doesn't rerun**
+
+### Edits to the file while it's running
+
+Changing `config.py` under a running program changes nothing. `importlib.reload(config)` runs the body again into the *same* module object, but names that other files copied with `from config import ...` still point at the old objects.
+
+**Keep import-time work small**
+
+A module's body runs the moment someone imports it, so slow or risky work at the top level (a network call, loading a large file, connecting to a database) happens before the importer's next line runs. That includes a test that only wanted one small function. Put that work in a function and call it when you actually need it.
+
+**Try this in a REPL**
+
+`import sys, json`, then `sys.modules["json"] is json` gives `True`. `len(sys.modules)` shows how many modules were loaded before you typed anything, and `json.__file__` shows which file this one came from. Finally `type(json)`: `<class 'module'>`, an ordinary class with ordinary instances.
+
+---
+
+Import forms
+
+## `from x import y` copies a name
+
+**In plain words**
+`import config` gives you the office's phone number. `from config import retries` is writing down what the office told you this morning. If the office changes its answer at lunchtime, the person with the phone number hears the new one. The person with the note doesn't.
+
+`from config import retries` imports `config` as usual, then does the equivalent of `retries = config.retries` in your namespace and stops. It doesn't create an alias or a link. If code later rebinds `config.retries` to a new object, your `retries` still points at the old one. If code *mutates* the object instead, say by appending to a list both names share, both names see it. That's Session 01's rule again, with the two names living in different files.
+
+| You write | Names bound in your file | Sees the module rebind it later? |
+| --- | --- | --- |
+| `import config` | `config` | Yes, `config.retries` is looked up every time |
+| `import config as cfg` | `cfg` only | Yes, the same module under another name |
+| `from config import retries` | `retries` only, not `config` | No, it's a copy of one binding |
+| `from config import *` | every public name, or just the ones listed in `__all__` | No, and a reader can't tell where each name came from |
+| `import os.path` | `os` | Yes. The package is bound, and `os.path` is reached through it |
+
+**`mock.patch` aims at a name, not at a module**
+
+This is why tests sometimes patch the wrong thing. If `user.py` does `from config import retries`, then `patch("config.retries", 99)` changes the module's slot, and `user.py` never looks there again. Patch `"user.retries"`, the name your code actually reads. The `unittest.mock` docs put it as: patch where an object is looked up, not where it's defined.
+
+**Try this in a REPL**
+
+Save `retries = 3` as `config.py`. Then `from config import retries`, then `import config`, then `config.retries = 5`. `retries` is still `3`, and `retries is config.retries` is `False`. Before the `import config` line, typing `config` would have given `NameError`, even though `"config"` was already in `sys.modules`.
+
+---
+
+The main guard
+
+## `__name__` and `if __name__ == "__main__":`
+
+**In plain words**
+A file can't tell from its own name whether it's the whole program or just a part of one. Python tells it, by setting `__name__` before the first line runs: `"__main__"` if you started it, and its module name if something imported it.
+
+The script you run is executed as a module registered in `sys.modules` under the key `"__main__"`, with `__name__` set to `"__main__"`. The same goes for `python -m pkg.tool`. When it's imported instead, the same file gets `__name__ == "pkg.tool"`. The guard is an ordinary `if` comparing two strings, and it separates what a file *defines* from what it *does* when you start it.
+
+```python
+import sys
+
+def main(argv):
+print("hello", *argv)
+
+if __name__ == "__main__":
+main(sys.argv[1:]) # python greet.py Sam prints: hello Sam
+# import greet defines main and runs nothing
+
+```
+
+**One file can turn into two modules**
+
+If `app.py` is the script you run *and* some other module does `import app`, the file runs twice: once as `__main__` and once as `app`. Those are two separate module objects with two separate sets of globals, so a counter or a cache at the top of `app.py` now exists twice, and changes to one don't show in the other. Keep the file you run thin, and import the real code from somewhere else.
+
+**Try this in a REPL**
+
+Type `__name__` in a fresh REPL: `'__main__'`. The REPL is a module too. Then `import json; json.__name__` gives `'json'`, and `import sys; sys.modules["__main__"]` shows the module you're typing into.
+
+---
+
+Circular imports
+
+## Two modules that need each other
+
+**In plain words**
+Two people each wait for the other to finish a sentence before they finish their own. Python breaks the deadlock by letting the second person carry on with whatever the first had said so far. That works fine, as long as the second person doesn't need the part that hasn't been said yet.
+
+Because a module goes into `sys.modules` before its body runs, an import that comes back round to it finds the partly run module and returns it without running anything. Names defined above the import line are there. Names below it don't exist yet, and reading one of them during the import raises `AttributeError` (for `a.NAME`) or `ImportError: cannot import name` (for `from a import NAME`). When an import fails, every module whose body didn't finish is removed from `sys.modules` again, so nothing is left half built in the cache.
+
+**Read names later.** Keep `import a` at the top, but use `a.VALUE` inside functions. By the time a function is called, both modules have finished loading.
+
+**Move the shared part out.** If both modules need `VALUE`, put it in a third module that imports neither of them. This is usually the real fix, because the cycle was a sign the code wanted splitting.
+
+**Import inside the function.** `def f(): from a import VALUE` waits until the call. It's a fair last resort, and after the first call it costs one dict lookup.
+
+**Reading the error on Python 3.13**
+
+Python 3.13 ends the message with a hint in brackets. For modules inside a package it usually says *partially initialized module ... (most likely due to a circular import)*, which is right. For files sitting next to the script you ran, as in demo 4, it says *consider renaming ... if it has the same name as a library you intended to import*, which sends you the wrong way. If the traceback shows two of your own modules importing each other, it's circular, whatever the hint says.
+
+---
+
+The search
+
+## Where Python looks: `sys.path`
+
+**In plain words**
+Finding `random.py` is like calling a name down a corridor of rooms, nearest room first. The first room that answers wins, even if the person you wanted was further down.
+
+On a cache miss, Python asks the modules built into the interpreter first (`sys`, for one), then walks `sys.path`, a plain list of folders, in order, and takes the first match: a `random.py` file, a `random/` package folder, or a compiled extension. Entry 0 is the folder of the script you ran (the current folder for `python -m`, and an empty string meaning the current folder in the REPL). After it come the standard library and then `site-packages`, where `pip` installs things.
+
+**sys.modules**
+Already loaded? Then you get that object, and the search never starts.
+cache
+
+**built in**
+Modules compiled into the interpreter, such as `sys`, and a few frozen copies of standard modules it needs at startup.
+interpreter
+
+**sys.path[0]**
+The script's own folder. Your files live here, which is why one of them can hide anything further down.
+your code
+
+**stdlib**
+The standard library folders, such as `lib/python3.13` and `lib-dynload`.
+batteries
+
+**site-packages**
+Everything `pip` installed, inside your virtual environment if one is active.
+third party
+
+**Don't name your files after modules you use**
+
+`random.py`, `json.py`, `email.py`, `test.py`, `requests.py`: each one hides the real module from every import in the program, including imports made inside the standard library itself. Python 3.13 notices the standard-library case and says so in the error. For a `pip` package like `requests` you only get the plain `AttributeError`.
+
+### Packages are modules with a `__path__`
+
+A folder with an `__init__.py` is a package. `import shop.orders` runs `shop/__init__.py` first, then `shop/orders.py`, registers both `"shop"` and `"shop.orders"` in `sys.modules`, and binds only `shop` in your file. The package's `__path__` is the list of folders its submodules are searched in, a small `sys.path` of its own.
+
+### What `__pycache__` is
+
+The first import of `config.py` compiles it to bytecode and saves that as `__pycache__/config.cpython-313.pyc`. Next time, if the source hasn't changed, Python loads the saved bytecode and skips compiling. It speeds up start-up, not running time, and it's safe to delete. The script you run directly isn't saved this way.
+
+**Try this in a REPL**
+
+`import sys; print(*sys.path, sep="\n")` prints the search order on your own machine. Then `import random; random.__file__` shows where the real `random` lives. If that path is inside your project, you've found a shadow.
+
+**What you should be able to draw**
+
+A `sys.modules` dict with one entry per loaded module, each pointing at a module object whose `__dict__` holds that file's top-level names. A frame that exists only while a file's body runs. Two names in two files pointing at one object, which is all a from-import leaves behind. And a module that sits in the cache half built while its own imports are still running. Draw those four and you can predict every case in this session.
+
+---
+
+Common mistakes
+
+## Six ways this goes wrong
+
+### Naming a file after a module you import
+
+A `random.py` or `requests.py` in your project folder wins the search, and the real module never loads. The error shows up somewhere else entirely, as a missing attribute. `print(module.__file__)` settles it in one line.
+
+### Expecting a from-imported name to update
+
+`from config import retries` takes a copy of one binding at import time. If the module rebinds `retries` later, your copy doesn't move. Use `config.retries`, or a function that returns the current value.
+
+### Doing real work at import time
+
+Top-level code runs for everyone who imports the module, including tests and tools that only wanted one function. Connections, big file loads and prints belong in a function, called from the main guard or by whoever needs them.
+
+### Running a file inside a package directly
+
+`python shop/orders.py` with a relative import such as `from . import users` fails with `ImportError: attempted relative import with no known parent package`, because a file run directly is `__main__`, not part of `shop`. Run it from the project folder as `python -m shop.orders`.
+
+### Re-importing to pick up an edit
+
+In a REPL or a notebook, a second `import config` after you edit the file does nothing, because the old module is still in the cache. `importlib.reload(config)` runs it again, but from-imported names and instances of old classes keep pointing at the old objects. Restarting is the honest fix.
+
+### Two modules that need each other at import time
+
+A circular import is fine until one side reads the other's names during loading. Read them inside functions instead, or move the shared names into a third module. The traceback's tell is two of your modules importing each other.
+
+**Two questions catch nearly all of it**
+
+**Is it already in `sys.modules`?** If it is, nothing runs and you get that object. **Which namespace does this name live in?** A from-import put a copy in yours, and `module.name` reads theirs.
+
+
+## Interactive lab (code and step-by-step narration)
+
+Each demo is a short Python program. The steps below are the text shown as the memory diagram animates.
+
+### Demo 1 · import runs it once
+
+Watch for: Keep one eye on sys.modules. The new module lands in it before any of config.py runs, and the second import never gets past it.
+
+```python
+# main.py
+import config
+import config
+print(config.TIMEOUT)
+
+# config.py
+print("loading config")
+TIMEOUT = 30
+```
+
+1. **Nothing has run yet** Two files in one folder. You run python main.py, and config.py sits next to it. The dict on the heap is sys.modules, where the interpreter keeps every module it has loaded so far. It already has a few dozen entries before your first line runs. Two are drawn: sys, and __main__, which is main.py itself. Its namespace is the frame above.
+2. **import config looks in sys.modules first** Before it touches the disk, Python asks one question: is there a module called config in sys.modules already? There isn't, so it goes looking for a file (demo 5 shows where it looks), finds config.py, and creates an empty module object. Look at the order. The new module goes into sys.modules before a single line of config.py has run.
+3. **The body of config.py runs in a frame of its own** Importing a module means running it, top to bottom, like a script. It gets a frame, much like a function call in Session 02, and that frame's global namespace is the module's __dict__. Line 7 prints loading config. main.py waits on line 2 until the body is done.
+4. **TIMEOUT = 30 lands in the frame and in the module at once** An assignment at the top level of a file binds a global name, and this frame's globals are the module's __dict__. So the new row shows up on the config.py frame and inside the module object at the same moment. It's one dict, drawn twice.
+5. **The body finishes. The frame goes, the module stays** After the last line of config.py, its frame is cleared like any other. The names survive, because they belong to the module object, and sys.modules is holding on to that. Only now does import do the part you can see: it binds the name config in main.py. Two references, the cache and your name.
+6. **The second import config is a dict lookup** config is already in sys.modules, so Python takes that object and binds the name to it again. No file is opened and the body doesn't run, so loading config is printed once, not twice. That holds for the whole process. Every file that imports config gets this same object.
+7. **config.TIMEOUT reads the module's __dict__** A dotted name on a module is ordinary attribute lookup (Session 04), and a module keeps its attributes in its __dict__. config.TIMEOUT finds the TIMEOUT entry there, so line 4 prints 30.
+8. **Summary: one file, one module object, run once per process** The output is loading config, then 30. An import is four moves: check the cache, create and register a module, run the file into its __dict__, bind a name. If you edit config.py while the program is running, nothing changes until the process restarts, or until you call importlib.reload(config), which runs the body again into the same object.
+
+### Demo 2 · from x import y
+
+Watch for: Compare two addresses: the one your retries points at, and the one inside the module's __dict__. They start out the same. (sys.modules is still there, it's just not drawn this time.)
+
+```python
+# main.py
+import config
+from config import retries
+config.set_retries(5)
+print(config.retries, retries)
+
+# config.py
+retries = 3
+
+def set_retries(n):
+    global retries
+    retries = n
+```
+
+1. **from config import retries looks like a shortcut** It reads like "let me write retries instead of config.retries". It isn't that. It makes a new name in your file, pointing at whatever object config.retries pointed at when the line ran. Watch what happens when config changes its mind later.
+2. **import config builds the module, as in demo 1** Running config.py fills the module's __dict__ with two names: retries, pointing at the int 3, and set_retries, a function object. The function remembers where it was defined: its __globals__ is this module's __dict__. main.py has one name so far, config.
+3. **from config import retries copies the binding, not the name** Python imports config (cached, so nothing runs), reads config.retries, and binds a new name retries in main.py to that same object. Two names in two namespaces, one int, one address. Nothing links the two names to each other. They just point at the same thing, like b = a in Session 01.
+4. **config.set_retries(5): global means this module** Inside set_retries, global retries tells Python to bind retries in the function's global namespace. A function's globals belong to the module where it was defined, not to the file that called it. So line 12 rebinds the retries slot in config's __dict__ to the int 5.
+5. **The call returns. config.retries is 5, your retries is still 3** Line 5 prints 5 3. The module's slot was rebound to a new object. Your name was never touched, because nothing ever told it to follow. It's Session 01's rule stretched across two files: rebinding one name never moves another.
+6. **Summary: config.retries follows changes, a from-imported name doesn't** Write config.retries when you want whatever the module holds now. That lookup happens every time the line runs. A from-imported name is a snapshot of one binding. Mutation is different: if retries were a list and the function appended to it, both names would see the change, because they share one object. The same rule decides where unittest.mock.patch has to aim, which the notes below cover.
+
+### Demo 3 · __name__ and the guard
+
+Watch for: Watch the __name__ row in the tools.py frame. Same file, same line, two different values, depending on which command started the program.
+
+```python
+# tools.py
+def double(x):
+    return x * 2
+
+if __name__ == "__main__":
+    print(double(21))
+
+# app.py
+import tools
+print(tools.double(4))
+```
+
+1. **One file, two ways to load it** Every module has a __name__. Python sets it before the body runs, and its value depends on how the file was loaded, not on what the file is called. This demo runs two separate programs: first python tools.py, then python app.py.
+2. **python tools.py: the file you run is called __main__** The script you start is loaded as a module too, but it's registered in sys.modules under the key "__main__", and that's also the __name__ in its namespace. The file name plays no part. Then def builds double as usual.
+3. **The guard is true, so line 6 runs** __name__ == "__main__" compares two ordinary strings. They match, so the block runs and prints 42. Read the guard as "only when this file is the program".
+4. **A new run, python app.py: now tools is imported** A fresh process, with nothing carried over. This time app.py is __main__, and line 9 imports tools the way demo 1 imported config: a module object registered as "tools", and its body run in a frame of its own. The first entry in that namespace is __name__, set to "tools".
+5. **This time the guard is false, so line 6 is skipped** __name__ is "tools", which isn't "__main__". The test print is skipped and the body ends with nothing but double defined. That's what the guard is for: the code under it runs when you start the file, and stays quiet when someone imports it.
+6. **Back in app.py: tools.double(4)** The tools.py frame is gone and the module stays, just as in demo 1. app.py now has the name tools and calls a function through it, so 8 is printed. 42 never is.
+7. **Summary: __name__ is set by whoever loads the file** python tools.py and python -m tools both load it as "__main__". import tools loads it as "tools". Put the code that starts your program under the guard, usually as one call to a main() function, and keep definitions above it. Session 07 showed a place where the guard is required: with the spawn start method, multiprocessing imports your main file again in every child process.
+
+### Demo 4 · circular import
+
+Watch for: Look inside module a when b asks for it. It's in the cache, so b gets it, but line 6 of a.py hasn't run yet.
+
+```python
+# main.py
+import a
+
+# a.py
+import b
+VALUE = 1
+
+# b.py
+import a
+print(a.VALUE)
+```
+
+1. **Two files that import each other** a imports b, and b imports a. Python allows that, and often it works. It breaks when one of them reads a name from the other while the imports are still going on. Watch sys.modules. It's what stops this from looping forever, and it's also what hands out a half-built module.
+2. **import a: module a is registered, then its body starts** The same moves as demo 1. a isn't in the cache, so a module object is created and stored in sys.modules, and a.py starts running in a new frame. Its __dict__ holds nothing but __name__ so far.
+3. **Line 5, import b: module b is registered and a waits** a.py stops on its very first line, before it ever reaches VALUE = 1, and the same moves start for b. Three frames are open now, each one paused on an import line, stacked up like nested function calls.
+4. **Line 9, import a: found in the cache, half built** a is already in sys.modules, so Python doesn't run a.py again. If it did, a would import b, which would import a, forever. Instead b gets the module object that exists, and its name a is bound to it. Look at what's inside: still only __name__, because line 6 hasn't run.
+5. **Line 10, a.VALUE: the name isn't there yet** Looking up an attribute on a module means looking in its __dict__, and VALUE isn't in it. Python raises AttributeError: module 'a' has no attribute 'VALUE', and the frame starts to unwind, as in Session 08. The exception keeps the module it was looking in as its obj attribute, which is the extra reference on a. Python 3.13 adds a hint in brackets after the message. The notes below explain why it can point you the wrong way.
+6. **A failed import is taken back out of sys.modules** b.py has no handler, so its frame is cleared. Its body never finished, so the import system deletes "b" from sys.modules. A module that blew up halfway isn't left in the cache for the next import b to find. The exception arrives in a.py at line 5, which has no handler either.
+7. **Then a goes too, and main.py has no handler** a is removed from the cache the same way, and the exception reaches main.py at line 2 with no try around it. The traceback lists main.py line 2, a.py line 5 and b.py line 10, outermost first: three <module> frames and no function in sight. The import system's own frames are left out of tracebacks on purpose.
+8. **Summary: read the other module's names later, not at import time** Nothing was wrong with import a itself. The bug was using a.VALUE while a was still half built. Move that line into a function that runs after both imports have finished, and it works, because by then the lookup finds a full module. The other cures are to move the shared name into a third module that imports neither, or to import inside the function that needs it. from a import VALUE on line 9 fails the same way, with ImportError: cannot import name.
+
+### Demo 5 · a file named random.py
+
+Watch for: Read sys.path from the left. The search stops at the first folder that has a random.py in it, and the standard library comes later.
+
+```python
+# /home/sam/game/random.py
+def pick():
+    return 4
+
+# /home/sam/game/game.py
+import random
+print(random.randint(1, 6))
+```
+
+1. **A file with an unlucky name** Someone writing a dice game saved a helper as random.py, in the same folder as game.py. The standard library has a random module too. Which one does import random find? The answer is in a list you can print yourself, sys.path, drawn here as it would be for python game.py on a Linux machine with a virtual environment.
+2. **import random checks the cache first** random isn't loaded at startup, so it's not in sys.modules, and Python has to search for it. It walks sys.path in order and takes the first match. Entry 0 is the folder of the script you ran.
+3. **Entry 0 is the script's own folder, and there's a random.py in it** The search stops at the first folder that has random.py (or a random/ package). That's /home/sam/game. The real one in /usr/lib/python3.13 is never even looked at. Your file is registered under the name random, and its body runs.
+4. **random now means your file, for the whole process** The name random in game.py points at your module, and so does sys.modules["random"]. Any other code in this process that runs import random, including modules in the standard library, now gets your two-line file instead.
+5. **random.randint doesn't exist in your file** Your module has pick and nothing else. Line 7 raises AttributeError: module 'random' has no attribute 'randint'. Python 3.13 spots this case and adds a hint after the message: consider renaming '/home/sam/game/random.py' since it has the same name as the standard library module named 'random'.
+6. **Summary: the first match on sys.path wins** Rename the file (dice.py, say) and the real module comes back. When an import behaves strangely, print(random.__file__) tells you which file you actually got. The usual suspects are files named after modules you also use: random.py, json.py, email.py, test.py, or requests.py for a library from pip.
+
+
+## Check yourself (quiz)
+
+**Q: 1. config.py starts with print("loading"). Three different files in one program each run import config. How many times is loading printed?**
+- Three times, once for each import
+- Once, because the later imports find the module in sys.modules and don't run the file (correct)
+- Never, because importing a module only reads its definitions
+
+Why: The first import runs the whole file into a new module object and caches it. Every import after that, in any file, is a lookup in sys.modules plus a name binding. Nothing runs again unless you call importlib.reload.
+
+**Q: 2. When is a new module added to sys.modules?**
+- Before its body runs, as soon as the empty module object exists (correct)
+- After its body finishes, so only complete modules are ever cached
+- Only when the program exits
+
+Why: Registering first is what lets a circular import find the module instead of loading it forever. It's also why the other module can see it half built. If the body then fails, the entry is removed again.
+
+**Q: 3. main.py runs from config import retries, and later config.set_retries(5) rebinds the module's retries from 3 to 5. What does retries in main.py hold now?**
+- 5, because retries is an alias for config.retries
+- It raises NameError, because the original binding was replaced
+- 3, because the from-import made a separate name pointing at the object config.retries held at the time (correct)
+
+Why: from config import retries works like retries = config.retries. Rebinding the module's name moves that one name only. If the object had been mutated instead (a list appended to, say), both names would see the change, because they share it.
+
+**Q: 4. After from config import retries and nothing else, you type config. What happens?**
+- You get the module, because importing anything from it binds its name too
+- NameError. The module is in sys.modules, but the only name bound in your file is retries (correct)
+- None, because the module was only partly imported
+
+Why: The whole module was loaded and cached, but a from-import binds only the names you list. import config is what binds config. Being in the cache and being a name in your namespace are two different things.
+
+**Q: 5. You start a program with python tools.py. Inside tools.py, what is __name__?**
+- "__main__", because it's the file you ran (correct)
+- "tools", because that's the file's name
+- "tools.py"
+
+Why: Python sets __name__ from how the file was loaded. The script you start, or the one you run with python -m, is "__main__". The same file imported by another module gets "tools", and then its guarded block doesn't run.
+
+**Q: 6. a.py is import b then VALUE = 1. b.py is import a then print(a.VALUE). You run import a. What happens?**
+- It prints 1, because Python loads the two files in the right order for you
+- It loops forever, each module importing the other
+- AttributeError: b gets the half-built a from the cache, and VALUE hasn't been defined yet (correct)
+
+Why: a is registered, starts running, and pauses on import b. b's import a finds a in sys.modules and gets it as it is, before line 2 of a.py has run. The cache stops the loop, and it's also what hands over an unfinished module.
+
+**Q: 7. Your project folder has game.py and a helper you saved as random.py. game.py runs import random. Which file is loaded?**
+- The standard library's random, because built-in names always win
+- Yours, because sys.path[0] is the script's folder and the first match wins (correct)
+- Python raises an error, because two modules have the same name
+
+Why: The search walks sys.path in order and stops at the first match, and your script's folder comes before the standard library. From then on sys.modules["random"] is your file, for every import in the process. Rename the helper.
+
+
+
+---
+
 # Glossary
 
 URL: https://inboxpraveen.github.io/Py-Internals/glossary.html
@@ -4106,3 +4248,16 @@ URL: https://inboxpraveen.github.io/Py-Internals/glossary.html
 - **Context manager**: Any object whose class defines __enter__ and __exit__. with EXPR as name: calls __enter__ and binds its return value to name, runs the body inside an invisible try, and then calls __exit__(exc_type, exc, tb), with three Nones on success. If __exit__ returns a true value the exception is suppressed. @contextlib.contextmanager builds one from a generator: the code before yield is the enter half, after it the exit half.
 - **Exception chaining**: An exception raised while another is being handled gets __context__ set to the one being handled; the traceback then says During handling of the above exception, another exception occurred. raise New from old also sets __cause__, and the sentence becomes The above exception was the direct cause of the following exception. from None hides the earlier one.
 - **Exception hierarchy**: Exceptions are classes with parents: KeyError and IndexError are LookupErrors, most things you raise yourself are Exceptions, and KeyboardInterrupt and SystemExit sit directly under BaseException so that except Exception lets a program be interrupted. A bare except: catches those too, which is why it is almost always a mistake.
+
+## Modules
+
+- **Module**: An ordinary object, an instance of the class module, made the first time a file is imported. Its __dict__ holds the file's top-level names, so config.TIMEOUT is a lookup in that dict, and a function defined in the file uses it as its globals. See Session 09.
+- **import**: Four moves. Look the name up in sys.modules. On a miss, find the file on sys.path, create a module object, register it, and run the file with the module's __dict__ as its globals. Then bind a name in the namespace that ran the import. A module's body runs once per process, however many files import it.
+- **sys.modules**: The import cache: a dict from module names to module objects. A module goes in before its body runs, which is how a circular import can find it half built, and comes out again if the body fails. A second import of the same name is one lookup here and runs nothing.
+- **from ... import**: from config import retries imports config, then binds retries in your namespace to whatever config.retries points at right then, much like retries = config.retries. It doesn't bind config, and it doesn't follow later rebinding inside the module. Mutating a shared object is still visible through both names.
+- **__name__ and the main guard**: __name__ is set before a module's body runs: "__main__" for the script you started (or ran with python -m), and the module's own name when it is imported. if __name__ == "__main__": runs a block only when the file is the program.
+- **Circular import**: Two modules that import each other. The second import finds the first module in sys.modules before its body has finished, so reading a name it hasn't defined yet raises AttributeError, or ImportError: cannot import name for a from-import. Read the names inside functions instead, or move them into a third module.
+- **sys.path**: The list of folders import searches, in order, after the modules built into the interpreter. Entry 0 is the folder of the script you ran, so a file there with a library's name (random.py, requests.py) hides the real one from the whole program. module.__file__ tells you which file you got.
+- **Package**: A module that can hold submodules, usually a folder with an __init__.py. import shop.orders runs shop/__init__.py first, then shop/orders.py, caches both, and binds the name shop. The package's __path__ lists the folders its submodules are searched in.
+- **__pycache__**: The folder where Python saves compiled bytecode for imported modules, as files like config.cpython-313.pyc, so the next start can skip compiling when the source hasn't changed. It speeds up start-up, not running time, and it is safe to delete.
+- **importlib.reload**: Runs a module's file again into the same module object, so code that reads config.name sees the new values. Names copied out earlier with from-imports, and instances of the old classes, still point at the old objects, which is why restarting is often simpler.

@@ -16,6 +16,7 @@ PJ.COURSE = [
   { id: '06-decorators',  num: '06', title: 'Decorators',                       short: 'f = deco(f), wrappers, wraps', status: 'live' },
   { id: '07-gil',         num: '07', title: 'The GIL & Concurrency',            short: 'Threads, processes, asyncio',  status: 'live' },
   { id: '08-exceptions',  num: '08', title: 'Exceptions, Tracebacks & Context Managers', short: 'raise, unwind, catch, with', status: 'live' },
+  { id: '09-modules',     num: '09', title: 'Modules & Imports',                short: 'import, sys.modules, __main__', status: 'live' },
 ];
 
 PJ.Core = (function () {
@@ -498,7 +499,6 @@ PJ.Session = {
     const demos = options.demos;
     const defaultDemo = options.defaultDemo || Object.keys(demos)[0];
     const defaultSpeed = options.defaultSpeed ?? 900;
-    const sessionId = options.sessionId;
     const memViz = new PJ.MemoryViz('memPanel');
     let currentAnimator = null;
 
@@ -548,7 +548,8 @@ PJ.Session = {
           if (descEl) descEl.innerHTML = step.desc || '';
         },
         onComplete() {
-          if (sessionId) PJ.Core.markSessionComplete(sessionId);
+          // Reaching the last step of one demo does not finish the session. Only
+          // the quiz marks it done (see _initQuizzes), or the Done badge means little.
           if (typeof options.onComplete === 'function') options.onComplete();
         },
         onReset() {

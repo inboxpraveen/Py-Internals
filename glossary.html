@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Python Internals Glossary: Names, Frames, Refcounts, GIL</title>
-  <meta name="description" content="Plain-English definitions for the words you meet while learning how Python works: names, objects, frames, closures, generators, decorators, the GIL and exceptions." />
+  <meta name="description" content="Plain-English definitions for the words you meet while learning how Python works: names, objects, frames, closures, generators, decorators, the GIL, exceptions and modules." />
   <meta name="theme-color" content="#1A6B5C" />
   <link rel="icon" type="image/png" href="assets/images/Python-logo.png" />
   <link rel="apple-touch-icon" href="assets/images/Python-logo.png" />
@@ -111,14 +111,14 @@
   <meta property="og:locale" content="en_GB" />
   <meta property="og:url" content="https://inboxpraveen.github.io/Py-Internals/glossary.html" />
   <meta property="og:title" content="Py Internals Glossary" />
-  <meta property="og:description" content="Plain-English definitions for the words you meet while learning how Python works: names, objects, frames, closures, generators, decorators, the GIL and exceptions." />
+  <meta property="og:description" content="Plain-English definitions for the words you meet while learning how Python works: names, objects, frames, closures, generators, decorators, the GIL, exceptions and modules." />
   <meta property="og:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/glossary.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="Py Internals Glossary on Py Internals" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Py Internals Glossary" />
-  <meta name="twitter:description" content="Plain-English definitions for the words you meet while learning how Python works: names, objects, frames, closures, generators, decorators, the GIL and exceptions." />
+  <meta name="twitter:description" content="Plain-English definitions for the words you meet while learning how Python works: names, objects, frames, closures, generators, decorators, the GIL, exceptions and modules." />
   <meta name="twitter:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/glossary.png" />
   <link rel="alternate" type="application/atom+xml" title="Py Internals sessions" href="https://inboxpraveen.github.io/Py-Internals/feed.xml" />
   <link rel="manifest" href="https://inboxpraveen.github.io/Py-Internals/manifest.webmanifest" />
@@ -133,7 +133,7 @@
       "@type": "DefinedTermSet",
       "@id": "https://inboxpraveen.github.io/Py-Internals/glossary.html",
       "name": "Py Internals Glossary",
-      "description": "Plain-English definitions for the words you meet while learning how Python works: names, objects, frames, closures, generators, decorators, the GIL and exceptions.",
+      "description": "Plain-English definitions for the words you meet while learning how Python works: names, objects, frames, closures, generators, decorators, the GIL, exceptions and modules.",
       "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html",
       "hasDefinedTerm": [
         {
@@ -639,6 +639,76 @@
           "description": "Exceptions are classes with parents: KeyError and IndexError are LookupErrors, most things you raise yourself are Exceptions, and KeyboardInterrupt and SystemExit sit directly under BaseException so that except Exception lets a program be interrupted. A bare except: catches those too, which is why it is almost always a mistake.",
           "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#exception-hierarchy",
           "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Module",
+          "description": "An ordinary object, an instance of the class module, made the first time a file is imported. Its __dict__ holds the file's top-level names, so config.TIMEOUT is a lookup in that dict, and a function defined in the file uses it as its globals. See Session 09.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#module",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "import",
+          "description": "Four moves. Look the name up in sys.modules. On a miss, find the file on sys.path, create a module object, register it, and run the file with the module's __dict__ as its globals. Then bind a name in the namespace that ran the import. A module's body runs once per process, however many files import it.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#import",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "sys.modules",
+          "description": "The import cache: a dict from module names to module objects. A module goes in before its body runs, which is how a circular import can find it half built, and comes out again if the body fails. A second import of the same name is one lookup here and runs nothing.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#sys-modules",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "from ... import",
+          "description": "from config import retries imports config, then binds retries in your namespace to whatever config.retries points at right then, much like retries = config.retries. It doesn't bind config, and it doesn't follow later rebinding inside the module. Mutating a shared object is still visible through both names.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#from-import",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "__name__ and the main guard",
+          "description": "__name__ is set before a module's body runs: \"__main__\" for the script you started (or ran with python -m), and the module's own name when it is imported. if __name__ == \"__main__\": runs a block only when the file is the program.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#main-guard",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Circular import",
+          "description": "Two modules that import each other. The second import finds the first module in sys.modules before its body has finished, so reading a name it hasn't defined yet raises AttributeError, or ImportError: cannot import name for a from-import. Read the names inside functions instead, or move them into a third module.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#circular-import",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "sys.path",
+          "description": "The list of folders import searches, in order, after the modules built into the interpreter. Entry 0 is the folder of the script you ran, so a file there with a library's name (random.py, requests.py) hides the real one from the whole program. module.__file__ tells you which file you got.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#sys-path",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Package",
+          "description": "A module that can hold submodules, usually a folder with an __init__.py. import shop.orders runs shop/__init__.py first, then shop/orders.py, caches both, and binds the name shop. The package's __path__ lists the folders its submodules are searched in.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#package",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "__pycache__",
+          "description": "The folder where Python saves compiled bytecode for imported modules, as files like config.cpython-313.pyc, so the next start can skip compiling when the source hasn't changed. It speeds up start-up, not running time, and it is safe to delete.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#pycache",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "importlib.reload",
+          "description": "Runs a module's file again into the same module object, so code that reads config.name sees the new values. Names copied out earlier with from-imports, and instances of the old classes, still point at the old objects, which is why restarting is often simpler.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#reload",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
         }
       ]
     },
@@ -690,7 +760,7 @@
     Short definitions for the words this course uses again and again.
     Search, then jump back into the session that shows the idea in memory.
   </p>
-  <input class="glossary__search" id="glossarySearch" type="search" placeholder="Search terms: alias, frame, yield, wrapper, MRO, traceback..." autocomplete="off" />
+  <input class="glossary__search" id="glossarySearch" type="search" placeholder="Search terms: alias, frame, yield, wrapper, MRO, traceback, import..." autocomplete="off" />
   <div class="glossary-filters" id="glossaryFilters" role="tablist" aria-label="Filter by topic">
     <button type="button" class="glossary-filter is-active" data-filter="all">All</button>
     <button type="button" class="glossary-filter" data-filter="objects">Objects</button>
@@ -701,6 +771,7 @@
     <button type="button" class="glossary-filter" data-filter="decorators">Decorators</button>
     <button type="button" class="glossary-filter" data-filter="concurrency">Concurrency</button>
     <button type="button" class="glossary-filter" data-filter="exceptions">Exceptions</button>
+    <button type="button" class="glossary-filter" data-filter="modules">Modules</button>
   </div>
   <p class="glossary-empty" id="glossaryEmpty">No terms match that search.</p>
 
@@ -1021,6 +1092,50 @@
     <article class="term" id="exception-hierarchy" data-terms="hierarchy BaseException Exception LookupError KeyError KeyboardInterrupt SystemExit">
       <h3>Exception hierarchy</h3>
       <p>Exceptions are classes with parents: <code>KeyError</code> and <code>IndexError</code> are <code>LookupError</code>s, most things you raise yourself are <code>Exception</code>s, and <code>KeyboardInterrupt</code> and <code>SystemExit</code> sit directly under <code>BaseException</code> so that <code>except Exception</code> lets a program be interrupted. A bare <code>except:</code> catches those too, which is why it is almost always a mistake.</p>
+    </article>
+  </section>
+
+  <section class="glossary-group" data-group="modules">
+    <h2>Modules</h2>
+    <article class="term" id="module" data-terms="module module object file namespace types.ModuleType">
+      <h3>Module</h3>
+      <p>An ordinary object, an instance of the class <code>module</code>, made the first time a file is imported. Its <code>__dict__</code> holds the file's top-level names, so <code>config.TIMEOUT</code> is a lookup in that dict, and a function defined in the file uses it as its globals. See <a href="sessions/09-modules/">Session 09</a>.</p>
+    </article>
+    <article class="term" id="import" data-terms="import statement load run once bind">
+      <h3><code>import</code></h3>
+      <p>Four moves. Look the name up in <code>sys.modules</code>. On a miss, find the file on <code>sys.path</code>, create a module object, register it, and run the file with the module's <code>__dict__</code> as its globals. Then bind a name in the namespace that ran the <code>import</code>. A module's body runs once per process, however many files import it.</p>
+    </article>
+    <article class="term" id="sys-modules" data-terms="sys.modules cache import cache loaded modules">
+      <h3><code>sys.modules</code></h3>
+      <p>The import cache: a dict from module names to module objects. A module goes in before its body runs, which is how a circular import can find it half built, and comes out again if the body fails. A second <code>import</code> of the same name is one lookup here and runs nothing.</p>
+    </article>
+    <article class="term" id="from-import" data-terms="from import copy binding stale snapshot">
+      <h3><code>from ... import</code></h3>
+      <p><code>from config import retries</code> imports <code>config</code>, then binds <code>retries</code> in your namespace to whatever <code>config.retries</code> points at right then, much like <code>retries = config.retries</code>. It doesn't bind <code>config</code>, and it doesn't follow later rebinding inside the module. Mutating a shared object is still visible through both names.</p>
+    </article>
+    <article class="term" id="main-guard" data-terms="__name__ __main__ main guard if __name__ script python -m">
+      <h3><code>__name__</code> and the main guard</h3>
+      <p><code>__name__</code> is set before a module's body runs: <code>"__main__"</code> for the script you started (or ran with <code>python -m</code>), and the module's own name when it is imported. <code>if __name__ == "__main__":</code> runs a block only when the file is the program.</p>
+    </article>
+    <article class="term" id="circular-import" data-terms="circular import partially initialized cycle cannot import name">
+      <h3>Circular import</h3>
+      <p>Two modules that import each other. The second import finds the first module in <code>sys.modules</code> before its body has finished, so reading a name it hasn't defined yet raises <code>AttributeError</code>, or <code>ImportError: cannot import name</code> for a from-import. Read the names inside functions instead, or move them into a third module.</p>
+    </article>
+    <article class="term" id="sys-path" data-terms="sys.path search path shadowing shadow PYTHONPATH site-packages">
+      <h3><code>sys.path</code></h3>
+      <p>The list of folders <code>import</code> searches, in order, after the modules built into the interpreter. Entry 0 is the folder of the script you ran, so a file there with a library's name (<code>random.py</code>, <code>requests.py</code>) hides the real one from the whole program. <code>module.__file__</code> tells you which file you got.</p>
+    </article>
+    <article class="term" id="package" data-terms="package __init__.py __path__ submodule dotted import">
+      <h3>Package</h3>
+      <p>A module that can hold submodules, usually a folder with an <code>__init__.py</code>. <code>import shop.orders</code> runs <code>shop/__init__.py</code> first, then <code>shop/orders.py</code>, caches both, and binds the name <code>shop</code>. The package's <code>__path__</code> lists the folders its submodules are searched in.</p>
+    </article>
+    <article class="term" id="pycache" data-terms="__pycache__ pyc bytecode cache compiled">
+      <h3><code>__pycache__</code></h3>
+      <p>The folder where Python saves compiled bytecode for imported modules, as files like <code>config.cpython-313.pyc</code>, so the next start can skip compiling when the source hasn't changed. It speeds up start-up, not running time, and it is safe to delete.</p>
+    </article>
+    <article class="term" id="reload" data-terms="importlib.reload reload re-import edit">
+      <h3><code>importlib.reload</code></h3>
+      <p>Runs a module's file again into the same module object, so code that reads <code>config.name</code> sees the new values. Names copied out earlier with from-imports, and instances of the old classes, still point at the old objects, which is why restarting is often simpler.</p>
     </article>
   </section>
 </main>

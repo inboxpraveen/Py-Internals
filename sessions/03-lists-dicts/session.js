@@ -622,7 +622,7 @@ print(original, shallow, deep)`,
       },
       {
         title: '<code>original = [[1]]</code> creates two list objects, not one',
-        desc: 'Line 1 pulls in the standard-library <code>copy</code> module for later. Line 2 builds the data: an outer list whose single slot points at an inner list. Two containers, two addresses, and that is the whole reason copying has a depth at all.',
+        desc: 'Line 1 pulls in the standard-library <code>copy</code> module for later. Line 2 builds the data: an outer list whose single slot points at an inner list. Two containers, two addresses, and that\'s why copying has a depth at all.',
         lines: [1, 2],
         memory: {
           frames: [{ name: 'global', vars: [

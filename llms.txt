@@ -14,6 +14,7 @@ The full text of every session and the glossary is in [llms-full.txt](https://in
 - [Session 06: Decorators](https://inboxpraveen.github.io/Py-Internals/sessions/06-decorators/): A decorator is one line of assignment. See the wrapper, the closure cell that keeps your function alive, functools.wraps, decorator factories and stacking.
 - [Session 07: The GIL & Concurrency](https://inboxpraveen.github.io/Py-Internals/sessions/07-gil/): Why CPython has a global interpreter lock, why it doesn't make your code thread-safe, and when threads, multiprocessing or asyncio actually help.
 - [Session 08: Exceptions, Tracebacks & Context Managers](https://inboxpraveen.github.io/Py-Internals/sessions/08-exceptions/): What raise does to the call stack, how to read a traceback, why finally runs past a return, what with calls for you and how exceptions chain with from.
+- [Session 09: Modules & Imports](https://inboxpraveen.github.io/Py-Internals/sessions/09-modules/): What import really does: find a file, run it once, cache it in sys.modules and bind a name. Why from-imports go stale, what __name__ is, and how circular imports break.
 
 ## Reference
 

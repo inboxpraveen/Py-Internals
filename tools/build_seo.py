@@ -43,7 +43,7 @@ PAGES = [
         'og_title': 'Py Internals: Learn Python from the Inside Out',
         'card_eyebrow': 'Open source · Free · Interactive',
         'card_title': 'Learn Python the way it actually works',
-        'description': 'A free, open-source Python course that shows what your code does in memory. Step through names, frames, references, classes, generators, the GIL and exceptions.',
+        'description': 'A free, open-source Python course that shows what your code does in memory. Step through names, frames, references, classes, generators, the GIL, exceptions and imports.',
     },
     {
         'id': 'glossary', 'path': 'glossary.html', 'file': 'glossary.html', 'type': 'website',
@@ -51,7 +51,7 @@ PAGES = [
         'og_title': 'Py Internals Glossary',
         'card_eyebrow': 'Glossary',
         'card_title': 'The words the course uses, in plain English',
-        'description': 'Plain-English definitions for the words you meet while learning how Python works: names, objects, frames, closures, generators, decorators, the GIL and exceptions.',
+        'description': 'Plain-English definitions for the words you meet while learning how Python works: names, objects, frames, closures, generators, decorators, the GIL, exceptions and modules.',
     },
     {
         'id': '01-variables', 'num': '01', 'type': 'article', 'published': '2026-03-23', 'time': 'PT25M',
@@ -108,6 +108,13 @@ PAGES = [
         'title': 'Python Exceptions, Tracebacks and Context Managers',
         'description': 'What raise does to the call stack, how to read a traceback, why finally runs past a return, what with calls for you and how exceptions chain with from.',
         'teaches': ['raise and stack unwinding', 'reading a traceback', 'try, except, else and finally', 'exception hierarchy', 'context managers and the with statement', '__enter__ and __exit__', 'exception chaining with raise from'],
+    },
+    {
+        'id': '09-modules', 'num': '09', 'type': 'article', 'published': '2026-10-17', 'time': 'PT40M',
+        'h1': 'Modules & Imports', 'section': 'Program structure',
+        'title': 'Python Modules and Imports: sys.modules, __main__, Circular Imports',
+        'description': 'What import really does: find a file, run it once, cache it in sys.modules and bind a name. Why from-imports go stale, what __name__ is, and how circular imports break.',
+        'teaches': ['what import does', 'module objects and their __dict__', 'sys.modules and the import cache', 'from-import versus import', 'the __name__ == "__main__" guard', 'circular imports', 'sys.path and shadowed modules', 'packages and __pycache__'],
     },
 ]
 
@@ -214,10 +221,10 @@ def json_ld(page):
             'datePublished': SESSIONS[0]['published'], 'dateModified': page['modified'],
             'educationalLevel': 'Beginner',
             'about': ['Python (programming language)', 'CPython internals', 'memory model'],
-            'keywords': 'python, python internals, memory model, reference counting, closures, decorators, generators, GIL, exceptions',
+            'keywords': 'python, python internals, memory model, reference counting, closures, decorators, generators, GIL, exceptions, imports, modules',
             'teaches': [t for s in SESSIONS for t in s['teaches']],
             'offers': [{'@type': 'Offer', 'category': 'Free', 'price': 0, 'priceCurrency': 'USD', 'availability': 'https://schema.org/InStock'}],
-            'hasCourseInstance': [{'@type': 'CourseInstance', 'courseMode': 'online', 'courseWorkload': 'PT5H'}],
+            'hasCourseInstance': [{'@type': 'CourseInstance', 'courseMode': 'online', 'courseWorkload': 'PT6H'}],
             'hasPart': [{'@type': 'LearningResource', 'name': f"Session {s['num']}: {s['h1']}", 'url': s['url']} for s in SESSIONS],
         })
         graph.append({'@type': 'WebSite', 'name': 'Py Internals', 'url': SITE, 'publisher': org, 'inLanguage': 'en'})
@@ -445,9 +452,18 @@ class ToMarkdown(HTMLParser):
         self.cell = None         # current table cell text, when inside a row
         self.row = None
         self.row_is_header = False
+        self.in_table = False
 
     def _skipping(self):
         return self.skip_from is not None
+
+    def _inline(self, mark):
+        # Inside a table cell the marker belongs to the cell text, not to the page, or the
+        # backticks end up on lines of their own between the table rows.
+        if self.cell is not None:
+            self.cell += mark
+        else:
+            self.out.append(mark)
 
     def handle_starttag(self, tag, attrs):
         if tag in self.VOID:
@@ -465,10 +481,10 @@ class ToMarkdown(HTMLParser):
         elif tag == 'h3': self.out.append('\n\n### ')
         elif tag == 'p': self.out.append('\n\n')
         elif tag == 'li': self.out.append('\n- ')
-        elif tag in ('code', 'kbd'): self.out.append('`')
-        elif tag == 'strong': self.out.append('**')
-        elif tag == 'em': self.out.append('*')
-        elif tag == 'table': self.out.append('\n')
+        elif tag in ('code', 'kbd'): self._inline('`')
+        elif tag == 'strong': self._inline('**')
+        elif tag == 'em': self._inline('*')
+        elif tag == 'table': self.out.append('\n'); self.in_table = True
         elif tag == 'tr': self.row = []; self.row_is_header = False
         elif tag in ('td', 'th'):
             self.cell = ''
@@ -491,9 +507,9 @@ class ToMarkdown(HTMLParser):
             if len(self.stack) < self.skip_from:
                 self.skip_from = None
             return
-        if tag in ('code', 'kbd'): self.out.append('`')
-        elif tag == 'strong': self.out.append('**')
-        elif tag == 'em': self.out.append('*')
+        if tag in ('code', 'kbd'): self._inline('`')
+        elif tag == 'strong': self._inline('**')
+        elif tag == 'em': self._inline('*')
         elif tag in ('td', 'th'):
             self.row.append(re.sub(r'\s+', ' ', self.cell or '').strip()); self.cell = None
         elif tag == 'tr':
@@ -501,6 +517,8 @@ class ToMarkdown(HTMLParser):
             if self.row_is_header:
                 self.out.append('\n|' + '|'.join([' --- '] * len(self.row)) + '|')
             self.row = None
+        elif tag == 'table':
+            self.in_table = False
         elif tag in ('h2', 'h3'):
             self.out.append('\n')
 
@@ -509,6 +527,9 @@ class ToMarkdown(HTMLParser):
             return
         if self.cell is not None:
             self.cell += data
+            return
+        if self.in_table:
+            # whitespace between rows; a blank line here would end the Markdown table
             return
         self.out.append(data)
 

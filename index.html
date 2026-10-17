@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Py Internals: Learn How Python Really Works, Visually</title>
-  <meta name="description" content="A free, open-source Python course that shows what your code does in memory. Step through names, frames, references, classes, generators, the GIL and exceptions." />
+  <meta name="description" content="A free, open-source Python course that shows what your code does in memory. Step through names, frames, references, classes, generators, the GIL, exceptions and imports." />
   <meta name="theme-color" content="#1A6B5C" />
 
   <!-- CSS -->
@@ -409,14 +409,14 @@
   <meta property="og:locale" content="en_GB" />
   <meta property="og:url" content="https://inboxpraveen.github.io/Py-Internals/" />
   <meta property="og:title" content="Py Internals: Learn Python from the Inside Out" />
-  <meta property="og:description" content="A free, open-source Python course that shows what your code does in memory. Step through names, frames, references, classes, generators, the GIL and exceptions." />
+  <meta property="og:description" content="A free, open-source Python course that shows what your code does in memory. Step through names, frames, references, classes, generators, the GIL, exceptions and imports." />
   <meta property="og:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/home.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="Py Internals: Learn Python from the Inside Out on Py Internals" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Py Internals: Learn Python from the Inside Out" />
-  <meta name="twitter:description" content="A free, open-source Python course that shows what your code does in memory. Step through names, frames, references, classes, generators, the GIL and exceptions." />
+  <meta name="twitter:description" content="A free, open-source Python course that shows what your code does in memory. Step through names, frames, references, classes, generators, the GIL, exceptions and imports." />
   <meta name="twitter:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/home.png" />
   <link rel="alternate" type="application/atom+xml" title="Py Internals sessions" href="https://inboxpraveen.github.io/Py-Internals/feed.xml" />
   <link rel="manifest" href="https://inboxpraveen.github.io/Py-Internals/manifest.webmanifest" />
@@ -431,7 +431,7 @@
       "@type": "Course",
       "@id": "https://inboxpraveen.github.io/Py-Internals/#course",
       "name": "Py Internals: Learn Python from the Inside Out",
-      "description": "A free, open-source Python course that shows what your code does in memory. Step through names, frames, references, classes, generators, the GIL and exceptions.",
+      "description": "A free, open-source Python course that shows what your code does in memory. Step through names, frames, references, classes, generators, the GIL, exceptions and imports.",
       "url": "https://inboxpraveen.github.io/Py-Internals/",
       "image": "https://inboxpraveen.github.io/Py-Internals/assets/images/og/home.png",
       "provider": {
@@ -457,14 +457,14 @@
       "isAccessibleForFree": true,
       "license": "https://github.com/inboxpraveen/Py-Internals/blob/main/LICENSE",
       "datePublished": "2026-03-23",
-      "dateModified": "2026-09-17",
+      "dateModified": "2026-10-17",
       "educationalLevel": "Beginner",
       "about": [
         "Python (programming language)",
         "CPython internals",
         "memory model"
       ],
-      "keywords": "python, python internals, memory model, reference counting, closures, decorators, generators, GIL, exceptions",
+      "keywords": "python, python internals, memory model, reference counting, closures, decorators, generators, GIL, exceptions, imports, modules",
       "teaches": [
         "Python variables as names bound to objects",
         "id() and object identity",
@@ -518,7 +518,15 @@
         "exception hierarchy",
         "context managers and the with statement",
         "__enter__ and __exit__",
-        "exception chaining with raise from"
+        "exception chaining with raise from",
+        "what import does",
+        "module objects and their __dict__",
+        "sys.modules and the import cache",
+        "from-import versus import",
+        "the __name__ == \"__main__\" guard",
+        "circular imports",
+        "sys.path and shadowed modules",
+        "packages and __pycache__"
       ],
       "offers": [
         {
@@ -533,7 +541,7 @@
         {
           "@type": "CourseInstance",
           "courseMode": "online",
-          "courseWorkload": "PT5H"
+          "courseWorkload": "PT6H"
         }
       ],
       "hasPart": [
@@ -576,6 +584,11 @@
           "@type": "LearningResource",
           "name": "Session 08: Exceptions, Tracebacks & Context Managers",
           "url": "https://inboxpraveen.github.io/Py-Internals/sessions/08-exceptions/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Session 09: Modules & Imports",
+          "url": "https://inboxpraveen.github.io/Py-Internals/sessions/09-modules/"
         }
       ]
     },
@@ -613,7 +626,7 @@
     <span class="topbar__brand">Py<span>Internals</span></span>
   </div>
   <div class="topbar__actions">
-    <span class="progress-chip" id="homeProgressChip">8 live sessions</span>
+    <span class="progress-chip" id="homeProgressChip">9 live sessions</span>
     <a href="glossary.html" class="btn btn--ghost btn--sm">Glossary</a>
     <a href="https://github.com/inboxpraveen/Py-Internals"
        target="_blank"
@@ -737,6 +750,11 @@
         <div class="course-path__num">08</div>
         <div class="course-path__title">Exceptions</div>
         <div class="course-path__idea">An object climbs the stack, clearing frames, until a handler stops it.</div>
+      </a>
+      <a class="course-path__step" href="sessions/09-modules/">
+        <div class="course-path__num">09</div>
+        <div class="course-path__title">Modules</div>
+        <div class="course-path__idea">A file runs once. Every later import gets the cached module.</div>
       </a>
     </div>
   </section>
@@ -923,6 +941,30 @@
       </svg>
     </a>
 
+    <a href="sessions/09-modules/" class="session-card animate-fade-up delay-5" data-session="09-modules">
+      <div class="session-card__num">09</div>
+      <div class="session-card__body">
+        <div class="session-card__title">Modules &amp; Imports</div>
+        <div class="session-card__desc">
+          What <code>import</code> really does: it finds a file, runs it once into a module
+          object and caches it in <code>sys.modules</code>. Why a from-imported name goes
+          stale, what <code>__name__ == "__main__"</code> checks, and how circular imports
+          and a stray <code>random.py</code> break a program.
+        </div>
+        <div class="session-card__tags">
+          <span class="session-card__tag">import</span>
+          <span class="session-card__tag">sys.modules</span>
+          <span class="session-card__tag">from ... import</span>
+          <span class="session-card__tag">__main__</span>
+          <span class="session-card__tag">circular imports</span>
+          <span class="session-card__tag">sys.path</span>
+        </div>
+      </div>
+      <svg class="session-card__arrow" width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M7 10h6M10 7l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+
   </section>
 
   <!-- Philosophy -->
@@ -958,7 +1000,7 @@
         <div class="philosophy-point__num">04</div>
         <div class="philosophy-point__title">Mobile-first, no install.</div>
         <div class="philosophy-point__text">
-          Pure HTML, CSS and JavaScript. No build tools, no Node, no backend. It works offline after the first load, so you can open it on your phone on the bus, close it, and come back later. It remembers where you were.
+          Pure HTML, CSS and JavaScript. No build tools, no Node, no backend, no account. The pages are small static files, so they open quickly on a phone, and your progress is kept in your own browser, so you can close a session on the bus and pick it up later.
         </div>
       </div>
     </div>

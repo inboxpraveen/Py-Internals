@@ -56,6 +56,7 @@ Py-Internals/
     ├── 06-decorators/          ← f = deco(f), wrappers, closure cells, wraps
     ├── 07-gil/                 ← the GIL, races, locks, processes, asyncio
     ├── 08-exceptions/          ← raise, unwinding, tracebacks, finally, with
+    ├── 09-modules/             ← import, sys.modules, __main__, circular imports
     └── ...
 
 `glossary.html` at the repo root is the searchable term list. Link it from every session topbar.
@@ -300,6 +301,66 @@ labels allowed to wrap. `.btn` is `nowrap` + `overflow: hidden` everywhere
 else, which was quietly truncating "Session 03: Lists, Dicts & References" to
 "Session 03: Lists".
 
+### Shared additions from Session 09
+
+Session 09 added no new types, states or components. Modules turned out to be
+drawable with the vocabulary that already existed, and these are the
+conventions it settled on. Copy them for anything about files, namespaces or
+the import system. It did fix three shared things on the way, which every
+session now gets:
+
+- **List cells wrap long values.** `.mem-obj__item-cell` in `memory-viz.css`
+  has `max-width: 100%` and `overflow-wrap: anywhere`, so a long file path in a
+  list (`sys.path`, say) breaks inside its cell at 320px instead of running out
+  past the object. The `[0]` index label is kept from shrinking. Values that fit
+  render exactly as before.
+- **The lookup-path label column is 6.5rem, not 72px** (`session.css`). At 72px
+  any mono label over about ten characters (`site-packages`, Session 02's
+  `B · builtins`) ran into the text beside it. Keep labels to about 13
+  characters.
+- **Tables in `llms-full.txt`.** `build_seo.py` used to write the backticks of
+  every `<code>` inside a table cell outside the row, and left blank lines
+  between rows, so every table in the export was broken. Inline markers now stay
+  in their cell and the rows are contiguous. Glance at your session's section of
+  `llms-full.txt` after a build.
+
+Session 09's copy of the `exception()` helper also takes `brief: true`, which
+leaves out `__cause__` and `__context__` when nothing in the session chains
+exceptions. That saves two rows per exception on a tall panel.
+
+**A module is an instance.** Like Session 08's exceptions, a module is
+`type: 'instance'` with `classRef: { name: 'module' }` and `dictLabel:
+'module __dict__'`. Session 09 wraps that in a `moduleObj()` helper whose
+pairs always start with `__name__`. Real modules also hold `__file__`,
+`__spec__`, `__loader__` and a few more dunders; leave them out unless the
+demo is about them.
+
+**`sys.modules` is a dict of refs.** Draw it as a `dict` with
+`dictLabel: 'sys.modules'` and one `type: 'ref'` pair per module
+(`'config': 'module -> 0x7fd10200'`). The real dict has a few dozen entries
+before the first line runs, and the count varies by install, so say "a few
+dozen more, not drawn" in a `note` rather than a number. Keep `'sys'` and
+`'__main__'` in it, so it never renders as `(empty)`.
+
+**A module body runs in a frame named after the file.** While `config.py`
+is being imported, draw a frame called `config.py` with a badge such as
+`importing`, and give the importer's frame `paused on import`. That frame's
+globals *are* the module's `__dict__`, so a top-level assignment adds a row to
+the frame and a pair to the module object in the same step: one dict, drawn
+twice. Remove the frame when the body finishes and keep the module, which is
+the point most learners are missing.
+
+**Refcounts measured for these drawings** (CPython 3.13): a module whose body is
+running has 3 references (`sys.modules` plus two held by the import system),
+and 2 once it is bound to one name. An `AttributeError` raised on a module
+keeps it as `exc.obj`, which is one more. A failed import removes the entry
+from `sys.modules`, but the module object lives on until the traceback is
+dropped, so don't draw it as freed.
+
+**Don't call a helper `module`.** The demo checker in section 10 appends
+`module.exports = DEMOS;` to your file, so a function named `module` quietly
+breaks it. Session 09 uses `moduleObj` for that reason.
+
 ---
 
 ## 3. The JavaScript Modules
@@ -321,7 +382,7 @@ else, which was quietly truncating "Session 03: Lists, Dicts & References" to
 - **`PJ.Core.getTypeColor(type)`**: Returns the CSS variable for a type's color
 - **`PJ.Core.markSessionComplete(id)`**: Saves completion to localStorage
 - **`PJ.Core.scrollToSection(selector)`**: Smooth-scroll helper for sidebar anchors
-- **`PJ.Session.mount({ sessionId, demos, defaultDemo, defaultSpeed })`**: Preferred session bootstrap (wires the lab, keyboard, and completion)
+- **`PJ.Session.mount({ sessionId, demos, defaultDemo, defaultSpeed })`**: Preferred session bootstrap (wires the lab and the keyboard; the quiz handles completion)
 
 Keyboard playback (once an animator is mounted): `→` next, `←` previous, `Space` play/pause, `R` reset.
 
@@ -374,9 +435,9 @@ The `containerId` element must contain buttons with these `data-action` attribut
 ### Step 1: Create the folder
 
 ```bash
-mkdir sessions/09-your-topic
-touch sessions/09-your-topic/index.html
-touch sessions/09-your-topic/session.js
+mkdir sessions/10-your-topic
+touch sessions/10-your-topic/index.html
+touch sessions/10-your-topic/session.js
 ```
 
 ### Step 2: Copy the HTML shell
@@ -389,7 +450,8 @@ Then read the session closest to your topic before you write a demo:
 Session 07 for the widest range of narrative components and for anything with
 more than one thread of control (`frame.state`, `frame.badge`); Session 08 for
 anything that tears frames down (`state: 'unwinding'`, the `exception()`
-helper); Session 04 for the object model (`classRef`, `bases`, inheritance);
+helper); Session 09 for files and namespaces (`moduleObj()`, `sys.modules`,
+a frame per file body); Session 04 for the object model (`classRef`, `bases`, inheritance);
 Session 02 for call stacks; Session 03 for containers and references. In your
 copy, replace:
 - `<title>`: update session name
@@ -428,7 +490,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 That's all the bootstrap there is. `mount` wires the demo pills (from their
 `data-demo` attributes), the code panel, the memory panel, the explanation
-strip, the animator and completion tracking. **Do not** write your own
+strip and the animator. Completion is not part of it: a session is marked done
+only when the reader answers every quiz question, so playing one demo to the
+end doesn't flip the homepage badge to Done. **Do not** write your own
 `initStage`, `switchDemo`, `scrollTo`, read-progress bar or sidebar scroll-spy.
 `PJ.Core.init()` already installs the last two on every page, and a second copy
 means two scroll listeners doing the same work.
@@ -1036,8 +1100,10 @@ Before shipping a session, verify:
       with your longest code line on screen. A code line cannot widen the
       stage any more, but check the first demo of a new session anyway
 - [ ] Compare your tallest memory snapshot against the existing ceiling
-      (~1200px, set by Sessions 04 and 07). Measure it, do not guess:
-      `document.getElementById('memPanel').scrollHeight` at your busiest step
+      (about 1200 to 1320px at 375px wide, set by Sessions 04, 07, 08 and 09,
+      and about 1470px at 320px, where long values wrap). Measure it, do not
+      guess: `document.getElementById('memPanel').scrollHeight` at your
+      busiest step
 
 ---
 
@@ -1098,7 +1164,7 @@ result = greet("Alice")`,
 
 document.addEventListener('DOMContentLoaded', () => {
   PJ.Session.mount({
-    sessionId: '09-your-topic',
+    sessionId: '10-your-topic',
     demos: DEMOS,
     defaultDemo: 'callStack',
     defaultSpeed: 900,
@@ -1112,7 +1178,7 @@ Run these. They are quick and they catch the mistakes that actually ship:
 
 ```bash
 # 1. The file parses.
-node --check sessions/09-your-topic/session.js
+node --check sessions/10-your-topic/session.js
 
 # 2. Every `lines:` number is a real line of that demo's own `code` string.
 #    (Off-by-one line references are the single most common session bug.)
@@ -1150,7 +1216,7 @@ for (const [k, d] of Object.entries(require(tmp))) {
   if (d.steps.length < 5 || d.steps.length > 10) console.log("WARN", k, "has", d.steps.length, "steps");
 }
 console.log(bad ? "FAILED: " + bad + " problem(s)" : "line references, heap refs, small ints, labels: all clean");
-' sessions/09-your-topic/session.js
+' sessions/10-your-topic/session.js
 
 # 3. Every factual claim is true in the Python you are targeting.
 python -c "import sys; print(sys.version)"

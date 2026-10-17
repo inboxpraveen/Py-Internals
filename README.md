@@ -20,6 +20,7 @@
 [**Session 06: Decorators**](https://inboxpraveen.github.io/Py-Internals/sessions/06-decorators/) &nbsp;·&nbsp;
 [**Session 07: The GIL**](https://inboxpraveen.github.io/Py-Internals/sessions/07-gil/) &nbsp;·&nbsp;
 [**Session 08: Exceptions**](https://inboxpraveen.github.io/Py-Internals/sessions/08-exceptions/) &nbsp;·&nbsp;
+[**Session 09: Modules**](https://inboxpraveen.github.io/Py-Internals/sessions/09-modules/) &nbsp;·&nbsp;
 [**Glossary**](https://inboxpraveen.github.io/Py-Internals/glossary.html) &nbsp;·&nbsp;
 [**Report a Bug**](https://github.com/inboxpraveen/Py-Internals/issues) &nbsp;·&nbsp;
 [**Request a Topic**](https://github.com/inboxpraveen/Py-Internals/discussions)
@@ -58,6 +59,7 @@ Py Internals closes that gap, visually, and for free.
 - 🧠 **Real memory diagrams**: see the heap, stack frames, reference counts and GC cycles
 - 🔒 **Runtime state, too**: Session 07 draws the interpreter itself, so you can watch the GIL change hands
 - 🧨 **Exceptions in flight**: Session 08 draws a frame being torn down and the traceback growing as an exception climbs the stack
+- 📦 **Imports you can watch**: Session 09 draws `sys.modules` filling up, a module's body running in its own frame, and a half-built module handed out by a circular import
 - 🔬 **Type explorer**: the nine types you meet first, their mutability, and how each behaves in memory
 - ✅ **Check-your-understanding quizzes**: predict the memory, then see why
 - 📚 **Glossary**: plain-English definitions you can search mid-lesson
@@ -66,7 +68,7 @@ Py Internals closes that gap, visually, and for free.
 - 📱 **Fully responsive**: reads well on a phone, animates nicely on a desktop
 - ⚡ **No login, no account, no tracking**: just open it and learn
 - 💾 **Progress saved locally**: your completed sessions are remembered in `localStorage`
-- 🌐 **Nothing to install**: pure static files, and after the first load only the web fonts need the network
+- 🌐 **Nothing to install**: pure static files, with no build step and no backend
 
 ---
 
@@ -82,6 +84,7 @@ Py Internals closes that gap, visually, and for free.
 | 06 | [Decorators](https://inboxpraveen.github.io/Py-Internals/sessions/06-decorators/) | ✅ Live | `f = deco(f)`, wrappers, closure cells, `functools.wraps`, stacking |
 | 07 | [The GIL & Concurrency](https://inboxpraveen.github.io/Py-Internals/sessions/07-gil/) | ✅ Live | GIL, races, `Lock`, I/O vs CPU, `multiprocessing`, `asyncio`, free threading |
 | 08 | [Exceptions, Tracebacks & Context Managers](https://inboxpraveen.github.io/Py-Internals/sessions/08-exceptions/) | ✅ Live | `raise`, stack unwinding, tracebacks, `try` / `except` / `finally`, `with`, `__enter__` / `__exit__`, `raise from` |
+| 09 | [Modules & Imports](https://inboxpraveen.github.io/Py-Internals/sessions/09-modules/) | ✅ Live | `import`, module objects, `sys.modules`, `from ... import`, `__name__ == "__main__"`, circular imports, `sys.path` |
 
 ---
 
@@ -122,7 +125,8 @@ Py-Internals/
     ├── 05-iterators/            ← iter/next, yield, lazy evaluation
     ├── 06-decorators/           ← f = deco(f), wrappers, functools.wraps
     ├── 07-gil/                  ← the interpreter lock, races, processes, asyncio
-    └── 08-exceptions/           ← raise, unwinding, tracebacks, finally, with
+    ├── 08-exceptions/           ← raise, unwinding, tracebacks, finally, with
+    └── 09-modules/              ← import, sys.modules, __main__, circular imports
 ```
 
 ---
@@ -169,7 +173,7 @@ Contributions are very welcome, especially new sessions.
 ### Adding a session
 
 1. Read [`IMPLEMENTATION_GUIDE.md`](IMPLEMENTATION_GUIDE.md). It covers everything
-2. Copy `sessions/06-decorators/` as a starting point, since it's the leanest complete shell. Read `sessions/07-gil/` for the widest range of components and `sessions/08-exceptions/` for frames being torn down
+2. Copy `sessions/06-decorators/` as a starting point, since it's the leanest complete shell. Read `sessions/07-gil/` for the widest range of components, `sessions/08-exceptions/` for frames being torn down and `sessions/09-modules/` for module objects and `sys.modules`
 3. Create your demo steps in `session.js` following the memory snapshot format
 4. Add the session to `PAGES` in `tools/build_seo.py` and run `python tools/build_seo.py`. That regenerates the page's head tags, its share card, the sitemap, the feed and `llms.txt`
 5. Submit a PR against `main`
