@@ -9,7 +9,7 @@
 
 # 🐍 Py Internals: Learn Python from the Inside Out
 
-**An open-source, interactive Python course that shows you what Python is *actually* doing**
+**An interactive Python course that shows how names, objects and execution work.**
 
 [**View the Course →**](https://inboxpraveen.github.io/Py-Internals) &nbsp;·&nbsp;
 [**Session 01: Variables**](https://inboxpraveen.github.io/Py-Internals/sessions/01-variables/) &nbsp;·&nbsp;
@@ -223,7 +223,7 @@ Everything a search engine, a social network or a language model needs is genera
 
 **Beautiful enough to take seriously.** The design is deliberate: warm cream backgrounds, editorial typography, restrained colour. Learning tools don't have to look like homework.
 
-**Zero friction to fork.** You can clone this, remove the attribution (actually, keep the attribution, it's in the license), and build your own course on top of it. The implementation guide exists so this is a 20-minute job, not a 20-hour one.
+You can study the source and build on it under the [Py Internals Community License](LICENSE). Keep the required attribution and check the license terms before reusing the material. The implementation guide explains how to add a session.
 
 ---
 
