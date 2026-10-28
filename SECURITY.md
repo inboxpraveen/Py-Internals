@@ -10,7 +10,7 @@ Py Internals is a set of static files served by GitHub Pages. There is no server
 
 - **Nothing is collected.** There are no cookies, no analytics and no accounts.
 - **Two values stay on the reader's device.** `localStorage` holds which sessions were finished (`pj_completed`) and which one was opened last (`pj_last`). Nothing reads them but the site itself.
-- **One third party.** Each page links the Google Fonts stylesheet and font files (Lora, DM Sans, JetBrains Mono). The browser contacts Google to fetch them. Nothing else is loaded from another host.
+- **No third parties.** The fonts (Lora, DM Sans, JetBrains Mono) are served from `assets/fonts/`, so a page loads nothing from another host. GitHub Pages serves the files and keeps ordinary web server logs, as any host does.
 - **No user content.** The pages render text that is written in the repository. Nothing a visitor types is ever inserted into a page, so there is no stored or reflected content to attack. Reports of cross-site scripting should show how an outside party can get their own text into a page.
 - **Pull requests are the attack surface.** Because the whole site is source in this repository, the realistic risk is a malicious change. Every change goes through review, and the project has no runtime dependencies to compromise.
 

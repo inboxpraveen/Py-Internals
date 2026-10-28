@@ -56,11 +56,11 @@ Only two `localStorage` keys, both written by `core.js`. Every read and write is
 - `pj_completed`: the ids of sessions whose quiz has been finished (every question answered).
 - `pj_last`: the id of the session opened most recently.
 
-There are no cookies, no accounts and no analytics. The one third-party request is the Google Fonts stylesheet and font files (Lora, DM Sans, JetBrains Mono) that each page links from its `<head>`.
+There are no cookies, no accounts and no analytics, and no page asks another site for anything. The fonts (Lora, DM Sans, JetBrains Mono, under the SIL Open Font License) are served from `assets/fonts/`.
 
 ### Styles
 
-Six stylesheets in `assets/css/`, all driven by the custom properties in `base.css`: `base`, `layout`, `components`, `memory-viz`, `animations` and `session`. Anything a second session needs unchanged is promoted into these files. Anything only one session needs stays in that session's own page.
+Six stylesheets in `assets/css/`, all driven by the custom properties in `base.css`, which also declares the self-hosted font faces: `base`, `layout`, `components`, `memory-viz`, `animations` and `session`. Anything a second session needs unchanged is promoted into these files. Anything only one session needs stays in that session's own page.
 
 ## 3. Publish
 

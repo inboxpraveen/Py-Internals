@@ -29,11 +29,6 @@ SITE = 'https://inboxpraveen.github.io/Py-Internals/'
 REPO = 'https://github.com/inboxpraveen/Py-Internals'
 AUTHOR = {'name': 'Praveen Kumar', 'url': 'https://github.com/inboxpraveen'}
 TODAY = date.today().isoformat()
-# Linked from each page's head rather than imported from base.css, so the browser
-# can fetch the fonts and the CSS at the same time instead of one after the other.
-FONTS = ('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400'
-         '&family=JetBrains+Mono:wght@400;500;600'
-         '&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap')
 
 # One row per page. `path` is the folder or file relative to the site root.
 PAGES = [
@@ -305,9 +300,6 @@ def head_block(page):
         f'  <meta name="twitter:image" content="{page["og_image_url"]}" />',
         f'  <link rel="alternate" type="application/atom+xml" title="Py Internals sessions" href="{SITE}feed.xml" />',
         f'  <link rel="manifest" href="{SITE}manifest.webmanifest" />',
-        '  <link rel="preconnect" href="https://fonts.googleapis.com" />',
-        '  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />',
-        f'  <link rel="stylesheet" href="{FONTS}" />',
         '  <script type="application/ld+json">',
         json_ld(page),
         '  </script>',

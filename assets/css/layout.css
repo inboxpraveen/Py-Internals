@@ -35,16 +35,7 @@
 .topbar__logo-mark {
   width: 32px;
   height: 32px;
-  background: var(--clr-accent);
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--clr-text-inv);
-  font-family: var(--font-mono);
-  font-weight: 600;
-  font-size: var(--fs-sm);
-  letter-spacing: -0.5px;
+  display: block;
   flex-shrink: 0;
 }
 
@@ -435,8 +426,7 @@
 }
 
 @media (max-width: 400px) {
-  /* Hiding only the "Internals" half left "Py Py" next to the logo mark, which
-     already says Py. Drop the wordmark and keep the mark. */
+  /* No room for the wordmark at this width. Keep the logo mark. */
   .topbar__brand { display: none; }
 }
 

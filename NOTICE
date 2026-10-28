@@ -4,4 +4,7 @@ Copyright 2026 Praveen Kumar (https://github.com/inboxpraveen)
 The code is licensed under the Apache License 2.0, see LICENSE.
 The course content is licensed under CC BY-SA 4.0, see LICENSE-CONTENT.txt.
 
+The bundled fonts (Lora, DM Sans, JetBrains Mono) keep their own terms, the SIL
+Open Font License 1.1. The texts are in assets/fonts/.
+
 Source: https://github.com/inboxpraveen/Py-Internals

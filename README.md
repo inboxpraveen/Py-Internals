@@ -12,7 +12,7 @@
 
 Py Internals is a free, open-source Python course that shows what your code does in memory. Every lesson is an animation you step through one line at a time: names pointing at objects, stack frames appearing and disappearing, reference counts going up and down, an exception climbing the call stack.
 
-No account, no install, no analytics. It is plain HTML, CSS and JavaScript, so it runs in any browser and you can read every line of it. The code is Apache-2.0 and the course content is CC BY-SA 4.0, so you can reuse both, with credit.
+No account, no install, no analytics, and no requests to other sites. It is plain HTML, CSS and JavaScript, so it runs in any browser and you can read every line of it. The code is Apache-2.0 and the course content is CC BY-SA 4.0, so you can reuse both, with credit.
 
 [**Start the course**](https://inboxpraveen.github.io/Py-Internals) · [Course content](#course-content) · [Use it in class](#use-it-in-your-class-or-on-your-site) · [How it works](#how-it-works) · [Run it locally](#run-it-locally) · [Contribute](#contributing) · [Sponsor](#support-the-project)
 
@@ -99,7 +99,7 @@ Because the content and the renderer are separate, a new lesson needs new data a
 | Markup | Semantic HTML5 | Accessible, no framework needed |
 | Styles | Vanilla CSS with custom properties | Zero runtime, one set of design tokens |
 | Scripts | Plain `<script>` tags, no bundler | Trivial to read, fork and debug |
-| Fonts | [Lora](https://fonts.google.com/specimen/Lora), [DM Sans](https://fonts.google.com/specimen/DM+Sans), [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono) | Editorial, readable, code-friendly |
+| Fonts | [Lora](https://fonts.google.com/specimen/Lora), [DM Sans](https://fonts.google.com/specimen/DM+Sans) and [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono), served from `assets/fonts/` | Editorial, readable, code-friendly, and no page calls another host |
 | Hosting | GitHub Pages | Free, zero config, git-native |
 | Progress | `localStorage` | No backend to run or secure |
 | Findability | `tools/build_seo.py` | Head tags, JSON-LD, share cards, sitemap, feed and `llms.txt`, all committed |
@@ -147,6 +147,7 @@ Py-Internals/
 ├── assets/
 │   ├── css/                   base, layout, components, memory-viz, animations, session
 │   ├── js/                    core, animator, memory-viz, syntax  (the PJ namespace)
+│   ├── fonts/                 Lora, DM Sans and JetBrains Mono (woff2) with their OFL license texts
 │   └── images/                logo, banner, architecture diagram, screenshots, og/ share cards
 │
 ├── sessions/
@@ -191,7 +192,7 @@ In short:
 - Changes to the course content must be shared under the same license
 - Commercial use is allowed under these terms
 
-The [NOTICE](NOTICE) file carries the credit line, and the Apache license asks you to keep it when you redistribute the code.
+The [NOTICE](NOTICE) file carries the credit line, and the Apache license asks you to keep it when you redistribute the code. The bundled fonts keep their own terms, the SIL Open Font License 1.1, with the texts in `assets/fonts/`.
 ## Acknowledgements
 
 Inspired by the work of:

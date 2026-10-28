@@ -44,6 +44,7 @@ Py-Internals/
 │   │   ├── animations.css      ← Keyframes and animation utilities
 │   │   └── session.css         ← Shared session-page layout (overview, lab, tables)
 │   │
+│   ├── fonts/                  ← Lora, DM Sans, JetBrains Mono (woff2) and their OFL texts
 │   └── js/
 │       ├── core.js             ← App init, sidebar, progress, quizzes, PJ.Session.mount
 │       ├── animator.js         ← Step engine (autoplay, pause, step, speed)
@@ -542,9 +543,10 @@ above every session footer, the 404 page's list, and the root files
 (`sitemap.xml`, `feed.xml`, `llms.txt`, `llms-full.txt`, `manifest.webmanifest`,
 `robots.txt`). It also draws the page's share card into `assets/images/og/`.
 Copy the marker comments from `sessions/06-decorators/index.html` into your
-new page first so the script has somewhere to write. The Google Fonts link
-lives in that block too, so a page without the markers loses its fonts as well
-as its meta tags. Commit what it generates; the live site needs no build step.
+new page first so the script has somewhere to write; a page without the
+markers gets no meta tags. The fonts are served from `assets/fonts/` through
+`base.css`, so a new page needs no font links. Commit what it generates; the
+live site needs no build step.
 Pillow and node must be installed.
 
 Only the publish date lives in the table. The modified date on each page (and
