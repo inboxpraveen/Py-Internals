@@ -5,14 +5,14 @@
   <link href="https://inboxpraveen.github.io/Py-Internals/" />
   <link rel="self" href="https://inboxpraveen.github.io/Py-Internals/feed.xml" />
   <id>https://inboxpraveen.github.io/Py-Internals/</id>
-  <updated>2026-10-28T00:00:00Z</updated>
+  <updated>2026-10-29T00:00:00Z</updated>
   <author><name>Praveen Kumar</name><uri>https://github.com/inboxpraveen</uri></author>
   <entry>
     <title>Session 09: Modules &amp; Imports</title>
     <link href="https://inboxpraveen.github.io/Py-Internals/sessions/09-modules/" />
     <id>https://inboxpraveen.github.io/Py-Internals/sessions/09-modules/</id>
     <published>2026-10-17T00:00:00Z</published>
-    <updated>2026-10-28T00:00:00Z</updated>
+    <updated>2026-10-29T00:00:00Z</updated>
     <summary>What import really does: find a file, run it once, cache it in sys.modules and bind a name. Why from-imports go stale, what __name__ is, and how circular imports break.</summary>
     <category term="Program structure" />
   </entry>
@@ -21,7 +21,7 @@
     <link href="https://inboxpraveen.github.io/Py-Internals/sessions/08-exceptions/" />
     <id>https://inboxpraveen.github.io/Py-Internals/sessions/08-exceptions/</id>
     <published>2026-09-17T00:00:00Z</published>
-    <updated>2026-10-28T00:00:00Z</updated>
+    <updated>2026-10-29T00:00:00Z</updated>
     <summary>What raise does to the call stack, how to read a traceback, why finally runs past a return, what with calls for you and how exceptions chain with from.</summary>
     <category term="Control flow" />
   </entry>
@@ -30,7 +30,7 @@
     <link href="https://inboxpraveen.github.io/Py-Internals/sessions/07-gil/" />
     <id>https://inboxpraveen.github.io/Py-Internals/sessions/07-gil/</id>
     <published>2026-09-12T00:00:00Z</published>
-    <updated>2026-10-28T00:00:00Z</updated>
+    <updated>2026-10-29T00:00:00Z</updated>
     <summary>Why CPython has a global interpreter lock, why it doesn&#x27;t make your code thread-safe, and when threads, multiprocessing or asyncio actually help.</summary>
     <category term="Runtime" />
   </entry>
@@ -39,7 +39,7 @@
     <link href="https://inboxpraveen.github.io/Py-Internals/sessions/06-decorators/" />
     <id>https://inboxpraveen.github.io/Py-Internals/sessions/06-decorators/</id>
     <published>2026-09-03T00:00:00Z</published>
-    <updated>2026-10-28T00:00:00Z</updated>
+    <updated>2026-10-29T00:00:00Z</updated>
     <summary>A decorator is one line of assignment. See the wrapper, the closure cell that keeps your function alive, functools.wraps, decorator factories and stacking.</summary>
     <category term="Functions" />
   </entry>
@@ -48,7 +48,7 @@
     <link href="https://inboxpraveen.github.io/Py-Internals/sessions/04-classes/" />
     <id>https://inboxpraveen.github.io/Py-Internals/sessions/04-classes/</id>
     <published>2026-08-15T00:00:00Z</published>
-    <updated>2026-10-28T00:00:00Z</updated>
+    <updated>2026-10-29T00:00:00Z</updated>
     <summary>What self really is, where attributes live, how bound methods work, why class attributes are shared and how inheritance is just a longer lookup.</summary>
     <category term="Objects" />
   </entry>
@@ -57,7 +57,7 @@
     <link href="https://inboxpraveen.github.io/Py-Internals/sessions/05-iterators/" />
     <id>https://inboxpraveen.github.io/Py-Internals/sessions/05-iterators/</id>
     <published>2026-08-15T00:00:00Z</published>
-    <updated>2026-10-28T00:00:00Z</updated>
+    <updated>2026-10-29T00:00:00Z</updated>
     <summary>How a for loop uses iter and next, what StopIteration does, how yield pauses a frame and what lazy evaluation costs in memory compared with a list.</summary>
     <category term="Control flow" />
   </entry>
@@ -66,7 +66,7 @@
     <link href="https://inboxpraveen.github.io/Py-Internals/sessions/03-lists-dicts/" />
     <id>https://inboxpraveen.github.io/Py-Internals/sessions/03-lists-dicts/</id>
     <published>2026-05-07T00:00:00Z</published>
-    <updated>2026-10-28T00:00:00Z</updated>
+    <updated>2026-10-29T00:00:00Z</updated>
     <summary>Why b = a shares a list, what a shallow copy really copies, how deepcopy differs, and why passing a dict to a function can change the caller&#x27;s data.</summary>
     <category term="Foundations" />
   </entry>
@@ -75,7 +75,7 @@
     <link href="https://inboxpraveen.github.io/Py-Internals/sessions/02-functions/" />
     <id>https://inboxpraveen.github.io/Py-Internals/sessions/02-functions/</id>
     <published>2026-05-05T00:00:00Z</published>
-    <updated>2026-10-28T00:00:00Z</updated>
+    <updated>2026-10-29T00:00:00Z</updated>
     <summary>Watch a call frame appear and disappear. Local scope, LEGB lookup, arguments passed by reference, closures with real cells and the mutable default trap.</summary>
     <category term="Foundations" />
   </entry>
@@ -84,7 +84,7 @@
     <link href="https://inboxpraveen.github.io/Py-Internals/sessions/01-variables/" />
     <id>https://inboxpraveen.github.io/Py-Internals/sessions/01-variables/</id>
     <published>2026-03-23T00:00:00Z</published>
-    <updated>2026-10-28T00:00:00Z</updated>
+    <updated>2026-10-29T00:00:00Z</updated>
     <summary>See what x = 42 really does in memory. Names, objects, id(), aliasing, mutation versus rebinding and reference counting, animated one step at a time.</summary>
     <category term="Foundations" />
   </entry>
