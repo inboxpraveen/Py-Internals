@@ -17,7 +17,7 @@ A session lives in its own folder, `sessions/NN-topic/`, and has two files.
 
 A snapshot is a plain object: the frames that exist (each with its variables), the heap objects that are alive (type, value, refcount, state) and which of them to highlight. It is a teaching diagram, not a dump from a live interpreter, so addresses are stable on purpose and every number shown has been checked against real CPython. The exact format is in [IMPLEMENTATION_GUIDE.md](../IMPLEMENTATION_GUIDE.md#6-memory-snapshot-format).
 
-Nothing is computed at runtime. A step is exactly what its author wrote, which is why each one can carry a single idea.
+Nothing is computed at runtime. A step shows only what its author wrote, which is why each one can carry a single idea.
 
 ## 2. Run
 

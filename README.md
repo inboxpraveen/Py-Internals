@@ -40,7 +40,7 @@ That gap, between using a tool and understanding it, is where bugs hide. It is w
 ## What you get
 
 - **Step-by-step labs.** Walk through a program one step at a time, or let it play. Keyboard: `→` and `←` to step, `Space` to play or pause, `R` to reset.
-- **Real memory diagrams.** Stack frames, heap objects, reference counts and garbage collection, with every number checked against CPython.
+- **Real memory diagrams.** Stack frames, heap objects, reference counts and garbage collection, with every reference count checked against CPython.
 - **Runtime state, too.** Session 07 draws the interpreter itself, so you can watch the GIL change hands. Session 08 draws a frame being torn down as an exception climbs the stack. Session 09 draws `sys.modules` filling up.
 - **Quizzes that test the picture.** You predict the memory diagram, then see why.
 - **A glossary** with plain-English definitions you can search in the middle of a lesson.
@@ -66,6 +66,10 @@ Sessions are released one at a time and build on each other, so start at 01 if y
 
 <p align="center">
   <img src="assets/images/Homepage.png" alt="The Py Internals homepage" width="860" />
+</p>
+
+<p align="center">
+  <img src="assets/images/Session-Example.png" alt="A session page: a learning goal, a recommended path and the lab, with the session list in the sidebar" width="860" />
 </p>
 
 ## Use it in your class or on your site
@@ -99,6 +103,16 @@ Because the content and the renderer are separate, a new lesson needs new data a
 | Hosting | GitHub Pages | Free, zero config, git-native |
 | Progress | `localStorage` | No backend to run or secure |
 | Findability | `tools/build_seo.py` | Head tags, JSON-LD, share cards, sitemap, feed and `llms.txt`, all committed |
+
+## Design philosophy
+
+**Show, don't just tell.** Every concept in this course has a picture. If you can't draw a memory diagram for it, the explanation isn't done yet.
+
+**One thing per step.** Each animation step introduces one new idea. No step ever asks you to track two changes at once.
+
+**Beautiful enough to take seriously.** The design is deliberate: warm cream backgrounds, editorial typography, restrained colour. Learning tools don't have to look like homework.
+
+You can study the source and build on it under the [Py Internals Community License](LICENSE). Keep the required attribution and check the license terms before reusing the material. The implementation guide explains how to add a session.
 
 ## Run it locally
 
