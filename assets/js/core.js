@@ -361,7 +361,7 @@ PJ.Core = (function () {
                   : `${correct} of ${cards.length} correct`}</h3>` +
                 `<p>${perfect
                   ? 'This mental model is sticking. Move on when you can draw the same picture from memory.'
-                  : 'Re-read the teal explanations, then rewind the matching demo and try again.'}</p>`;
+                  : 'Re-read the explanations for the ones you missed, then rewind the matching demo. This session is marked finished either way.'}</p>`;
 
               const sessionId = quiz.dataset.session || currentSessionId();
               if (sessionId) markSessionComplete(sessionId);
