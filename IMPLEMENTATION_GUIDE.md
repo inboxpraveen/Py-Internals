@@ -29,6 +29,11 @@ Py-Internals/
 ├── LICENSE                     ← Py Internals Community License v1.0
 ├── README.md
 ├── IMPLEMENTATION_GUIDE.md     ← This file
+├── CONTRIBUTING.md, SECURITY.md, CODE_OF_CONDUCT.md
+├── docs/ARCHITECTURE.md        ← How the engine, the sessions and the build tool fit together
+├── tools/
+│   ├── check_sessions.js       ← Demo data checks (node)
+│   └── build_seo.py            ← Head tags, share cards, sitemap, feed, llms files
 │
 ├── assets/
 │   ├── css/
@@ -1180,43 +1185,11 @@ Run these. They are quick and they catch the mistakes that actually ship:
 # 1. The file parses.
 node --check sessions/10-your-topic/session.js
 
-# 2. Every `lines:` number is a real line of that demo's own `code` string.
-#    (Off-by-one line references are the single most common session bug.)
-node -e '
-const fs = require("fs"), os = require("os"), path = require("path");
-const src = fs.readFileSync(process.argv[1], "utf8")
-  .replace(/document\.addEventListener[\s\S]*$/, "") + "\nmodule.exports = DEMOS;";
-const tmp = path.join(os.tmpdir(), "pj-demos.js");
-fs.writeFileSync(tmp, src);
-let bad = 0;
-for (const [k, d] of Object.entries(require(tmp))) {
-  const n = d.code.split("\n").length;
-  d.steps.forEach((s, i) => {
-    (s.lines || []).forEach(L => {
-      if (L < 1 || L > n) { console.log("BAD", k, "step", i + 1, "-> line", L, "(code has", n, "lines)"); bad++; }
-    });
-    const m = s.memory; if (!m) return;
-    // every `ref` on a var must name an object that is actually on the heap in that step
-    const ids = new Set((m.heap || []).map(o => o.id));
-    (m.frames || (m.frame ? [m.frame] : [])).forEach(f => (f.vars || []).forEach(v => {
-      if (v.ref && !ids.has(v.ref)) { console.log("BAD-REF", k, "step", i + 1, v.name, "->", v.ref); bad++; }
-    }));
-    // cached small ints are immortal: draw them with refcount "∞" and never as gc
-    (m.heap || []).forEach(o => {
-      if (o.type === "int" && typeof o.value === "number" && o.value >= -5 && o.value <= 256 && (o.refcount !== "∞" || o.state === "gc")) {
-        console.log("BAD-SMALLINT", k, "step", i + 1, "int", o.value, "refcount", o.refcount, "state", o.state); bad++;
-      }
-      // a pointer label typed as str renders as a quoted string
-      [...(o.items || []), ...(o.pairs || [])].forEach(cell => {
-        if (typeof cell.value === "string" && /(-> |@ )0x/.test(cell.value) && cell.type !== "ref") { console.log("BAD-LABEL", k, "step", i + 1, cell.value); bad++; }
-      });
-    });
-  });
-  if ((d.steps[0].lines || []).length) { console.log("BAD", k, "step 1 should have lines: []"); bad++; }
-  if (d.steps.length < 5 || d.steps.length > 10) console.log("WARN", k, "has", d.steps.length, "steps");
-}
-console.log(bad ? "FAILED: " + bad + " problem(s)" : "line references, heap refs, small ints, labels: all clean");
-' sessions/10-your-topic/session.js
+# 2. The demo checker runs over every session. It catches off-by-one `lines:`
+#    references (the most common session bug), heap refs that point at nothing,
+#    small ints drawn as garbage, and pointer labels typed as strings.
+node tools/check_sessions.js
+node tools/check_sessions.js 10-your-topic      # or just yours
 
 # 3. Every factual claim is true in the Python you are targeting.
 python -c "import sys; print(sys.version)"

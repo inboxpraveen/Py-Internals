@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Suggest a topic or ask a question
+    url: https://github.com/inboxpraveen/Py-Internals/discussions
+    about: Ideas for new sessions and questions about how Python works go in Discussions.
