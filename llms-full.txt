@@ -1,6 +1,6 @@
 # Py Internals: full text
 
-Source: https://inboxpraveen.github.io/Py-Internals/ (https://github.com/inboxpraveen/Py-Internals). Licence: Py Internals Community License, free for educational use with attribution.
+Source: https://inboxpraveen.github.io/Py-Internals/ (https://github.com/inboxpraveen/Py-Internals). Licence: course content CC BY-SA 4.0, code Apache-2.0.
 This file is the complete text of every session, the demo code with its step-by-step narration, the quizzes, and the glossary, in Markdown.
 
 

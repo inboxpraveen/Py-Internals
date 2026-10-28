@@ -75,7 +75,7 @@ For anything bigger than a fix, open a [discussion](https://github.com/inboxprav
 2. Fill in the pull request template.
 3. Run the checks above. For a layout change, a screenshot helps.
 
-By contributing you agree that your work is published under the [Py Internals Community License](LICENSE).
+By contributing you agree that your code is published under the [Apache License 2.0](LICENSE) and your writing and diagrams under [CC BY-SA 4.0](LICENSE-CONTENT.txt).
 
 ## Reporting bugs
 

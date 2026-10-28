@@ -217,7 +217,7 @@ def json_ld(page):
             'url': SITE, 'image': page['og_image_url'],
             'provider': org, 'author': author,
             'inLanguage': 'en', 'isAccessibleForFree': True,
-            'license': REPO + '/blob/main/LICENSE',
+            'license': 'https://creativecommons.org/licenses/by-sa/4.0/',
             'datePublished': SESSIONS[0]['published'], 'dateModified': page['modified'],
             'educationalLevel': 'Beginner',
             'about': ['Python (programming language)', 'CPython internals', 'memory model'],
@@ -244,7 +244,7 @@ def json_ld(page):
             'author': author, 'publisher': org,
             'datePublished': s['published'], 'dateModified': s['modified'],
             'inLanguage': 'en', 'isAccessibleForFree': True,
-            'license': REPO + '/blob/main/LICENSE',
+            'license': 'https://creativecommons.org/licenses/by-sa/4.0/',
             'isPartOf': {'@type': 'Course', '@id': course_id, 'name': 'Py Internals', 'url': SITE},
             'position': int(s['num']),
             'learningResourceType': 'Interactive lesson',
@@ -417,7 +417,7 @@ def write_manifest():
 def write_llms():
     lines = ['# Py Internals', '',
              '> A free, open-source, interactive Python course. Every concept is paired with an animated memory diagram (names, objects, frames, references, refcounts), followed by a plain-English narrative and a short quiz. Pure static HTML, CSS and JavaScript, hosted on GitHub Pages.', '',
-             f'The full text of every session and the glossary is in [llms-full.txt]({SITE}llms-full.txt). Source and licence: [{REPO}]({REPO}) (Py Internals Community License: free for educational use with attribution).', '',
+             f'The full text of every session and the glossary is in [llms-full.txt]({SITE}llms-full.txt). Source and licence: [{REPO}]({REPO}) (code under Apache-2.0, course content under CC BY-SA 4.0).', '',
              '## Sessions', '']
     for s in SESSIONS:
         lines.append(f"- [Session {s['num']}: {s['h1']}]({s['url']}): {s['description']}")
@@ -617,7 +617,7 @@ def demos_markdown(page):
 
 def write_llms_full():
     parts = ['# Py Internals: full text', '',
-             f'Source: {SITE} ({REPO}). Licence: Py Internals Community License, free for educational use with attribution.',
+             f'Source: {SITE} ({REPO}). Licence: course content CC BY-SA 4.0, code Apache-2.0.',
              'This file is the complete text of every session, the demo code with its step-by-step narration, the quizzes, and the glossary, in Markdown.', '']
     for s in SESSIONS:
         parts.append(f"\n\n---\n\n# Session {s['num']}: {s['h1']}\n\nURL: {s['url']}\n\nSummary: {s['description']}\n")

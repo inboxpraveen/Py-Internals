@@ -26,7 +26,7 @@
 ```
 Py-Internals/
 ├── index.html                  ← Course homepage
-├── LICENSE                     ← Py Internals Community License v1.0
+├── LICENSE, LICENSE-CONTENT.txt, NOTICE  ← Apache-2.0 for code, CC BY-SA 4.0 for content
 ├── README.md
 ├── IMPLEMENTATION_GUIDE.md     ← This file
 ├── CONTRIBUTING.md, SECURITY.md, CODE_OF_CONDUCT.md
@@ -1208,4 +1208,4 @@ moment, use a list.
 ## Questions / Contributing
 
 Open an issue on GitHub, or submit a PR!
-All contributions must follow the [PI Community License](LICENSE).
+Contributions are published under the [Apache License 2.0](LICENSE) (code) and [CC BY-SA 4.0](LICENSE-CONTENT.txt) (lesson text and images).

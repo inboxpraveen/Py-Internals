@@ -6,13 +6,13 @@
 
 [![Live course](https://img.shields.io/badge/course-live-1A6B5C)](https://inboxpraveen.github.io/Py-Internals)
 [![Sessions](https://img.shields.io/badge/sessions-9-1A6B5C)](#course-content)
-[![License](https://img.shields.io/badge/license-Py%20Internals%20Community-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0%20%2B%20CC%20BY--SA%204.0-blue.svg)](#license)
 [![No build step](https://img.shields.io/badge/build-none-B85C1A)](docs/ARCHITECTURE.md)
 [![Sponsor](https://img.shields.io/badge/sponsor-inboxpraveen-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/inboxpraveen)
 
-Py Internals is a free Python course that shows what your code does in memory. Every lesson is an animation you step through one line at a time: names pointing at objects, stack frames appearing and disappearing, reference counts going up and down, an exception climbing the call stack.
+Py Internals is a free, open-source Python course that shows what your code does in memory. Every lesson is an animation you step through one line at a time: names pointing at objects, stack frames appearing and disappearing, reference counts going up and down, an exception climbing the call stack.
 
-No account, no install, no analytics. It is plain HTML, CSS and JavaScript, so it runs in any browser and you can read every line of it. The source is public, and the [license](#license) spells out how you can reuse it.
+No account, no install, no analytics. It is plain HTML, CSS and JavaScript, so it runs in any browser and you can read every line of it. The code is Apache-2.0 and the course content is CC BY-SA 4.0, so you can reuse both, with credit.
 
 [**Start the course**](https://inboxpraveen.github.io/Py-Internals) · [Course content](#course-content) · [Use it in class](#use-it-in-your-class-or-on-your-site) · [How it works](#how-it-works) · [Run it locally](#run-it-locally) · [Contribute](#contributing) · [Sponsor](#support-the-project)
 
@@ -82,7 +82,7 @@ Py Internals is built to be shared.
 - **Use the pictures in talks and posts.** Screenshots and diagrams may be shared with credit and a link back here.
 - **Read it as text.** [`llms-full.txt`](https://inboxpraveen.github.io/Py-Internals/llms-full.txt) is the whole course as Markdown, for language models and for anyone who wants the words without the animations.
 
-The [license](#license) asks for attribution and share-alike, and does not allow selling the material or putting it behind a paywall without written permission.
+The [licenses](#license) ask for credit and, for the course content, that changes are shared under the same terms. Commercial use is allowed under those terms.
 
 ## How it works
 
@@ -112,7 +112,7 @@ Because the content and the renderer are separate, a new lesson needs new data a
 
 **Beautiful enough to take seriously.** The design is deliberate: warm cream backgrounds, editorial typography, restrained colour. Learning tools don't have to look like homework.
 
-You can study the source and build on it under the [Py Internals Community License](LICENSE). Keep the required attribution and check the license terms before reusing the material. The implementation guide explains how to add a session.
+You can study the source and build on it under the [licenses below](#license). Keep the credit the licenses ask for. The implementation guide explains how to add a session.
 
 ## Run it locally
 
@@ -137,7 +137,7 @@ Py-Internals/
 ├── index.html                 Course homepage and session grid
 ├── glossary.html              Searchable term list
 ├── 404.html                   Not-found page with every session linked
-├── LICENSE                    Py Internals Community License v1.0
+├── LICENSE, LICENSE-CONTENT.txt, NOTICE    Apache-2.0 for the code, CC BY-SA 4.0 for the content
 ├── IMPLEMENTATION_GUIDE.md    How to build a new session
 ├── CONTRIBUTING.md, SECURITY.md, CODE_OF_CONDUCT.md
 │
@@ -176,14 +176,22 @@ Py Internals is free and stays free. Each session takes real time to write, beca
 
 ## License
 
-Published under the **Py Internals Community License v1.0**. See [`LICENSE`](LICENSE) for the full text. In short:
+Copyright 2026 Praveen Kumar. Two licenses apply, so each part has the terms that suit it:
 
-- Free to use, share and adapt for education, including classrooms, workshops and bootcamps
+| What | License |
+|------|---------|
+| The code: `assets/js/`, `assets/css/`, `tools/`, and the site pages | [Apache License 2.0](LICENSE) |
+| The course: the lessons in `sessions/`, `glossary.html`, the guides in `docs/` and `IMPLEMENTATION_GUIDE.md`, and everything in `assets/images/` | [CC BY-SA 4.0](LICENSE-CONTENT.txt) |
+
+In short:
+
+- Free to use, share and adapt, including in classrooms, workshops and bootcamps
 - Free to embed visuals in blog posts, talks and notes
-- Attribution is required, with a visible credit and a link back to this repository
-- Derivatives must use the same or a compatible license
-- No selling or paywalling the material without written permission
+- Credit is required, with a link back to this repository
+- Changes to the course content must be shared under the same license
+- Commercial use is allowed under these terms
 
+The [NOTICE](NOTICE) file carries the credit line, and the Apache license asks you to keep it when you redistribute the code.
 ## Acknowledgements
 
 Inspired by the work of:

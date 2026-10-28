@@ -2,7 +2,7 @@
 
 > A free, open-source, interactive Python course. Every concept is paired with an animated memory diagram (names, objects, frames, references, refcounts), followed by a plain-English narrative and a short quiz. Pure static HTML, CSS and JavaScript, hosted on GitHub Pages.
 
-The full text of every session and the glossary is in [llms-full.txt](https://inboxpraveen.github.io/Py-Internals/llms-full.txt). Source and licence: [https://github.com/inboxpraveen/Py-Internals](https://github.com/inboxpraveen/Py-Internals) (Py Internals Community License: free for educational use with attribution).
+The full text of every session and the glossary is in [llms-full.txt](https://inboxpraveen.github.io/Py-Internals/llms-full.txt). Source and licence: [https://github.com/inboxpraveen/Py-Internals](https://github.com/inboxpraveen/Py-Internals) (code under Apache-2.0, course content under CC BY-SA 4.0).
 
 ## Sessions
 
