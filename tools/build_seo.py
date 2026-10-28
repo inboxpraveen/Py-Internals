@@ -204,7 +204,7 @@ def plain(fragment):
 
 def json_ld(page):
     org = {'@type': 'Organization', 'name': 'Py Internals', 'url': SITE,
-           'logo': {'@type': 'ImageObject', 'url': SITE + 'assets/images/Python-logo.png', 'width': 1024, 'height': 1024},
+           'logo': {'@type': 'ImageObject', 'url': SITE + 'assets/images/icon-512.png', 'width': 512, 'height': 512},
            'sameAs': [REPO]}
     author = {'@type': 'Person', **AUTHOR}
     course_id = SITE + '#course'
@@ -406,7 +406,8 @@ def write_manifest():
         'description': 'Learn Python from the inside out: an interactive course that shows what your code does in memory.',
         'start_url': SITE, 'scope': SITE, 'display': 'standalone',
         'background_color': '#FAFAF7', 'theme_color': '#1A6B5C', 'lang': 'en',
-        'icons': [{'src': SITE + 'assets/images/Python-logo.png', 'sizes': '1024x1024', 'type': 'image/png', 'purpose': 'any'}],
+        'icons': [{'src': SITE + 'assets/images/icon-512.png', 'sizes': '512x512', 'type': 'image/png', 'purpose': 'any'},
+                  {'src': SITE + 'assets/images/logo.svg', 'sizes': 'any', 'type': 'image/svg+xml', 'purpose': 'any'}],
     }
     write('manifest.webmanifest', json.dumps(data, indent=2) + '\n')
 
@@ -652,15 +653,14 @@ def render_card(page):
     sans = font('segoeui.ttf', 27)
     sans_b = font('segoeuib.ttf', 22)
     mono = font('consola.ttf', 21)
-    mark = font('segoeuib.ttf', 24)
 
     im = Image.new('RGB', (W, H), cream)
     d = ImageDraw.Draw(im)
     d.rectangle([0, 0, 14, H], fill=teal)
 
     # wordmark
-    d.rounded_rectangle([64, 52, 112, 100], radius=12, fill=teal)
-    d.text((88, 76), 'Py', font=mark, fill='white', anchor='mm')
+    logo = Image.open(ROOT / 'assets' / 'images' / 'icon-512.png').convert('RGBA').resize((48, 48), Image.LANCZOS)
+    im.paste(logo, (64, 52), logo)
     d.text((128, 76), 'Py', font=font('georgiab.ttf', 30), fill=ink, anchor='lm')
     d.text((128 + d.textlength('Py', font=font('georgiab.ttf', 30)), 76), 'Internals', font=font('georgiab.ttf', 30), fill=teal, anchor='lm')
 
