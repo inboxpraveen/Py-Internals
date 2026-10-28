@@ -2,7 +2,7 @@ PY INTERNALS COMMUNITY LICENSE
 Version 1.0, 2024
 
 Copyright (c) 2024 Praveen Kumar (inboxpraveen)
-Project: Py Internals — https://github.com/inboxpraveen/Py-Internals
+Project: Py Internals, https://github.com/inboxpraveen/Py-Internals
 
 ═══════════════════════════════════════════════════════════════════════════════
 PREAMBLE
@@ -22,13 +22,13 @@ everywhere, encourage contributions and derivatives that benefit the community,
 and ensure the original author receives credit for their work.
 
 ═══════════════════════════════════════════════════════════════════════════════
-PERMISSIONS — You are FREE to:
+PERMISSIONS: You are FREE to:
 ═══════════════════════════════════════════════════════════════════════════════
 
 1. USE
    Use this project and its contents for personal learning, teaching, or
-   educational purposes — including in classrooms, workshops, bootcamps,
-   and online courses — without charge or restriction.
+   educational purposes, including in classrooms, workshops, bootcamps,
+   and online courses, without charge or restriction.
 
 2. SHARE
    Copy and redistribute the material in any medium or format, including
@@ -45,7 +45,7 @@ PERMISSIONS — You are FREE to:
    articles, YouTube videos, tutorials, or other educational materials.
 
 ═══════════════════════════════════════════════════════════════════════════════
-CONDITIONS — Under the following terms:
+CONDITIONS: Under the following terms:
 ═══════════════════════════════════════════════════════════════════════════════
 
 A. ATTRIBUTION (Required in all cases)
@@ -100,10 +100,10 @@ COMMERCIAL USE
 
 For commercial use beyond what is permitted above, please contact the author
 to discuss a separate commercial license. Teaching institutions, coding
-bootcamps, and individual educators may often use the materials freely —
-contact the author to confirm your use case.
+bootcamps, and individual educators may often use the materials freely.
+Contact the author to confirm your use case.
 
-Contact: [your email or GitHub profile URL]
+Contact: https://github.com/inboxpraveen
 
 ═══════════════════════════════════════════════════════════════════════════════
 CONTRIBUTIONS
