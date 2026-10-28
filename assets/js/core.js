@@ -168,6 +168,10 @@ PJ.Core = (function () {
     try { localStorage.setItem('pj_last', id); } catch (err) { /* ignore */ }
   }
 
+  function _lastVisited() {
+    try { return localStorage.getItem('pj_last'); } catch (err) { return null; }
+  }
+
   function markSessionComplete(sessionId) {
     if (!state.completedSessions.includes(sessionId)) {
       state.completedSessions.push(sessionId);
@@ -189,7 +193,7 @@ PJ.Core = (function () {
     const start = document.getElementById('startCta');
     if (start) {
       const target = nextIncomplete();
-      const last = localStorage.getItem('pj_last');
+      const last = _lastVisited();
       const completed = state.completedSessions.length;
       if (completed > 0 || last) {
         start.textContent = '';
@@ -206,7 +210,7 @@ PJ.Core = (function () {
 
     const lastNote = document.getElementById('lastSessionNote');
     if (lastNote) {
-      const lastId = localStorage.getItem('pj_last');
+      const lastId = _lastVisited();
       const last = PJ.COURSE.find((s) => s.id === lastId);
       if (last) {
         lastNote.hidden = false;
