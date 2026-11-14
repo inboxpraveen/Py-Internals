@@ -342,17 +342,21 @@
   line-height: var(--lh-loose);
 }
 
+/* The strip is the lab's caption and lives inside #stage. On a wide screen it
+   is a full-width row under the two panels. Once the panels stack (the 1024px
+   block below) it moves up between the code and the memory, so the words for a
+   step are on screen right under the Next button that showed it. */
 .explanation-strip {
+  grid-column: 1 / -1;
   padding: var(--sp-7) var(--sp-12);
   min-height: 150px;
-  border-bottom: 2px solid var(--clr-border);
-  margin: var(--sp-5) 0;
+  border-top: 1px solid var(--clr-border);
+  border-bottom: 0;
 }
 
 @media (max-width: 768px) {
   .explanation-strip {
     padding: var(--sp-5);
-    margin: 0;
   }
 }
 
@@ -750,6 +754,14 @@
     border-right: none;
     border-bottom: 1px solid rgba(255,255,255,0.07);
   }
+
+  /* code, then what the step did, then memory */
+  .stage > .explanation-strip {
+    order: 1;
+    border-bottom: 1px solid var(--clr-border);
+  }
+
+  .stage__memory-panel { order: 2; }
 }
 
 @media (max-width: 768px) {

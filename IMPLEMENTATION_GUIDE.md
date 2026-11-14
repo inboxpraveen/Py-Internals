@@ -409,6 +409,12 @@ new session gets them without doing anything.
   points to the course page.
 - **Card paragraphs end flush.** The last `<p>` in a flow, rule, diagram or
   mental-model card has no bottom margin.
+- **The explanation strip is inside `#stage`.** It is the last child of the
+  stage: a full-width row under the two panels on a wide screen, and moved up
+  between the code and the memory (with `order`) once the panels stack at
+  1024px. On a phone the words for a step now sit right under the Next button
+  that showed them, instead of below a tall memory panel. Copy the stage from
+  an existing session and it comes with the strip in the right place.
 
 ---
 
@@ -1024,8 +1030,10 @@ Session 02 introduced a reusable page structure for complex topics, and Session 
 <section class="stage-intro">...</section>
 <div class="demo-guide">...</div>
 <div class="demo-selector">...</div>
-<div class="stage" id="stage">...</div>
-<div class="explanation-strip">...</div>
+<div class="stage" id="stage">
+  ...code panel, memory panel...
+  <div class="explanation-strip">...</div>
+</div>
 <article class="narrative">...</article>
 ```
 
@@ -1131,7 +1139,7 @@ Before shipping a session, verify:
 - [ ] Stage code panel readable at 375px; indentation visible (the panel uses `white-space: pre`)
 - [ ] Memory panel scrolls rather than clipping when a snapshot is tall. Step to
       the busiest step of the busiest demo and confirm you can reach the bottom
-- [ ] The memory panel does not overlap the explanation strip below it
+- [ ] The explanation strip is the last child of `#stage`, and on a phone it shows between the code and the memory
 - [ ] Playback controls reachable with a thumb (tap targets ≥ 44px on touch)
 - [ ] Sidebar toggle opens **and** closes, and tapping a section link dismisses it
 - [ ] Narrative text has appropriate padding on mobile (`var(--sp-5)`)
