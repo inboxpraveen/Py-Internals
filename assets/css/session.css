@@ -410,6 +410,15 @@
   margin: var(--sp-6) 0 var(--sp-8);
 }
 
+/* `.narrative p` gives every paragraph a bottom margin, which left a band of
+   empty card under the last line of each of these. */
+.flow-card p:last-child,
+.rule-card p:last-child,
+.diagram-card p:last-child,
+.mental-model__card p:last-child {
+  margin-bottom: 0;
+}
+
 .flow-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .rule-grid,
 .diagram-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -753,6 +762,23 @@
   }
 
   .demo-guide__arrow { display: none; }
+
+  /* A pill reads as one tap target, so its label stays on one line. Session
+     01 groups its pills under a label: the label sits in a column of its own
+     with its pills stacked beside it, and the divider between the groups,
+     which ended up alone on a line, goes. */
+  .demo-pill { white-space: nowrap; }
+  .demo-group {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    justify-items: start;
+    align-items: center;
+    gap: var(--sp-2) var(--sp-3);
+  }
+  .demo-group__label { grid-column: 1; grid-row: 1; }
+  .demo-group .demo-pill { grid-column: 2; }
+  .demo-group-divider { display: none; }
+
   .reference-map { padding: var(--sp-4); }
   .demo-watch { padding-left: var(--sp-5); padding-right: var(--sp-5); }
   .lookup-path__step { grid-template-columns: 1fr; gap: var(--sp-1); }

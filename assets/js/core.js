@@ -87,7 +87,10 @@ PJ.Core = (function () {
     toggle.addEventListener('click', () => toggleSidebar());
 
     if (overlay) {
-      overlay.addEventListener('click', () => closeSidebar());
+      overlay.addEventListener('click', () => {
+        closeSidebar();
+        toggle.focus();
+      });
     }
 
     // On a phone the sidebar covers the page, so tapping a section link has to
@@ -109,11 +112,16 @@ PJ.Core = (function () {
   }
 
   function openSidebar() {
-    document.querySelector('.sidebar')?.classList.add('open');
+    const sidebar = document.querySelector('.sidebar');
+    sidebar?.classList.add('open');
     document.querySelector('.sidebar-overlay')?.classList.add('active');
     document.querySelector('.menu-toggle')?.setAttribute('aria-expanded', 'true');
     state.sidebarOpen = true;
     document.body.style.overflow = 'hidden';
+    // Put the keyboard where the menu is. The current section is the useful
+    // place to start; the first link is the fallback.
+    const start = sidebar?.querySelector('.sidebar__item.active[href^="#"]') || sidebar?.querySelector('.sidebar__item');
+    start?.focus({ preventScroll: true });
   }
 
   function closeSidebar() {
@@ -257,11 +265,55 @@ PJ.Core = (function () {
     });
   }
 
+  function homeHref() {
+    const path = window.location.pathname.replace(/\\/g, '/');
+    if (/\/sessions\//.test(path)) return '../../index.html';
+    return 'index.html';
+  }
+
+  /** Where the quiz result sends you: the next live session, or home after the last. */
+  function _afterQuiz(sessionId) {
+    const live = liveSessions();
+    const index = live.findIndex((s) => s.id === sessionId);
+    const next = index === -1 ? null : live[index + 1];
+    return next
+      ? { href: sessionHref(next.id), label: `Next: Session ${next.num} &middot; ${next.title.replace(/&/g, '&amp;')}` }
+      : { href: homeHref(), label: 'Back to all sessions' };
+  }
+
   function _initQuizzes() {
     document.querySelectorAll('.quiz').forEach((quiz) => {
       const cards = [...quiz.querySelectorAll('.quiz-card')];
       let answered = 0;
       let correct = 0;
+
+      function resetQuiz() {
+        answered = 0;
+        correct = 0;
+        cards.forEach((card) => {
+          card.classList.remove('is-answered', 'is-right', 'is-miss');
+          const status = card.querySelector('.quiz-card__status');
+          if (status) {
+            status.hidden = true;
+            status.textContent = '';
+          }
+          card.querySelectorAll('.quiz-option').forEach((b) => {
+            b.classList.remove('is-correct', 'is-wrong');
+            b.removeAttribute('aria-disabled');
+          });
+        });
+        quiz.querySelector('.quiz-score')?.remove();
+        const first = cards[0];
+        if (first) {
+          const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          first.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' });
+          first.querySelector('.quiz-option')?.focus({ preventScroll: true });
+        }
+      }
+
+      quiz.addEventListener('click', (e) => {
+        if (e.target.closest('[data-quiz="retake"]')) resetQuiz();
+      });
 
       const lede = quiz.querySelector('.quiz__lede');
       if (lede && !quiz.querySelector('.quiz__hint')) {
@@ -349,9 +401,12 @@ PJ.Core = (function () {
               if (!score) {
                 score = document.createElement('div');
                 score.className = 'quiz-score';
+                score.setAttribute('role', 'status');
                 quiz.appendChild(score);
               }
+              const sessionId = quiz.dataset.session || currentSessionId();
               const perfect = correct === cards.length;
+              const after = _afterQuiz(sessionId);
               score.classList.toggle('is-perfect', perfect);
               score.classList.toggle('is-partial', !perfect);
               score.innerHTML =
@@ -361,9 +416,12 @@ PJ.Core = (function () {
                   : `${correct} of ${cards.length} correct`}</h3>` +
                 `<p>${perfect
                   ? 'This mental model is sticking. Move on when you can draw the same picture from memory.'
-                  : 'Re-read the explanations for the ones you missed, then rewind the matching demo. This session is marked finished either way.'}</p>`;
+                  : 'Re-read the explanations for the ones you missed, then rewind the matching demo. This session is marked finished either way.'}</p>` +
+                `<div class="quiz-score__actions">` +
+                  `<a class="btn btn--primary" href="${after.href}">${after.label} &rarr;</a>` +
+                  `<button type="button" class="btn btn--secondary" data-quiz="retake">Try again</button>` +
+                `</div>`;
 
-              const sessionId = quiz.dataset.session || currentSessionId();
               if (sessionId) markSessionComplete(sessionId);
             }
           });
@@ -476,6 +534,7 @@ PJ.Core = (function () {
     nextIncomplete,
     sessionHref,
     glossaryHref,
+    homeHref,
     currentSessionId,
     scrollToSection,
     formatPyValue,
@@ -521,6 +580,11 @@ PJ.Session = {
 
       const codePanel = document.getElementById('codePanel');
       PJ.Syntax.render(demo.code, codePanel);
+      // A new demo starts at the top of both panels, not wherever the last one
+      // happened to be scrolled.
+      codePanel.scrollTop = 0;
+      const memPanel = document.getElementById('memPanel');
+      if (memPanel) memPanel.scrollTop = 0;
 
       if (currentAnimator) {
         currentAnimator.pause();
@@ -536,7 +600,10 @@ PJ.Session = {
         defaultSpeed: Number.isFinite(chosenSpeed) ? chosenSpeed : defaultSpeed,
         onStep(step, index) {
           PJ.Syntax.highlightLines(codePanel, step.lines || []);
-          if (step.memory) memViz.render(step.memory);
+          if (step.memory) {
+            memViz.render(step.memory);
+            memViz.reveal();
+          }
 
           const numEl = document.getElementById('stepNum');
           const titleEl = document.getElementById('stepTitle');

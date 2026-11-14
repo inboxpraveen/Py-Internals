@@ -860,6 +860,22 @@ kbd {
 
 .quiz-score.is-partial .quiz-score__title { color: var(--clr-accent-2); }
 
+.quiz-score__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: var(--sp-5);
+}
+
+/* A long next-session title wraps inside its button instead of being cut. */
+.quiz-score__actions .btn {
+  white-space: normal;
+  text-align: left;
+  line-height: var(--lh-snug);
+  padding-top: var(--sp-3);
+  padding-bottom: var(--sp-3);
+}
+
 @media (max-width: 768px) {
   .quiz { padding: var(--sp-8) var(--sp-5) var(--sp-12); }
 }

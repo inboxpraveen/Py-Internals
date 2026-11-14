@@ -217,6 +217,9 @@ html {
      browser font-size preference. */
   font-size: 100%;
   scroll-behavior: smooth;
+  /* The topbar is sticky and 56px tall. Without this, every sidebar link and
+     every #anchor landed its heading underneath it. */
+  scroll-padding-top: 72px;
   -webkit-text-size-adjust: 100%;
 }
 

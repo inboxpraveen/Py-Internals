@@ -135,22 +135,37 @@ PJ.Syntax = (function () {
       el.classList.remove('highlighted', 'highlighting');
     });
 
-    let first = null;
+    const rows = [];
     target.forEach(lineNum => {
       const el = container.querySelector(`[data-line="${lineNum}"]`);
       if (el) {
         el.classList.add('highlighted', 'highlighting');
-        if (!first) first = el;
+        rows.push(el);
       }
     });
 
     // Scroll the code panel itself, never the page. scrollIntoView() would drag
     // the whole document around every step on a phone.
-    if (first && container.scrollHeight > container.clientHeight) {
-      const top = first.offsetTop - container.clientHeight / 2 + first.offsetHeight / 2;
-      const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      container.scrollTo({ top: Math.max(0, top), behavior: calm ? 'auto' : 'smooth' });
+    if (rows.length && container.scrollHeight > container.clientHeight) {
+      // Positions are measured against the panel on screen. offsetTop counts
+      // from the page, because nothing between a line and <body> is
+      // positioned, so it used to send the panel to the bottom and hide line 1.
+      const origin = container.getBoundingClientRect().top - container.scrollTop;
+      const tops = rows.map(el => el.getBoundingClientRect().top - origin);
+      const spanTop = Math.min(...tops);
+      const spanBottom = Math.max(...rows.map((el, i) => tops[i] + el.offsetHeight));
+      // A step often marks a call and the def it jumps into. Show them both
+      // when they fit; otherwise centre the first one listed, the line that runs.
+      const centre = spanBottom - spanTop <= container.clientHeight - 24
+        ? (spanTop + spanBottom) / 2
+        : tops[0] + rows[0].offsetHeight / 2;
+      const top = centre - container.clientHeight / 2;
+      container.scrollTo({ top: Math.max(0, top), behavior: calmMotion() ? 'auto' : 'smooth' });
     }
+  }
+
+  function calmMotion() {
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   }
 
   /**
@@ -164,5 +179,5 @@ PJ.Syntax = (function () {
     });
   }
 
-  return { highlight, render, highlightLines, markExecuted };
+  return { highlight, render, highlightLines, markExecuted, calmMotion };
 })();

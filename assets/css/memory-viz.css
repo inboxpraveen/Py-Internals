@@ -217,6 +217,21 @@
 }
 .mem-var__ref:hover { background: rgba(184,92,26,0.15); }
 
+/* Linked pair: an address and the object it points at, lit together while one
+   of them is pointed at or tapped (see memory-viz.js). Amber, because amber
+   already means "a reference" everywhere on this panel. */
+.mem-var.is-linked { background: rgba(184,92,26,0.07); }
+
+.mem-var.is-linked .mem-var__ref {
+  background: rgba(184,92,26,0.18);
+  border-color: var(--clr-mem-ref);
+}
+
+.mem-obj.is-linked {
+  border-color: var(--clr-mem-ref);
+  box-shadow: 0 0 0 3px rgba(184,92,26,0.16);
+}
+
 .mem-var__inline-val {
   font-size: var(--fs-sm);
   color: var(--clr-text);

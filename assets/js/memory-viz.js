@@ -55,10 +55,27 @@ PJ.MemoryViz = class {
   constructor(containerId) {
     this._container = document.getElementById(containerId);
     this._prevSnapshot = null;
+    this._lit = null;
 
     if (!this._container) {
       console.warn('[PJ.MemoryViz] Container not found:', containerId);
+      return;
     }
+
+    // Pointing at a name's address, or at an object, lights up the pair: the
+    // object and every name that refers to it. Two names on one object is the
+    // idea half the course turns on, and matching addresses by eye on a busy
+    // step is slow. Tapping an address also scrolls its object into view.
+    const box = this._container;
+    box.addEventListener('mouseover', (e) => this._light(this._linkId(e.target)));
+    box.addEventListener('mouseleave', () => this._light(null));
+    box.addEventListener('click', (e) => {
+      const ref = e.target.closest('.mem-var__ref[data-ref]');
+      if (!ref) return;
+      this._light(ref.dataset.ref);
+      const obj = this._objectFor(ref.dataset.ref);
+      if (obj) this._scrollIntoPanel(obj);
+    });
   }
 
   // ── Main Render ───────────────────────────────────────────
@@ -86,6 +103,91 @@ PJ.MemoryViz = class {
 
     this._container.appendChild(wrap);
     this._prevSnapshot = snapshot;
+    this._lit = null;
+  }
+
+  // ── Follow the change ─────────────────────────────────────
+  /**
+   * Scroll the panel (never the page) so the thing this step changed is in
+   * view. A busy snapshot is two or three times taller than the panel on a
+   * phone, and a new object could appear below the fold with nothing to say
+   * it had. Moves as little as it can, and not at all if it is already shown.
+   */
+  reveal() {
+    const box = this._container;
+    if (!box || box.scrollHeight <= box.clientHeight) return;
+    const objects = [...box.querySelectorAll('.mem-obj.new-obj, .mem-obj.mutated, .mem-obj.gc-pending')];
+    let changed = [...box.querySelectorAll('.mem-var.new-var, .mem-var.rebound')].concat(objects);
+    if (!changed.length) changed = [...box.querySelectorAll('.mem-var.highlight, .mem-obj.id-match-highlight')];
+    if (!changed.length) return;
+    // Everything that changed, if it fits. A step that adds a name and its
+    // object should show both. If it does not fit, the object wins: it is the
+    // bigger change and usually what the step text is about.
+    const rects = changed.map((el) => this._layoutRect(el));
+    const span = { top: Math.min(...rects.map((r) => r.top)), bottom: Math.max(...rects.map((r) => r.bottom)) };
+    if (span.bottom - span.top <= box.clientHeight - 24) this._scrollIntoPanel(null, span);
+    else this._scrollIntoPanel(objects[0] || changed[0]);
+  }
+
+  _scrollIntoPanel(el, rect) {
+    const box = this._container;
+    const view = box.getBoundingClientRect();
+    const r = rect || this._layoutRect(el);
+    const pad = 12;
+    let delta = 0;
+    if (r.top < view.top + pad) {
+      delta = r.top - view.top - pad;
+    } else if (r.bottom > view.bottom - pad) {
+      // Bring the bottom edge in, but never push the top edge out.
+      delta = Math.min(r.bottom - view.bottom + pad, r.top - view.top - pad);
+    }
+    if (Math.abs(delta) < 2) return;
+    const calm = PJ.Syntax && PJ.Syntax.calmMotion && PJ.Syntax.calmMotion();
+    box.scrollTo({ top: box.scrollTop + delta, behavior: calm ? 'auto' : 'smooth' });
+  }
+
+  /**
+   * Where an element sits in the layout, in viewport coordinates. Not
+   * getBoundingClientRect() on the element itself: a new object is still
+   * scaled down and nudged by its entrance animation when this runs.
+   */
+  _layoutRect(el) {
+    const canvas = this._container.querySelector('.mem-canvas');
+    let top = 0;
+    let node = el;
+    while (node && node !== canvas) {
+      top += node.offsetTop;
+      node = node.offsetParent;
+    }
+    if (!canvas || node !== canvas) return el.getBoundingClientRect();
+    const origin = canvas.getBoundingClientRect().top;
+    return { top: origin + top, bottom: origin + top + el.offsetHeight };
+  }
+
+  // ── Name and object linking ───────────────────────────────
+  _linkId(target) {
+    const ref = target.closest && target.closest('.mem-var__ref[data-ref]');
+    if (ref) return ref.dataset.ref;
+    const obj = target.closest && target.closest('.mem-obj[data-obj]');
+    return obj ? obj.dataset.obj : null;
+  }
+
+  _objectFor(id) {
+    return [...this._container.querySelectorAll('.mem-obj[data-obj]')].find((o) => o.dataset.obj === id) || null;
+  }
+
+  _light(id) {
+    if (id === this._lit) return;
+    const box = this._container;
+    box.querySelectorAll('.is-linked').forEach((el) => el.classList.remove('is-linked'));
+    this._lit = id;
+    if (!id) return;
+    const names = [...box.querySelectorAll('.mem-var__ref[data-ref]')].filter((el) => el.dataset.ref === id);
+    // An object that no name points at (an item inside a list, say) has
+    // nothing to pair with, so pointing at it lights nothing.
+    if (!names.length) return;
+    names.forEach((el) => el.closest('.mem-var')?.classList.add('is-linked'));
+    this._objectFor(id)?.classList.add('is-linked');
   }
 
   // ── Frame (namespace / stack) ─────────────────────────────
@@ -209,8 +311,8 @@ PJ.MemoryViz = class {
       const ref = document.createElement('span');
       ref.className = 'mem-var__ref';
       ref.textContent = v.pyId || (v.ref ? `id:${v.ref.replace('obj-','')}` : '?');
-      ref.dataset.ref = v.ref;
-      ref.title = `Points to object at id ${v.pyId || v.ref}`;
+      if (v.ref) ref.dataset.ref = v.ref;
+      ref.title = `Points to the object at ${v.pyId || v.ref}`;
 
       const chip = this._makeTypeChip(v.type || '?');
 
@@ -248,6 +350,7 @@ PJ.MemoryViz = class {
     const el = document.createElement('div');
     el.className = 'mem-obj';
     el.id = `heap-${obj.id}`;
+    el.dataset.obj = obj.id;
     el.classList.add(obj.mutable ? 'mutable' : 'immutable');
 
     if (obj.state === 'new')     el.classList.add('new-obj', 'mem-appear');
