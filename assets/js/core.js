@@ -17,6 +17,7 @@ PJ.COURSE = [
   { id: '07-gil',         num: '07', title: 'The GIL & Concurrency',            short: 'Threads, processes, asyncio',  status: 'live' },
   { id: '08-exceptions',  num: '08', title: 'Exceptions, Tracebacks & Context Managers', short: 'raise, unwind, catch, with', status: 'live' },
   { id: '09-modules',     num: '09', title: 'Modules & Imports',                short: 'import, sys.modules, __main__', status: 'live' },
+  { id: '10-data-model',  num: '10', title: 'Special Methods & the Data Model', short: '__repr__, ==, hash, operators', status: 'live' },
 ];
 
 PJ.Core = (function () {

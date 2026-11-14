@@ -367,6 +367,42 @@ dropped, so don't draw it as freed.
 `module.exports = DEMOS;` to your file, so a function named `module` quietly
 breaks it. Session 09 uses `moduleObj` for that reason.
 
+### Shared additions from Session 10
+
+Session 10 (special methods) also needed no new types. It settled a few
+conventions for drawing built-in objects and hashing, and made one small
+renderer change:
+
+- **A set has no `[0]`.** `type: 'set'` objects render their `items` without
+  the index label, since an index would suggest `s[0]` works. Lists and
+  tuples keep theirs.
+- **Built-ins are drawn as immortal.** `object`, `NotImplemented`, `TypeError`
+  and the small ints all report 4294967295 from `sys.getrefcount` on 3.13,
+  so draw them with `refcount: '∞'`. `object` is a `class` with
+  `mutable: false`; its entries are C slot wrappers
+  (`type(object.__dict__['__str__'])` is `wrapper_descriptor`), so label them
+  as such, not as `fn -> 0x...`. Draw only the entries the demo uses and say
+  in a `note` that the rest (22 more) are left out. `NotImplemented` is an
+  `instance` with a `classRef` to `NotImplementedType` and no `pairs`.
+- **C code gets no frame.** When `str()` runs `object.__str__`, or `3 * v`
+  runs `int.__mul__`, nothing Python-level is on the stack, so no frame is
+  drawn. The global frame's `badge` says what it's in the middle of
+  (`calling str(p)`, `evaluating 3 * v`), and a frame appears only when one of
+  the reader's own methods runs.
+- **Refcounts count what's drawn, as in Session 04.** Inside a special
+  method, `sys.getrefcount(self) - 1` is 3, not 2: the C call machinery
+  holds an extra reference for the length of the call. The diagram shows 2
+  (the global name and `self`), and a running method's function gets one
+  more than at rest, for its frame. Measure with `sys.getrefcount(x) - 1`
+  inline; wrapping it in a helper function adds that function's parameter
+  and inflates every count by one.
+- **Show a stored hash, not just the reference.** A set entry keeps the hash
+  it was given on the way in. Put that number in the set's `note` so a
+  learner can compare it with the object's current hash. Tuples of small
+  ints hash the same on every run (only `str` and `bytes` are randomised),
+  so `hash((1, 2))` is a fixed `-3550055125485641917` on a 64-bit build.
+  Check any other value under two `PYTHONHASHSEED`s before drawing it.
+
 ### Shared fixes from the November 2026 review
 
 A pass over every session at 320 to 1440px, stepping all 312 steps, turned up

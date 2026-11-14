@@ -8,6 +8,15 @@
   <updated>2026-11-14T00:00:00Z</updated>
   <author><name>Praveen Kumar</name><uri>https://github.com/inboxpraveen</uri></author>
   <entry>
+    <title>Session 10: Special Methods &amp; the Data Model</title>
+    <link href="https://inboxpraveen.github.io/Py-Internals/sessions/10-data-model/" />
+    <id>https://inboxpraveen.github.io/Py-Internals/sessions/10-data-model/</id>
+    <published>2026-11-14T00:00:00Z</published>
+    <updated>2026-11-14T00:00:00Z</updated>
+    <summary>How print, len, == and * find your methods on the class. Why __eq__ makes a class unhashable, what NotImplemented is for, and how a changed key gets lost in a set.</summary>
+    <category term="Objects" />
+  </entry>
+  <entry>
     <title>Session 09: Modules &amp; Imports</title>
     <link href="https://inboxpraveen.github.io/Py-Internals/sessions/09-modules/" />
     <id>https://inboxpraveen.github.io/Py-Internals/sessions/09-modules/</id>

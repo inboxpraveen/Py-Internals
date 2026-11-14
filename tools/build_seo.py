@@ -111,6 +111,13 @@ PAGES = [
         'description': 'What import really does: find a file, run it once, cache it in sys.modules and bind a name. Why from-imports go stale, what __name__ is, and how circular imports break.',
         'teaches': ['what import does', 'module objects and their __dict__', 'sys.modules and the import cache', 'from-import versus import', 'the __name__ == "__main__" guard', 'circular imports', 'sys.path and shadowed modules', 'packages and __pycache__'],
     },
+    {
+        'id': '10-data-model', 'num': '10', 'type': 'article', 'published': '2026-11-14', 'time': 'PT40M',
+        'h1': 'Special Methods & the Data Model', 'section': 'Objects',
+        'title': 'Python Special Methods: __repr__, __eq__, __hash__ and Operators',
+        'description': 'How print, len, == and * find your methods on the class. Why __eq__ makes a class unhashable, what NotImplemented is for, and how a changed key gets lost in a set.',
+        'teaches': ['special methods and the data model', '__repr__ and __str__', 'special method lookup on the type', 'operator overloading', 'NotImplemented and reflected operators', '__eq__ and __hash__', 'hashable objects and changing keys', 'dataclasses'],
+    },
 ]
 
 for p in PAGES:
@@ -216,10 +223,10 @@ def json_ld(page):
             'datePublished': SESSIONS[0]['published'], 'dateModified': page['modified'],
             'educationalLevel': 'Beginner',
             'about': ['Python (programming language)', 'CPython internals', 'memory model'],
-            'keywords': 'python, python internals, memory model, reference counting, closures, decorators, generators, GIL, exceptions, imports, modules',
+            'keywords': 'python, python internals, memory model, reference counting, closures, decorators, generators, GIL, exceptions, imports, modules, special methods, dunder methods',
             'teaches': [t for s in SESSIONS for t in s['teaches']],
             'offers': [{'@type': 'Offer', 'category': 'Free', 'price': 0, 'priceCurrency': 'USD', 'availability': 'https://schema.org/InStock'}],
-            'hasCourseInstance': [{'@type': 'CourseInstance', 'courseMode': 'online', 'courseWorkload': 'PT6H'}],
+            'hasCourseInstance': [{'@type': 'CourseInstance', 'courseMode': 'online', 'courseWorkload': 'PT7H'}],
             'hasPart': [{'@type': 'LearningResource', 'name': f"Session {s['num']}: {s['h1']}", 'url': s['url']} for s in SESSIONS],
         })
         graph.append({'@type': 'WebSite', 'name': 'Py Internals', 'url': SITE, 'publisher': org, 'inLanguage': 'en'})

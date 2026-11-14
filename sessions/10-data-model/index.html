@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Python Special Methods: __repr__, __eq__, __hash__ and Operators</title>
+  <meta name="description" content="How print, len, == and * find your methods on the class. Why __eq__ makes a class unhashable, what NotImplemented is for, and how a changed key gets lost in a set." />
+  <meta name="theme-color" content="#1A6B5C" />
+  <link rel="icon" type="image/svg+xml" href="../../assets/images/logo.svg" />
+  <link rel="icon" type="image/png" sizes="512x512" href="../../assets/images/icon-512.png" />
+  <link rel="apple-touch-icon" href="../../assets/images/apple-touch-icon.png" />
+  <link rel="stylesheet" href="../../assets/css/base.css" />
+  <link rel="stylesheet" href="../../assets/css/layout.css" />
+  <link rel="stylesheet" href="../../assets/css/components.css" />
+  <link rel="stylesheet" href="../../assets/css/memory-viz.css" />
+  <link rel="stylesheet" href="../../assets/css/animations.css" />
+  <link rel="stylesheet" href="../../assets/css/session.css" />
+  <!-- seo:head -->
+  <link rel="canonical" href="https://inboxpraveen.github.io/Py-Internals/sessions/10-data-model/" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Praveen Kumar" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="Py Internals" />
+  <meta property="og:locale" content="en_GB" />
+  <meta property="og:url" content="https://inboxpraveen.github.io/Py-Internals/sessions/10-data-model/" />
+  <meta property="og:title" content="Python Special Methods: __repr__, __eq__, __hash__ and Operators" />
+  <meta property="og:description" content="How print, len, == and * find your methods on the class. Why __eq__ makes a class unhashable, what NotImplemented is for, and how a changed key gets lost in a set." />
+  <meta property="og:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/10-data-model.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Python Special Methods: __repr__, __eq__, __hash__ and Operators on Py Internals" />
+  <meta property="article:published_time" content="2026-11-14" />
+  <meta property="article:modified_time" content="2026-11-14" />
+  <meta property="article:section" content="Objects" />
+  <meta property="article:author" content="https://github.com/inboxpraveen" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Python Special Methods: __repr__, __eq__, __hash__ and Operators" />
+  <meta name="twitter:description" content="How print, len, == and * find your methods on the class. Why __eq__ makes a class unhashable, what NotImplemented is for, and how a changed key gets lost in a set." />
+  <meta name="twitter:image" content="https://inboxpraveen.github.io/Py-Internals/assets/images/og/10-data-model.png" />
+  <link rel="alternate" type="application/atom+xml" title="Py Internals sessions" href="https://inboxpraveen.github.io/Py-Internals/feed.xml" />
+  <link rel="manifest" href="https://inboxpraveen.github.io/Py-Internals/manifest.webmanifest" />
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": [
+        "Article",
+        "LearningResource"
+      ],
+      "@id": "https://inboxpraveen.github.io/Py-Internals/sessions/10-data-model/#lesson",
+      "mainEntityOfPage": "https://inboxpraveen.github.io/Py-Internals/sessions/10-data-model/",
+      "headline": "Session 10: Special Methods & the Data Model",
+      "name": "Session 10: Special Methods & the Data Model",
+      "description": "How print, len, == and * find your methods on the class. Why __eq__ makes a class unhashable, what NotImplemented is for, and how a changed key gets lost in a set.",
+      "image": "https://inboxpraveen.github.io/Py-Internals/assets/images/og/10-data-model.png",
+      "author": {
+        "@type": "Person",
+        "name": "Praveen Kumar",
+        "url": "https://github.com/inboxpraveen"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Py Internals",
+        "url": "https://inboxpraveen.github.io/Py-Internals/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://inboxpraveen.github.io/Py-Internals/assets/images/icon-512.png",
+          "width": 512,
+          "height": 512
+        },
+        "sameAs": [
+          "https://github.com/inboxpraveen/Py-Internals"
+        ]
+      },
+      "datePublished": "2026-11-14",
+      "dateModified": "2026-11-14",
+      "inLanguage": "en",
+      "isAccessibleForFree": true,
+      "license": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "isPartOf": {
+        "@type": "Course",
+        "@id": "https://inboxpraveen.github.io/Py-Internals/#course",
+        "name": "Py Internals",
+        "url": "https://inboxpraveen.github.io/Py-Internals/"
+      },
+      "position": 10,
+      "learningResourceType": "Interactive lesson",
+      "educationalLevel": "Beginner",
+      "timeRequired": "PT40M",
+      "teaches": [
+        "special methods and the data model",
+        "__repr__ and __str__",
+        "special method lookup on the type",
+        "operator overloading",
+        "NotImplemented and reflected operators",
+        "__eq__ and __hash__",
+        "hashable objects and changing keys",
+        "dataclasses"
+      ],
+      "about": [
+        "Python (programming language)"
+      ],
+      "keywords": "special methods and the data model, __repr__ and __str__, special method lookup on the type, operator overloading, NotImplemented and reflected operators, __eq__ and __hash__, hashable objects and changing keys, dataclasses"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://inboxpraveen.github.io/Py-Internals/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Session 10: Special Methods & the Data Model",
+          "item": "https://inboxpraveen.github.io/Py-Internals/sessions/10-data-model/"
+        }
+      ]
+    }
+  ]
+}
+  </script>
+  <!-- /seo:head -->
+</head>
+<body>
+
+<a class="skip-link" href="#demo-repr">Skip to the interactive lab</a>
+
+<header class="topbar">
+  <div class="topbar__logo">
+    <button class="menu-toggle" aria-label="Open session menu">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+        <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <a href="../../index.html" class="topbar__home" aria-label="Py Internals home">
+      <img class="topbar__logo-mark" src="../../assets/images/logo.svg" alt="" width="32" height="32">
+      <span class="topbar__brand">Py<span>Internals</span></span>
+    </a>
+  </div>
+  <div class="topbar__actions">
+    <a href="../../glossary.html" class="btn btn--ghost btn--sm">Glossary</a>
+    <span class="session-count" data-role="session-count">Session 10 of 10</span>
+  </div>
+</header>
+
+<div class="sidebar-overlay"></div>
+
+<div class="app-shell" style="grid-template-rows:unset">
+  <aside class="sidebar" aria-label="Session sections">
+    <div class="sidebar__section">
+      <div class="sidebar__label">Session 10</div>
+      <a href="#intro" class="sidebar__item active">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <circle cx="9" cy="9" r="7"/><path d="M9 6v4l2 2"/>
+        </svg>
+        Introduction
+      </a>
+      <a href="#demo-repr" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M2 9h14M9 2v14"/>
+        </svg>
+        Interactive Lab
+      </a>
+      <a href="#protocol" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M6 5L2.5 9 6 13M12 5l3.5 4-3.5 4"/>
+        </svg>
+        Syntax calls methods
+      </a>
+      <a href="#repr" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <rect x="2.5" y="4" width="13" height="10" rx="2"/><path d="M5.5 8h7M5.5 11h4"/>
+        </svg>
+        <code>__repr__</code> and <code>__str__</code>
+      </a>
+      <a href="#operators" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M5 5l8 8M13 5l-8 8"/>
+        </svg>
+        Operators
+      </a>
+      <a href="#equality" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M4 7h10M4 11h10"/>
+        </svg>
+        Equality and hashing
+      </a>
+      <a href="#dataclass" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <rect x="3" y="3" width="12" height="12" rx="2"/><path d="M3 7.5h12M7.5 7.5V15"/>
+        </svg>
+        Dataclasses
+      </a>
+      <a href="#mistakes" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M9 2.5l6.5 12h-13z" stroke-linejoin="round"/><path d="M9 7v3.5M9 12.5h.01"/>
+        </svg>
+        Common mistakes
+      </a>
+      <a href="#quiz" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <circle cx="9" cy="9" r="7"/><path d="M7 7a2 2 0 113 1.8v1.2M9 13h.01"/>
+        </svg>
+        Check yourself
+      </a>
+    </div>
+    <div class="sidebar__section">
+      <div class="sidebar__label">Course</div>
+      <a href="../09-modules/" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M11 5l-4 4 4 4"/>
+        </svg>
+        Previous Session
+      </a>
+      <a href="../../glossary.html" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M4 3.5h8a2 2 0 012 2V15H6a2 2 0 01-2-2z"/><path d="M4 13a2 2 0 012-2h8"/>
+        </svg>
+        Glossary
+      </a>
+      <a href="../../index.html" class="sidebar__item">
+        <svg class="sidebar__item-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M3 9L9 3l6 6M5 7v8h8V7"/>
+        </svg>
+        All Sessions
+      </a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <div class="session-hero" id="intro">
+      <div class="session-hero__breadcrumb">
+        <a href="../../index.html">Home</a>
+        <span>&rsaquo;</span>
+        Session 10
+      </div>
+      <div class="session-hero__eyebrow">Objects &middot; Session 10</div>
+      <h1 class="session-hero__title">Special Methods &amp; the Data Model</h1>
+      <p class="session-hero__subtitle">
+        Every time you write <code>len(x)</code>, <code>a + b</code>, <code>a == b</code> or <code>print(x)</code>, Python turns the syntax into a call to a method with a reserved name, such as <code>__len__</code> or <code>__add__</code>, and looks that method up on the object's class. Define those methods and your own classes work with the language's syntax. Get <code>__eq__</code> and <code>__hash__</code> out of step and you get a class that can't go in a set, or a set that can't find what's in it.
+      </p>
+      <div class="session-meta">
+        <div class="session-meta__item">~40 minutes</div>
+        <div class="session-meta__item">5 interactive demos</div>
+        <div class="session-meta__item">Builds on Sessions 03, 04 and 06</div>
+      </div>
+    </div>
+
+    <div class="progress-bar"><div class="progress-bar__fill" id="readProgress" style="width:0%"></div></div>
+
+    <section class="learning-overview">
+      <div class="learning-card">
+        <div class="learning-card__label">Learning goal</div>
+        <h2 class="learning-card__title">Syntax is a method call, looked up on the class.</h2>
+        <p class="learning-card__body">
+          Python's data model is the list of specially named methods it calls for you. <code>len(x)</code> runs <code>type(x).__len__(x)</code>, and <code>v * 3</code> runs <code>type(v).__mul__(v, 3)</code>. The search starts at the class, never at the instance, and ends at <code>object</code>, which has a fallback for a few of them. Everything else in this session follows from that.
+        </p>
+        <div class="concept-chip-row">
+          <span class="type-chip type-chip--class">type(x)</span>
+          <span class="type-chip type-chip--function">__repr__</span>
+          <span class="type-chip type-chip--function">__mul__</span>
+          <span class="type-chip type-chip--none">NotImplemented</span>
+          <span class="type-chip type-chip--set">__hash__</span>
+        </div>
+      </div>
+      <div class="learning-card">
+        <div class="learning-card__label">Recommended path</div>
+        <div class="learning-path">
+          <div class="learning-path__step">
+            <span class="learning-path__num">1</span>
+            <span><strong>Start with printing.</strong> Demo 1 follows <code>str(p)</code> up to <code>object</code> and back down to your <code>__repr__</code>. Two searches, both on the class.</span>
+          </div>
+          <div class="learning-path__step">
+            <span class="learning-path__num">2</span>
+            <span><strong>Then the rule and the operators.</strong> Demo 2 puts a <code>__len__</code> on an instance and shows <code>len()</code> ignoring it. Demo 3 shows why <code>3 * v</code> needs a second method.</span>
+          </div>
+          <div class="learning-path__step">
+            <span class="learning-path__num">3</span>
+            <span><strong>Then equality and hashing.</strong> Demos 4 and 5 are the pair behind most real bugs here: a class that suddenly can't go in a set, and a set that loses an object it still holds.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="demo-repr">
+      <section class="stage-intro" aria-labelledby="stage-title">
+        <div>
+          <div class="stage-intro__label">Interactive lab</div>
+          <h2 id="stage-title">Watch syntax turn into a method call</h2>
+          <p>
+            The panel reads as it did in Session 04: classes hold the functions, instances hold the data, and a frame appears whenever one of <em>your</em> methods runs. Built-in code such as <code>object.__str__</code> or <code>int.__mul__</code> is written in C and gets no frame, so the global frame's badge says what Python is in the middle of. Refcounts count the references drawn here, as in Session 04.
+          </p>
+        </div>
+        <div class="stage-intro__hint">
+          Tip: at every line, name the special method the syntax calls, then find the class Python will look it up on.
+        </div>
+      </section>
+
+      <div class="demo-guide">
+        <div class="demo-guide__step"><span class="demo-guide__badge">1</span> Choose a demo</div>
+        <span class="demo-guide__arrow">&rsaquo;</span>
+        <div class="demo-guide__step"><span class="demo-guide__badge">2</span> Step with <kbd>&rarr;</kbd> or Play</div>
+        <span class="demo-guide__arrow">&rsaquo;</span>
+        <div class="demo-guide__step"><span class="demo-guide__badge">3</span> Find the class that answers</div>
+        <span class="demo-guide__arrow">&rsaquo;</span>
+        <div class="demo-guide__step"><span class="demo-guide__badge">4</span> Read the model below</div>
+      </div>
+
+      <div class="mem-legend" aria-label="How to read the memory diagram">
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--stack"></span> Call stack: your code, plus a frame while one of your special methods runs</div>
+        <div class="mem-legend__item"><span class="mem-legend__swatch mem-legend__swatch--heap"></span> Classes with their methods, instances with their data, and built-ins like <code>object</code></div>
+        <div class="mem-legend__item"><kbd>&rarr;</kbd> next <kbd>&larr;</kbd> back <kbd>Space</kbd> play <kbd>R</kbd> reset</div>
+      </div>
+
+      <div class="demo-selector">
+        <button class="demo-pill active" data-demo="repr">1 &middot; str(p) and __repr__</button>
+        <button class="demo-pill" data-demo="lookup">2 &middot; len() asks the class</button>
+        <button class="demo-pill" data-demo="operators">3 &middot; v * 3 and 3 * v</button>
+        <button class="demo-pill" data-demo="eqHash">4 &middot; __eq__ turns off hashing</button>
+        <button class="demo-pill" data-demo="movedKey">5 &middot; a key that moved</button>
+      </div>
+
+      <div class="demo-watch" id="demoWatch"></div>
+
+      <div class="stage" id="stage">
+        <div class="stage__code-panel">
+          <div class="panel-header panel-header--dark">
+            <span>python</span>
+            <div style="display:flex;align-items:center;gap:6px" aria-hidden="true">
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+            </div>
+          </div>
+          <div class="code-panel-body" id="codePanel"></div>
+          <div class="step-track" data-role="step-track" id="stepTrack" role="group" aria-label="Jump to a step"></div>
+          <div class="playback-controls" id="controls">
+            <div class="playback-controls__left">
+              <button class="step-btn" data-action="prev" title="Previous step" aria-label="Previous step" disabled>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M8 2L4 6l4 4"/></svg>
+              </button>
+              <button class="play-btn" data-action="play" title="Play / Pause" aria-label="Play the walkthrough">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true"><path d="M3 2.5l8 4.5-8 4.5z"/></svg>
+              </button>
+              <button class="step-btn" data-action="next" title="Next step" aria-label="Next step">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M4 2l4 4-4 4"/></svg>
+              </button>
+              <button class="btn btn--ghost btn--sm" data-action="reset" title="Reset" aria-label="Reset to the first step">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path d="M10 6A4 4 0 112 6" stroke-linecap="round"/>
+                  <path d="M2 3v3h3" fill="currentColor" stroke="none"/>
+                </svg>
+                Reset
+              </button>
+            </div>
+            <div class="playback-controls__right">
+              <div class="speed-control">
+                <label for="speedSelect">Speed:</label>
+                <select class="speed-select" id="speedSelect" data-action="speed">
+                  <option value="1700">0.5&times;</option>
+                  <option value="900" selected>1&times;</option>
+                  <option value="600">1.5&times;</option>
+                  <option value="400">2&times;</option>
+                </select>
+              </div>
+              <span class="step-counter" data-role="step-counter">1 / 1</span>
+            </div>
+          </div>
+        </div>
+        <div class="stage__memory-panel">
+          <div class="panel-header">
+            <span style="color:var(--clr-text-3)">Memory</span>
+            <div style="display:flex;align-items:center;gap:6px;font-size:var(--fs-xs);color:var(--clr-text-3)">
+              <span style="display:inline-block;width:8px;height:8px;background:var(--clr-mem-stack);border-radius:2px;opacity:.6"></span>
+              stack
+              <span style="display:inline-block;width:8px;height:8px;background:var(--clr-mem-heap);border-radius:2px;opacity:.6;margin-left:4px"></span>
+              heap
+            </div>
+          </div>
+          <div class="mem-panel-body" id="memPanel"></div>
+        </div>
+        <div class="explanation-strip" aria-live="polite">
+          <div class="explanation-strip__step-num" id="stepNum">1</div>
+          <div class="explanation-strip__content">
+            <h3 id="stepTitle" class="explanation-text">Nothing has run yet</h3>
+            <p id="stepDesc" class="explanation-text">Press Play or use Next to watch <code>str(p)</code> find its method.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <article class="narrative">
+      <h2 id="protocol">Syntax is a method call on the type</h2>
+      <p class="in-plain">
+        <span class="in-plain__label">In plain words</span>
+        A universal remote has the same buttons whatever it's pointed at: power, volume, channel. What a button does depends on the device. Python's syntax is the buttons. Each class decides what they do by defining methods with reserved names, and Python presses the one that matches what you wrote.
+      </p>
+      <p class="narrative-lede then-precise">
+        These methods have two underscores on each side, so people call them dunder methods. <code>len(x)</code> becomes <code>type(x).__len__(x)</code>, <code>a * b</code> becomes <code>type(a).__mul__(a, b)</code>, and <code>a == b</code> becomes <code>type(a).__eq__(a, b)</code>. The search starts at <code>type(x)</code>, follows the MRO from Session 04, and never reads the instance's <code>__dict__</code>. If no class on the way defines the method, either <code>object</code> has a fallback (it does for <code>__repr__</code>, <code>__str__</code>, <code>__eq__</code> and <code>__hash__</code>) or you get a <code>TypeError</code>.
+      </p>
+
+      <div style="overflow-x:auto">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>You write</th>
+              <th>Python calls</th>
+              <th>If no class defines it</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>repr(x)</code>, the REPL, items in a list</td>
+              <td><code>__repr__</code></td>
+              <td><code>object.__repr__</code>: <code>&lt;__main__.Point object at 0x...&gt;</code></td>
+            </tr>
+            <tr>
+              <td><code>str(x)</code>, <code>print(x)</code>, f-strings</td>
+              <td><code>__str__</code></td>
+              <td><code>object.__str__</code>, which calls <code>__repr__</code></td>
+            </tr>
+            <tr>
+              <td><code>len(x)</code></td>
+              <td><code>__len__</code></td>
+              <td><code>TypeError: object of type 'Point' has no len()</code></td>
+            </tr>
+            <tr>
+              <td><code>if x:</code>, <code>bool(x)</code></td>
+              <td><code>__bool__</code>, then <code>__len__</code></td>
+              <td>Always true</td>
+            </tr>
+            <tr>
+              <td><code>x[i]</code></td>
+              <td><code>__getitem__</code></td>
+              <td><code>TypeError: 'Point' object is not subscriptable</code></td>
+            </tr>
+            <tr>
+              <td><code>for v in x</code></td>
+              <td><code>__iter__</code> (Session 05)</td>
+              <td><code>TypeError: 'Point' object is not iterable</code></td>
+            </tr>
+            <tr>
+              <td><code>v in x</code></td>
+              <td><code>__contains__</code>, then <code>__iter__</code></td>
+              <td><code>TypeError: argument of type 'Point' is not iterable</code></td>
+            </tr>
+            <tr>
+              <td><code>a * b</code>, <code>a + b</code></td>
+              <td><code>__mul__</code>, <code>__add__</code>, then the right side's <code>__rmul__</code>, <code>__radd__</code></td>
+              <td><code>TypeError: unsupported operand type(s)</code></td>
+            </tr>
+            <tr>
+              <td><code>a == b</code>, <code>a != b</code></td>
+              <td><code>__eq__</code>, <code>__ne__</code></td>
+              <td><code>object.__eq__</code>: true only for the same object</td>
+            </tr>
+            <tr>
+              <td><code>hash(x)</code>, dict keys, set members</td>
+              <td><code>__hash__</code></td>
+              <td><code>object.__hash__</code>, worked out from the object's identity</td>
+            </tr>
+            <tr>
+              <td><code>x()</code></td>
+              <td><code>__call__</code></td>
+              <td><code>TypeError: 'Point' object is not callable</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout callout--insight">
+        <div class="callout__icon">Key</div>
+        <div>
+          <div class="callout__title">Why the class, and not the instance</div>
+          <div class="callout__body">
+            The Python docs give the sharpest reason. A class is an object too, so <code>repr(Point)</code> has to describe the class. If the search started in <code>Point</code>'s own namespace, it would find the <code>__repr__</code> written for points and call it with no point to work on. Looking on the type keeps the two apart: the type of <code>p</code> is <code>Point</code>, and the type of <code>Point</code> is <code>type</code>. It's faster as well. CPython keeps a table of these methods for every class, filled in when the class is created and refreshed when you assign one to the class, so <code>len(x)</code> reads one entry instead of searching dictionaries.
+          </div>
+        </div>
+      </div>
+
+      <div class="try-this">
+        <div class="try-this__label">Try this in a REPL</div>
+        <p>
+          <code>(3).__add__(1.5)</code> returns <code>NotImplemented</code>, because <code>int</code> doesn't add floats. <code>3 + 1.5</code> still gives <code>4.5</code>: after the int declined, Python called <code>float.__radd__(1.5, 3)</code>. Then try <code>len("abc") == type("abc").__len__("abc")</code>, which is <code>True</code>.
+        </p>
+      </div>
+
+      <div id="repr">
+        <div class="section-divider"><div class="section-divider__label">Showing an object</div></div>
+        <h2><code>__repr__</code> for developers, <code>__str__</code> for users</h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          A repr is a name badge for developers: it says what the object is, ideally in a form you could type back in. A str is the friendly version you'd show a user. If you only write one, write the badge, because Python falls back to it when there's no friendly version.
+        </p>
+        <p class="then-precise">
+          <code>repr()</code> is what the REPL shows, what debuggers and <code>!r</code> in an f-string use, and what every container uses for its items. <code>str()</code> is what <code>print</code>, f-strings and <code>format()</code> use. <code>object.__str__</code> calls <code>repr</code>, so a class with only <code>__repr__</code> looks right everywhere. A class with only <code>__str__</code> prints nicely on its own and turns back into <code>&lt;__main__.Point object at 0x...&gt;</code> inside a list.
+        </p>
+
+        <div class="code-block">
+          <div class="code-block__header">
+            <div class="code-block__dots">
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+            </div>
+            <span class="code-block__lang">python</span>
+          </div>
+          <div class="code-block__body"><span class="tok-kw">class</span> <span class="tok-cls">Point</span>:
+    <span class="tok-kw">def</span> <span class="tok-fn">__init__</span>(self, x, y):
+        self.x = x
+        self.y = y
+
+    <span class="tok-kw">def</span> <span class="tok-fn">__repr__</span>(self):
+        <span class="tok-kw">return</span> <span class="tok-str">f"Point({self.x!r}, {self.y!r})"</span>
+
+    <span class="tok-kw">def</span> <span class="tok-fn">__str__</span>(self):
+        <span class="tok-kw">return</span> <span class="tok-str">f"({self.x}, {self.y})"</span>
+
+p = <span class="tok-cls">Point</span>(<span class="tok-num">3</span>, <span class="tok-num">4</span>)
+<span class="tok-fn">print</span>(p)          <span class="tok-cmt"># (3, 4)</span>
+<span class="tok-fn">print</span>([p])        <span class="tok-cmt"># [Point(3, 4)]</span>
+<span class="tok-fn">print</span>(<span class="tok-str">f"{p!r}"</span>)   <span class="tok-cmt"># Point(3, 4)</span></div>
+        </div>
+
+        <div class="callout callout--warn">
+          <div class="callout__icon">Care</div>
+          <div>
+            <div class="callout__title">Use <code>!r</code> inside a repr</div>
+            <div class="callout__body">
+              <code>f"User({self.name!r})"</code> gives <code>User('Ada')</code>, with quotes, so a string is visibly a string. Without <code>!r</code> you'd get <code>User(Ada)</code>, which looks like a variable. Keep a repr cheap and free of side effects too. It runs in debuggers, logs and error messages, often after something has already gone wrong.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="operators">
+        <div class="section-divider"><div class="section-divider__label">Operators</div></div>
+        <h2>Operators: the left side is asked first</h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Two people reach the till together and one of them has to pay. The person on the left is asked first. If they say they can't, the person on the right is asked. If both say no, nobody pays, and there's a scene.
+        </p>
+        <p class="then-precise">
+          <code>a * b</code> calls <code>type(a).__mul__(a, b)</code>. If that method is missing or returns <code>NotImplemented</code>, and <code>b</code> is of a different type, Python calls the reflected method <code>type(b).__rmul__(b, a)</code>. If that's missing or returns <code>NotImplemented</code> too, it raises <code>TypeError: unsupported operand type(s)</code>. There's one exception to left first: when <code>b</code>'s type is a subclass of <code>a</code>'s type and overrides the reflected method, <code>b</code> is asked first, so a subclass can take over from its parent.
+        </p>
+
+        <div class="flow-grid">
+          <div class="flow-card">
+            <div class="section-label">1 &middot; Left</div>
+            <h3>The left operand's class</h3>
+            <p>
+              <code>type(a).__mul__(a, b)</code> gets the first chance. Any result other than <code>NotImplemented</code> is the answer, and nothing else runs.
+            </p>
+          </div>
+          <div class="flow-card">
+            <div class="section-label">2 &middot; Right</div>
+            <h3>The reflected method</h3>
+            <p>
+              Only when the types differ: <code>type(b).__rmul__(b, a)</code>. The operands are swapped, so <code>self</code> is always an instance of the class the method belongs to.
+            </p>
+          </div>
+          <div class="flow-card">
+            <div class="section-label">3 &middot; Neither</div>
+            <h3><code>TypeError</code></h3>
+            <p>
+              Both declined, so Python raises <code>unsupported operand type(s) for *</code>, naming both types. That message is only right if your methods returned <code>NotImplemented</code> instead of raising.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout callout--warn">
+          <div class="callout__icon">Care</div>
+          <div>
+            <div class="callout__title"><code>NotImplemented</code> isn't <code>NotImplementedError</code></div>
+            <div class="callout__body">
+              Return <code>NotImplemented</code>, a value, from an operator method to say "not with this type". <code>NotImplementedError</code> is an exception, for a method that a subclass is meant to fill in. Raising it from <code>__mul__</code> would stop Python before it asks the other operand. And don't test <code>NotImplemented</code> with <code>if</code>: using it as true or false is deprecated.
+            </div>
+          </div>
+        </div>
+
+        <div class="rule-grid">
+          <div class="rule-card rule-card--mutate">
+            <div class="rule-card__label">In place</div>
+            <h3><code>a += b</code> tries <code>__iadd__</code> first</h3>
+            <p>
+              A list's <code>__iadd__</code> extends the list itself and returns it, so every name sharing the list sees the change (Session 03). Without <code>__iadd__</code>, Python falls back to <code>a = a + b</code>, builds a new object and rebinds the name. Tuples, ints and strings work that way.
+            </p>
+          </div>
+          <div class="rule-card rule-card--rebind">
+            <div class="rule-card__label">Comparisons</div>
+            <h3><code>&lt;</code> reflects to <code>&gt;</code></h3>
+            <p>
+              If <code>a.__lt__(b)</code> declines, Python tries <code>b.__gt__(a)</code>. <code>==</code> reflects to itself, and when both sides decline it falls back to identity instead of raising, which is why <code>p == 5</code> is <code>False</code> in demo 4.
+            </p>
+          </div>
+        </div>
+
+        <div class="try-this">
+          <div class="try-this__label">Try this in a REPL</div>
+          <p>
+            <code>[1, 2] * 2</code> and <code>2 * [1, 2]</code> both give <code>[1, 2, 1, 2]</code>. <code>(2).__mul__([1, 2])</code> returns <code>NotImplemented</code>, so the second one only works because the list was asked next.
+          </p>
+        </div>
+      </div>
+
+      <div id="equality">
+        <div class="section-divider"><div class="section-divider__label">Equality and hashing</div></div>
+        <h2><code>__eq__</code> and <code>__hash__</code> come as a pair</h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          A cloakroom gives you a ticket number worked out from what your coat looks like. Sew a patch on the coat, then ask for it back, and the attendant works out a new number, looks on that hook and finds nothing. Your coat is still in the room, on the hook for the old number.
+        </p>
+        <p class="then-precise">
+          A dict or set finds an object in two moves: <code>hash(key)</code> picks a place, then <code>==</code> confirms the match. That only works if <strong>equal objects have equal hashes</strong>, and if an object's hash doesn't change while it's stored. By default both hold, because <code>object.__eq__</code> and <code>object.__hash__</code> both go by identity. Define <code>__eq__</code> and you've changed what equal means, so Python sets <code>__hash__</code> to <code>None</code> in your class, unless the class body defines <code>__hash__</code> too.
+        </p>
+
+        <div class="key-idea">
+          <div class="key-idea__icon">1</div>
+          <p>
+            <strong>Values that never change: define both.</strong> Hash a tuple of the same fields <code>__eq__</code> compares. Money amounts, coordinates and dates are like this. A frozen dataclass does it for you.
+          </p>
+        </div>
+        <div class="key-idea">
+          <div class="key-idea__icon">2</div>
+          <p>
+            <strong>Values that change: define <code>__eq__</code> only.</strong> Leave the class unhashable, and when you need a dict, key it by something that stays put, such as an id.
+          </p>
+        </div>
+        <div class="key-idea">
+          <div class="key-idea__icon">3</div>
+          <p>
+            <strong>Things with an identity: define neither.</strong> A connection, a game player or an open file is equal only to itself, and the default identity hash is right for it.
+          </p>
+        </div>
+
+        <div class="callout callout--info">
+          <div class="callout__icon">Read</div>
+          <div>
+            <div class="callout__title"><code>is</code> and <code>==</code> ask different questions</div>
+            <div class="callout__body">
+              <code>a is b</code> compares addresses and never calls a method. <code>a == b</code> calls <code>__eq__</code>, which can return whatever its author chose. That's why the idiom is <code>x is None</code>: a class can make <code>x == None</code> return <code>True</code>, but nothing can make <code>is</code> lie.
+            </div>
+          </div>
+        </div>
+
+        <div class="try-this">
+          <div class="try-this__label">Try this in a REPL</div>
+          <p>
+            Define a class with an <code>__eq__</code> and nothing else, then look at <code>MyClass.__hash__</code>: it's <code>None</code>. Take the <code>__eq__</code> out, and <code>MyClass.__hash__ is object.__hash__</code> is <code>True</code> again.
+          </p>
+        </div>
+      </div>
+
+      <div id="dataclass">
+        <div class="section-divider"><div class="section-divider__label">Dataclasses</div></div>
+        <h2><code>@dataclass</code> writes the methods for you</h2>
+        <p class="in-plain">
+          <span class="in-plain__label">In plain words</span>
+          Most small classes need the same three methods: an <code>__init__</code> that stores the fields, a <code>__repr__</code> that shows them, and an <code>__eq__</code> that compares them. A dataclass reads your list of fields and writes those methods for you.
+        </p>
+        <p class="then-precise">
+          <code>@dataclass</code> is a decorator in Session 06's sense, so it means <code>Point = dataclass(Point)</code>. It reads the annotated fields from the class body, generates the methods, sets them on the class it was given, and returns that same class. With the default <code>eq=True</code> and without <code>frozen=True</code>, it sets <code>__hash__</code> to <code>None</code>, by the same rule as demo 4.
+        </p>
+
+        <div class="code-block">
+          <div class="code-block__header">
+            <div class="code-block__dots">
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+              <div class="code-block__dot"></div>
+            </div>
+            <span class="code-block__lang">python</span>
+          </div>
+          <div class="code-block__body"><span class="tok-kw">from</span> dataclasses <span class="tok-kw">import</span> dataclass
+
+<span class="tok-fn">@dataclass</span>(frozen=<span class="tok-bool">True</span>)
+<span class="tok-kw">class</span> <span class="tok-cls">Point</span>:
+    x: <span class="tok-cls">int</span>
+    y: <span class="tok-cls">int</span>
+
+p = <span class="tok-cls">Point</span>(<span class="tok-num">1</span>, <span class="tok-num">2</span>)
+<span class="tok-fn">print</span>(p)                  <span class="tok-cmt"># Point(x=1, y=2)</span>
+<span class="tok-fn">print</span>(p == <span class="tok-cls">Point</span>(<span class="tok-num">1</span>, <span class="tok-num">2</span>))   <span class="tok-cmt"># True</span>
+<span class="tok-fn">print</span>({p})                <span class="tok-cmt"># {Point(x=1, y=2)}</span>
+p.x = <span class="tok-num">10</span>                   <span class="tok-cmt"># FrozenInstanceError: cannot assign to field 'x'</span></div>
+        </div>
+
+        <div style="overflow-x:auto">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>You write</th>
+                <th>What lands in the class</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>@dataclass</code></td>
+                <td><code>__init__</code>, <code>__repr__</code>, <code>__eq__</code>, and <code>__hash__ = None</code></td>
+              </tr>
+              <tr>
+                <td><code>@dataclass(frozen=True)</code></td>
+                <td>The same, except that <code>__hash__</code> is built from the fields, plus a <code>__setattr__</code> and <code>__delattr__</code> that raise <code>FrozenInstanceError</code></td>
+              </tr>
+              <tr>
+                <td><code>@dataclass(order=True)</code></td>
+                <td><code>__lt__</code>, <code>__le__</code>, <code>__gt__</code> and <code>__ge__</code>, comparing the fields in order, like tuples</td>
+              </tr>
+              <tr>
+                <td><code>@dataclass(slots=True)</code></td>
+                <td><code>__slots__</code> for the fields. This option builds and returns a new class</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout--info">
+          <div class="callout__icon">Edge</div>
+          <div>
+            <div class="callout__title">Frozen is a strong hint, not a lock</div>
+            <div class="callout__body">
+              <code>object.__setattr__(p, "x", 10)</code> still gets through, because it skips the class's own <code>__setattr__</code>. That's how the generated <code>__init__</code> stores the fields of a frozen class in the first place. Nobody does it by accident, and accidents are what frozen protects against.
+            </div>
+          </div>
+        </div>
+
+        <div class="recap-box">
+          <div class="recap-box__label">What you should be able to draw</div>
+          <p>
+            A class namespace with special methods in it, and a lookup that starts at <code>type(x)</code> and walks to <code>object</code> without looking inside the instance. Two operands: the left one asked first, a <code>NotImplemented</code>, then the right one's reflected method. A class whose <code>__eq__</code> arrived with <code>__hash__ = None</code>. And a set entry filed under a hash its object no longer has. Draw those four and you can predict every case in this session.
+          </p>
+        </div>
+      </div>
+
+      <div id="mistakes">
+        <div class="section-divider"><div class="section-divider__label">Common mistakes</div></div>
+        <h2>Six ways this goes wrong</h2>
+
+        <div class="mistake-list">
+          <div class="mistake-item">
+            <h3>Defining <code>__eq__</code>, then using the objects as keys</h3>
+            <p>
+              The class became unhashable the moment it got an <code>__eq__</code>, so the first dict or set raises <code>TypeError: unhashable type</code>. Add a <code>__hash__</code> from the same fields if the objects never change, or use a frozen dataclass.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Hashing fields that change</h3>
+            <p>
+              Nothing fails when you change the object. Lookups just stop finding it, as in demo 5, and the bug shows up far from the line that caused it. Hash only what's fixed for the object's whole life.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Raising instead of returning <code>NotImplemented</code></h3>
+            <p>
+              An operator method that raises, or that crashes reading <code>other.x</code> from an int, never lets the other operand try. Check the type and return <code>NotImplemented</code>, and Python produces the right <code>TypeError</code> by itself.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Writing only <code>__str__</code></h3>
+            <p>
+              <code>print(obj)</code> looks fine, while the REPL, the debugger and every list show <code>&lt;__main__.Point object at 0x...&gt;</code>. Write <code>__repr__</code> first, since <code>str()</code> falls back to it.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Putting a special method on an instance</h3>
+            <p>
+              <code>obj.__len__ = ...</code> or <code>obj.__call__ = ...</code> changes nothing that <code>len(obj)</code> or <code>obj()</code> can see, because syntax looks on the class. Define the method on the class, and have it read data from the instance if the behaviour has to vary.
+            </p>
+          </div>
+          <div class="mistake-item">
+            <h3>Forgetting that empty means false</h3>
+            <p>
+              A class with <code>__len__</code> is false when its length is 0, so <code>if playlist:</code> skips an empty playlist that does exist. When you mean "is there one at all", write <code>if playlist is not None:</code>.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout callout--success">
+          <div class="callout__icon">Check</div>
+          <div>
+            <div class="callout__title">Two questions catch nearly all of it</div>
+            <div class="callout__body">
+              <strong>Which special method does this syntax call, and on which class will Python find it?</strong> The instance is never part of the answer. <strong>If I define <code>==</code>, can my objects still be hashed, and can their hash change?</strong> Equal objects need equal hashes, and those hashes have to hold still.
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <section class="quiz" id="quiz" data-session="10-data-model">
+      <div class="section-divider"><div class="section-divider__label">Check your understanding</div></div>
+      <h2>Can you predict the memory?</h2>
+      <p class="quiz__lede">Every question comes back to which class answers, and whether a hash can change.</p>
+
+      <div class="quiz-card" data-answer="1">
+        <div class="quiz-card__q">1. <code>Playlist</code> defines <code>__len__</code>, and you run <code>mix.__len__ = lambda: 99</code> on one instance. What does <code>len(mix)</code> return?</div>
+        <button class="quiz-option" data-choice="0">99, because the instance's <code>__dict__</code> is checked before the class</button>
+        <button class="quiz-option" data-choice="1">Whatever <code>Playlist.__len__</code> returns, because <code>len()</code> looks the method up on <code>type(mix)</code></button>
+        <button class="quiz-option" data-choice="2">It raises <code>TypeError</code>, because the instance and the class disagree</button>
+        <div class="quiz-explain">
+          Special methods are found on the class. The lambda sits in the instance's <code>__dict__</code>, where only an explicit <code>mix.__len__()</code> would find it. To change what <code>len()</code> does, change the class.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="0">
+        <div class="quiz-card__q">2. A class defines <code>__repr__</code>, returning <code>"P"</code>, and no <code>__str__</code>. What does <code>print(p)</code> show?</div>
+        <button class="quiz-option" data-choice="0"><code>P</code>, because <code>object.__str__</code> falls back to <code>repr</code></button>
+        <button class="quiz-option" data-choice="1"><code>&lt;__main__.P object at 0x...&gt;</code>, because <code>print</code> needs a <code>__str__</code></button>
+        <button class="quiz-option" data-choice="2">Nothing. It raises <code>AttributeError</code></button>
+        <div class="quiz-explain">
+          <code>print</code> calls <code>str(p)</code>, which finds <code>object.__str__</code> on the way up from the class. That method calls <code>repr(p)</code>, which finds your <code>__repr__</code>. One method covers both.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="2">
+        <div class="quiz-card__q">3. <code>Vec</code> defines <code>__mul__</code>, and <code>__rmul__ = __mul__</code>. In what order does Python try methods for <code>3 * v</code>?</div>
+        <button class="quiz-option" data-choice="0"><code>Vec.__mul__(v, 3)</code> first, because a class you wrote takes priority over a built-in one</button>
+        <button class="quiz-option" data-choice="1">It converts 3 to a <code>Vec</code>, then calls <code>Vec.__mul__</code></button>
+        <button class="quiz-option" data-choice="2"><code>int.__mul__(3, v)</code>, which returns <code>NotImplemented</code>, then <code>Vec.__rmul__(v, 3)</code></button>
+        <div class="quiz-explain">
+          The left operand is asked first. The int can't multiply by a Vec, so it returns <code>NotImplemented</code>, and Python asks the right operand through its reflected method. Nothing is converted.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="1">
+        <div class="quiz-card__q">4. Your <code>__add__</code> is handed a type it can't add. What should it do?</div>
+        <button class="quiz-option" data-choice="0">Raise <code>NotImplementedError</code>, so the caller can see the type isn't supported</button>
+        <button class="quiz-option" data-choice="1">Return <code>NotImplemented</code>, so Python can ask the other operand, and raise the right <code>TypeError</code> if that fails too</button>
+        <button class="quiz-option" data-choice="2">Return <code>None</code>, so the expression has no value</button>
+        <div class="quiz-explain">
+          <code>NotImplemented</code> is a value that means "not with this type". Raising stops the search before the other side gets a turn, and returning <code>None</code> makes <code>a + b</code> evaluate to <code>None</code>, which is worse than an error.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="0">
+        <div class="quiz-card__q">5. <code>Point</code> defines <code>__eq__</code> and no <code>__hash__</code>. What does <code>{Point(1, 2)}</code> do?</div>
+        <button class="quiz-option" data-choice="0">It raises <code>TypeError: unhashable type: 'Point'</code>, because defining <code>__eq__</code> set <code>__hash__</code> to <code>None</code></button>
+        <button class="quiz-option" data-choice="1">It makes a set with one point, hashed by its identity</button>
+        <button class="quiz-option" data-choice="2">It makes a set with one point, hashed by its fields</button>
+        <div class="quiz-explain">
+          Hashing by identity would give equal points different hashes, which breaks dicts and sets. So Python switches hashing off for the class until you write a <code>__hash__</code> that agrees with your <code>__eq__</code>.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="2">
+        <div class="quiz-card__q">6. <code>p</code> is in the set <code>seen</code>, hashed from <code>(x, y)</code>. Then <code>p.x = 10</code> runs. What is <code>p in seen</code>?</div>
+        <button class="quiz-option" data-choice="0"><code>True</code>, because it's the same object</button>
+        <button class="quiz-option" data-choice="1">It raises <code>KeyError</code></button>
+        <button class="quiz-option" data-choice="2"><code>False</code>: the set looks under <code>p</code>'s new hash, and the entry is filed under the old one</button>
+        <div class="quiz-explain">
+          The set stored the hash when <code>p</code> went in and never works it out again. The lookup hashes <code>p</code> as it is now, finds no entry with that hash and stops. <code>p</code> is still inside, and only looping over the set would find it.
+        </div>
+      </div>
+
+      <div class="quiz-card" data-answer="1">
+        <div class="quiz-card__q">7. You write <code>@dataclass</code> above <code>class P:</code> with one field, <code>x: int</code>. What does <code>{P(1)}</code> do?</div>
+        <button class="quiz-option" data-choice="0">It makes a set with one item, because dataclasses are always hashable</button>
+        <button class="quiz-option" data-choice="1">It raises <code>TypeError: unhashable type: 'P'</code>. The dataclass wrote an <code>__eq__</code>, so it set <code>__hash__</code> to <code>None</code></button>
+        <button class="quiz-option" data-choice="2">It makes a set with one item, hashed by identity</button>
+        <div class="quiz-explain">
+          A dataclass follows the same rule as a class you write by hand. Pass <code>frozen=True</code> to get a <code>__hash__</code> built from the fields, along with fields that can't be reassigned.
+        </div>
+      </div>
+    </section>
+
+    <!-- seo:sessions-nav -->
+    <nav class="sessions-nav" aria-label="All sessions">
+      <div class="sessions-nav__label">All sessions</div>
+      <ul>
+        <li><a href="../01-variables/"><span>01</span> Variables &amp; Mutability</a></li>
+        <li><a href="../02-functions/"><span>02</span> Functions, Scope &amp; the Call Stack</a></li>
+        <li><a href="../03-lists-dicts/"><span>03</span> Lists, Dicts &amp; References</a></li>
+        <li><a href="../04-classes/"><span>04</span> Classes &amp; Objects</a></li>
+        <li><a href="../05-iterators/"><span>05</span> Iterators &amp; Generators</a></li>
+        <li><a href="../06-decorators/"><span>06</span> Decorators</a></li>
+        <li><a href="../07-gil/"><span>07</span> The GIL &amp; Concurrency</a></li>
+        <li><a href="../08-exceptions/"><span>08</span> Exceptions, Tracebacks &amp; Context Managers</a></li>
+        <li><a href="../09-modules/"><span>09</span> Modules &amp; Imports</a></li>
+        <li class="is-current"><a href="../10-data-model/"><span>10</span> Special Methods &amp; the Data Model</a></li>
+      </ul>
+    </nav>
+    <!-- /seo:sessions-nav -->
+
+    <div class="session-footer">
+      <a href="../09-modules/" class="btn btn--secondary">&larr; Session 09: Modules &amp; Imports</a>
+      <div class="session-footer__count" data-role="session-count">Session 10 of 10</div>
+      <a href="../../index.html" class="btn btn--primary">Back to all sessions</a>
+    </div>
+  </main>
+</div>
+
+<script src="../../assets/js/core.js"></script>
+<script src="../../assets/js/syntax.js"></script>
+<script src="../../assets/js/memory-viz.js"></script>
+<script src="../../assets/js/animator.js"></script>
+<script src="session.js"></script>
+</body>
+</html>

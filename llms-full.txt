@@ -4148,6 +4148,452 @@ Why: The search walks sys.path in order and stops at the first match, and your s
 
 ---
 
+# Session 10: Special Methods & the Data Model
+
+URL: https://inboxpraveen.github.io/Py-Internals/sessions/10-data-model/
+
+Summary: How print, len, == and * find your methods on the class. Why __eq__ makes a class unhashable, what NotImplemented is for, and how a changed key gets lost in a set.
+
+Every time you write `len(x)`, `a + b`, `a == b` or `print(x)`, Python turns the syntax into a call to a method with a reserved name, such as `__len__` or `__add__`, and looks that method up on the object's class. Define those methods and your own classes work with the language's syntax. Get `__eq__` and `__hash__` out of step and you get a class that can't go in a set, or a set that can't find what's in it.
+
+**Learning goal**
+
+## Syntax is a method call, looked up on the class.
+
+Python's data model is the list of specially named methods it calls for you. `len(x)` runs `type(x).__len__(x)`, and `v * 3` runs `type(v).__mul__(v, 3)`. The search starts at the class, never at the instance, and ends at `object`, which has a fallback for a few of them. Everything else in this session follows from that.
+
+**Recommended path**
+
+**Start with printing.** Demo 1 follows `str(p)` up to `object` and back down to your `__repr__`. Two searches, both on the class.
+
+**Then the rule and the operators.** Demo 2 puts a `__len__` on an instance and shows `len()` ignoring it. Demo 3 shows why `3 * v` needs a second method.
+
+**Then equality and hashing.** Demos 4 and 5 are the pair behind most real bugs here: a class that suddenly can't go in a set, and a set that loses an object it still holds.
+
+## Syntax is a method call on the type
+
+**In plain words**
+A universal remote has the same buttons whatever it's pointed at: power, volume, channel. What a button does depends on the device. Python's syntax is the buttons. Each class decides what they do by defining methods with reserved names, and Python presses the one that matches what you wrote.
+
+These methods have two underscores on each side, so people call them dunder methods. `len(x)` becomes `type(x).__len__(x)`, `a * b` becomes `type(a).__mul__(a, b)`, and `a == b` becomes `type(a).__eq__(a, b)`. The search starts at `type(x)`, follows the MRO from Session 04, and never reads the instance's `__dict__`. If no class on the way defines the method, either `object` has a fallback (it does for `__repr__`, `__str__`, `__eq__` and `__hash__`) or you get a `TypeError`.
+
+| You write | Python calls | If no class defines it |
+| --- | --- | --- |
+| `repr(x)`, the REPL, items in a list | `__repr__` | `object.__repr__`: `<__main__.Point object at 0x...>` |
+| `str(x)`, `print(x)`, f-strings | `__str__` | `object.__str__`, which calls `__repr__` |
+| `len(x)` | `__len__` | `TypeError: object of type 'Point' has no len()` |
+| `if x:`, `bool(x)` | `__bool__`, then `__len__` | Always true |
+| `x[i]` | `__getitem__` | `TypeError: 'Point' object is not subscriptable` |
+| `for v in x` | `__iter__` (Session 05) | `TypeError: 'Point' object is not iterable` |
+| `v in x` | `__contains__`, then `__iter__` | `TypeError: argument of type 'Point' is not iterable` |
+| `a * b`, `a + b` | `__mul__`, `__add__`, then the right side's `__rmul__`, `__radd__` | `TypeError: unsupported operand type(s)` |
+| `a == b`, `a != b` | `__eq__`, `__ne__` | `object.__eq__`: true only for the same object |
+| `hash(x)`, dict keys, set members | `__hash__` | `object.__hash__`, worked out from the object's identity |
+| `x()` | `__call__` | `TypeError: 'Point' object is not callable` |
+
+**Why the class, and not the instance**
+
+The Python docs give the sharpest reason. A class is an object too, so `repr(Point)` has to describe the class. If the search started in `Point`'s own namespace, it would find the `__repr__` written for points and call it with no point to work on. Looking on the type keeps the two apart: the type of `p` is `Point`, and the type of `Point` is `type`. It's faster as well. CPython keeps a table of these methods for every class, filled in when the class is created and refreshed when you assign one to the class, so `len(x)` reads one entry instead of searching dictionaries.
+
+**Try this in a REPL**
+
+`(3).__add__(1.5)` returns `NotImplemented`, because `int` doesn't add floats. `3 + 1.5` still gives `4.5`: after the int declined, Python called `float.__radd__(1.5, 3)`. Then try `len("abc") == type("abc").__len__("abc")`, which is `True`.
+
+---
+
+Showing an object
+
+## `__repr__` for developers, `__str__` for users
+
+**In plain words**
+A repr is a name badge for developers: it says what the object is, ideally in a form you could type back in. A str is the friendly version you'd show a user. If you only write one, write the badge, because Python falls back to it when there's no friendly version.
+
+`repr()` is what the REPL shows, what debuggers and `!r` in an f-string use, and what every container uses for its items. `str()` is what `print`, f-strings and `format()` use. `object.__str__` calls `repr`, so a class with only `__repr__` looks right everywhere. A class with only `__str__` prints nicely on its own and turns back into `<__main__.Point object at 0x...>` inside a list.
+
+```python
+class Point:
+def __init__(self, x, y):
+self.x = x
+self.y = y
+
+def __repr__(self):
+return f"Point({self.x!r}, {self.y!r})"
+
+def __str__(self):
+return f"({self.x}, {self.y})"
+
+p = Point(3, 4)
+print(p) # (3, 4)
+print([p]) # [Point(3, 4)]
+print(f"{p!r}") # Point(3, 4)
+
+```
+
+**Use `!r` inside a repr**
+
+`f"User({self.name!r})"` gives `User('Ada')`, with quotes, so a string is visibly a string. Without `!r` you'd get `User(Ada)`, which looks like a variable. Keep a repr cheap and free of side effects too. It runs in debuggers, logs and error messages, often after something has already gone wrong.
+
+---
+
+Operators
+
+## Operators: the left side is asked first
+
+**In plain words**
+Two people reach the till together and one of them has to pay. The person on the left is asked first. If they say they can't, the person on the right is asked. If both say no, nobody pays, and there's a scene.
+
+`a * b` calls `type(a).__mul__(a, b)`. If that method is missing or returns `NotImplemented`, and `b` is of a different type, Python calls the reflected method `type(b).__rmul__(b, a)`. If that's missing or returns `NotImplemented` too, it raises `TypeError: unsupported operand type(s)`. There's one exception to left first: when `b`'s type is a subclass of `a`'s type and overrides the reflected method, `b` is asked first, so a subclass can take over from its parent.
+
+**1 · Left**
+
+### The left operand's class
+
+`type(a).__mul__(a, b)` gets the first chance. Any result other than `NotImplemented` is the answer, and nothing else runs.
+
+**2 · Right**
+
+### The reflected method
+
+Only when the types differ: `type(b).__rmul__(b, a)`. The operands are swapped, so `self` is always an instance of the class the method belongs to.
+
+**3 · Neither**
+
+### `TypeError`
+
+Both declined, so Python raises `unsupported operand type(s) for *`, naming both types. That message is only right if your methods returned `NotImplemented` instead of raising.
+
+**`NotImplemented` isn't `NotImplementedError`**
+
+Return `NotImplemented`, a value, from an operator method to say "not with this type". `NotImplementedError` is an exception, for a method that a subclass is meant to fill in. Raising it from `__mul__` would stop Python before it asks the other operand. And don't test `NotImplemented` with `if`: using it as true or false is deprecated.
+
+**In place**
+
+### `a += b` tries `__iadd__` first
+
+A list's `__iadd__` extends the list itself and returns it, so every name sharing the list sees the change (Session 03). Without `__iadd__`, Python falls back to `a = a + b`, builds a new object and rebinds the name. Tuples, ints and strings work that way.
+
+**Comparisons**
+
+### `<` reflects to `>`
+
+If `a.__lt__(b)` declines, Python tries `b.__gt__(a)`. `==` reflects to itself, and when both sides decline it falls back to identity instead of raising, which is why `p == 5` is `False` in demo 4.
+
+**Try this in a REPL**
+
+`[1, 2] * 2` and `2 * [1, 2]` both give `[1, 2, 1, 2]`. `(2).__mul__([1, 2])` returns `NotImplemented`, so the second one only works because the list was asked next.
+
+---
+
+Equality and hashing
+
+## `__eq__` and `__hash__` come as a pair
+
+**In plain words**
+A cloakroom gives you a ticket number worked out from what your coat looks like. Sew a patch on the coat, then ask for it back, and the attendant works out a new number, looks on that hook and finds nothing. Your coat is still in the room, on the hook for the old number.
+
+A dict or set finds an object in two moves: `hash(key)` picks a place, then `==` confirms the match. That only works if **equal objects have equal hashes**, and if an object's hash doesn't change while it's stored. By default both hold, because `object.__eq__` and `object.__hash__` both go by identity. Define `__eq__` and you've changed what equal means, so Python sets `__hash__` to `None` in your class, unless the class body defines `__hash__` too.
+
+**Values that never change: define both.** Hash a tuple of the same fields `__eq__` compares. Money amounts, coordinates and dates are like this. A frozen dataclass does it for you.
+
+**Values that change: define `__eq__` only.** Leave the class unhashable, and when you need a dict, key it by something that stays put, such as an id.
+
+**Things with an identity: define neither.** A connection, a game player or an open file is equal only to itself, and the default identity hash is right for it.
+
+**`is` and `==` ask different questions**
+
+`a is b` compares addresses and never calls a method. `a == b` calls `__eq__`, which can return whatever its author chose. That's why the idiom is `x is None`: a class can make `x == None` return `True`, but nothing can make `is` lie.
+
+**Try this in a REPL**
+
+Define a class with an `__eq__` and nothing else, then look at `MyClass.__hash__`: it's `None`. Take the `__eq__` out, and `MyClass.__hash__ is object.__hash__` is `True` again.
+
+---
+
+Dataclasses
+
+## `@dataclass` writes the methods for you
+
+**In plain words**
+Most small classes need the same three methods: an `__init__` that stores the fields, a `__repr__` that shows them, and an `__eq__` that compares them. A dataclass reads your list of fields and writes those methods for you.
+
+`@dataclass` is a decorator in Session 06's sense, so it means `Point = dataclass(Point)`. It reads the annotated fields from the class body, generates the methods, sets them on the class it was given, and returns that same class. With the default `eq=True` and without `frozen=True`, it sets `__hash__` to `None`, by the same rule as demo 4.
+
+```python
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class Point:
+x: int
+y: int
+
+p = Point(1, 2)
+print(p) # Point(x=1, y=2)
+print(p == Point(1, 2)) # True
+print({p}) # {Point(x=1, y=2)}
+p.x = 10 # FrozenInstanceError: cannot assign to field 'x'
+
+| You write | What lands in the class |
+| --- | --- |
+| `@dataclass` | `__init__`, `__repr__`, `__eq__`, and `__hash__ = None` |
+| `@dataclass(frozen=True)` | The same, except that `__hash__` is built from the fields, plus a `__setattr__` and `__delattr__` that raise `FrozenInstanceError` |
+| `@dataclass(order=True)` | `__lt__`, `__le__`, `__gt__` and `__ge__`, comparing the fields in order, like tuples |
+| `@dataclass(slots=True)` | `__slots__` for the fields. This option builds and returns a new class |
+
+```
+
+**Frozen is a strong hint, not a lock**
+
+`object.__setattr__(p, "x", 10)` still gets through, because it skips the class's own `__setattr__`. That's how the generated `__init__` stores the fields of a frozen class in the first place. Nobody does it by accident, and accidents are what frozen protects against.
+
+**What you should be able to draw**
+
+A class namespace with special methods in it, and a lookup that starts at `type(x)` and walks to `object` without looking inside the instance. Two operands: the left one asked first, a `NotImplemented`, then the right one's reflected method. A class whose `__eq__` arrived with `__hash__ = None`. And a set entry filed under a hash its object no longer has. Draw those four and you can predict every case in this session.
+
+---
+
+Common mistakes
+
+## Six ways this goes wrong
+
+### Defining `__eq__`, then using the objects as keys
+
+The class became unhashable the moment it got an `__eq__`, so the first dict or set raises `TypeError: unhashable type`. Add a `__hash__` from the same fields if the objects never change, or use a frozen dataclass.
+
+### Hashing fields that change
+
+Nothing fails when you change the object. Lookups just stop finding it, as in demo 5, and the bug shows up far from the line that caused it. Hash only what's fixed for the object's whole life.
+
+### Raising instead of returning `NotImplemented`
+
+An operator method that raises, or that crashes reading `other.x` from an int, never lets the other operand try. Check the type and return `NotImplemented`, and Python produces the right `TypeError` by itself.
+
+### Writing only `__str__`
+
+`print(obj)` looks fine, while the REPL, the debugger and every list show `<__main__.Point object at 0x...>`. Write `__repr__` first, since `str()` falls back to it.
+
+### Putting a special method on an instance
+
+`obj.__len__ = ...` or `obj.__call__ = ...` changes nothing that `len(obj)` or `obj()` can see, because syntax looks on the class. Define the method on the class, and have it read data from the instance if the behaviour has to vary.
+
+### Forgetting that empty means false
+
+A class with `__len__` is false when its length is 0, so `if playlist:` skips an empty playlist that does exist. When you mean "is there one at all", write `if playlist is not None:`.
+
+**Two questions catch nearly all of it**
+
+**Which special method does this syntax call, and on which class will Python find it?** The instance is never part of the answer. **If I define `==`, can my objects still be hashed, and can their hash change?** Equal objects need equal hashes, and those hashes have to hold still.
+
+
+## Interactive lab (code and step-by-step narration)
+
+Each demo is a short Python program. The steps below are the text shown as the memory diagram animates.
+
+### Demo 1 · str(p) and __repr__
+
+Watch for: Watch which class answers. str(p) never looks inside p: it searches Point, then object, and object sends it back to your __repr__.
+
+```python
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def __repr__(self):
+        return f"Point({self.x}, {self.y})"
+
+p = Point(3, 4)
+text = str(p)
+print(p)
+```
+
+1. **Initial state: one built-in class is already here** Before your first line runs, object exists. Every class you write inherits from it, and it carries a fallback version of the special methods every object needs. It's built into the interpreter and never freed, so its refcount is drawn as ∞, like the small ints.
+2. **class Point: two functions, and no __str__** The body leaves two functions in the class namespace. __repr__ is an ordinary function with an unusual name. Nothing about the def is special. It's special because built-in code knows the name and goes looking for it. Point has no __str__, and its __bases__ link points at object.
+3. **p = Point(3, 4): the data goes on the instance** Session 04 traced this call line by line. What it leaves behind is an instance whose __dict__ holds x and y, and a __class__ link to Point. Its __dict__ holds no methods, special or otherwise.
+4. **str(p) asks the class, and Point has no __str__** str(p) doesn't look in p at all. It goes to type(p), which is Point, and searches it and its bases for __str__, the same walk as Session 04's inherited methods. Point misses, so the search moves on to object and finds its __str__.
+5. **object.__str__ calls repr(p), which finds yours** The fallback __str__ has one job: return repr(p). That starts a second search, for __repr__, again on the class. This time Point has one, so your function runs with self bound to p. C code like object.__str__ gets no frame on this diagram. Your __repr__ does.
+6. **text is the string your method returned** The f-string builds 'Point(3, 4)', __repr__ returns it, and its frame goes. object.__str__ hands the same string straight back, and text is bound to it. Without lines 6 and 7, the second search would also end at object, and text would be '<__main__.Point object at 0x...>'.
+7. **print(p) makes the same two trips** print calls str() on what you pass it, so this line repeats the last three steps and writes Point(3, 4). f-strings and format() do the same. A container is different: str([p]) uses repr for every item, giving [Point(3, 4)]. That's why __repr__ is the one to write first. It covers both.
+8. **Summary: a built-in call, then a method lookup on the type** Two searches ran, and neither looked inside p. Both started at type(p) and walked towards object. That's the data model in miniature: Python turns a built-in operation into a call to a specially named method, and finds that method on the class.
+
+### Demo 2 · len() asks the class
+
+Watch for: A __len__ ends up in the instance's __dict__. Watch whether len(mix) ever reads it.
+
+```python
+class Playlist:
+    def __init__(self, songs):
+        self.songs = songs
+
+    def __len__(self):
+        return len(self.songs)
+
+mix = Playlist(["intro", "outro"])
+n = len(mix)
+mix.__len__ = lambda: 99
+m = len(mix)
+```
+
+1. **Initial state: a rule from Session 04, about to bend** Session 04's rule for obj.name was instance first, then the class. This demo puts a special method in the instance on purpose, and watches what len() does about it.
+2. **class Playlist defines __len__** Defining __len__ is how a class opts in to len(). Without it, len(mix) would raise TypeError: object of type 'Playlist' has no len().
+3. **mix holds a list of two songs** The instance reaches the list through self.songs. Its two strings are drawn inside the list to save space.
+4. **len(mix) runs Playlist.__len__** len(mix) means type(mix).__len__(mix). Your method runs, and its len(self.songs) asks the list's own class the same question. list.__len__ is C code, so it gets no frame.
+5. **n is 2** The method returns 2, a cached small int, and n is bound to it. len() checks the answer on the way out: a negative number raises ValueError, and anything that isn't an int raises TypeError.
+6. **mix.__len__ = ... writes into the instance** This is a normal attribute assignment, so the lambda lands in the instance's __dict__, just as self.songs did. Ask the instance directly and Session 04's rule holds: mix.__len__() finds the lambda first and returns 99.
+7. **len(mix) still goes to the class** len() never reads the instance's __dict__. It starts at type(mix), finds Playlist.__len__ and runs it again. The lambda sits in the instance, one box away, and nothing looks at it.
+8. **m is 2, the same as n** The class answered both times, so n and m share the one cached 2. The lambda is still there, and only an explicit mix.__len__() would ever call it.
+9. **Summary: special methods are looked up on the type** Everything the language does for you (len(), *, ==, for, with, if x:) finds its method on the class and skips the instance. That's a third place Session 04's rule bends. Assigning to the class does work: Playlist.__len__ = ... changes len() for every playlist, because CPython refreshes the class's internal method table when a special method on it changes.
+
+### Demo 3 · v * 3 and 3 * v
+
+Watch for: Two multiplications that look alike. Watch who is asked first each time, and the NotImplemented that hands the job to the other side.
+
+```python
+class Vec:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def __mul__(self, k):
+        if not isinstance(k, int):
+            return NotImplemented
+        return Vec(self.x * k, self.y * k)
+
+    __rmul__ = __mul__
+
+v = Vec(1, 2)
+a = v * 3
+b = 3 * v
+```
+
+1. **Initial state: the left operand is asked first** For a binary operator, Python asks the object on the left before the one on the right. v * 3 and 3 * v are about to take different routes to the same answer.
+2. **class Vec: one function under two names** The body defines __init__ and __mul__. Line 11 is a plain assignment inside the class body: it binds a second key, __rmul__, to the same function object. Two keys, one function, refcount 2.
+3. **v = Vec(1, 2)** One instance, with two small ints in its __dict__. The class keeps the behaviour, as in Session 04.
+4. **v * 3: the left operand goes first** Python asks the left operand's class: Vec.__mul__(v, 3). k is 3, an int, so the guard on line 7 lets it through.
+5. **a is a new Vec** Line 9 builds a new instance (through __init__, as usual) and returns it. v is unchanged: * makes a new object, it doesn't edit one.
+6. **3 * v: the int is asked first, and says NotImplemented** Now the left operand is the int, so Python calls int.__mul__(3, v). That C code can multiply by numbers and nothing else, so it returns NotImplemented, a built-in object like None. It isn't an error. It means "not with this type", and tells Python to ask the other side.
+7. **Then Python asks v, through __rmul__** The right operand gets its turn through the reflected method, Vec.__rmul__(v, 3), with the operands swapped so self is still the Vec. __rmul__ is the same function, so the frame is named __mul__, the name it was created with.
+8. **b is another new Vec: equal numbers, a different object** a and b hold the same numbers in two separate objects. a == b is False for now: Vec has no __eq__, and the fallback, object.__eq__, compares identity. Demo 4 defines one.
+9. **Summary: if both sides say NotImplemented, you get the TypeError** Try v * 2.5. Vec.__mul__ returns NotImplemented, float.__rmul__ does too, and Python raises TypeError: unsupported operand type(s) for *: 'Vec' and 'float'. Returning NotImplemented is what makes that message right. Raising your own error inside __mul__ would stop Python from ever asking the other side.
+
+### Demo 4 · __eq__ turns off hashing
+
+Watch for: Look at the class namespace when it's created. There's a __hash__ entry that the code never wrote.
+
+```python
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def __eq__(self, other):
+        if not isinstance(other, Point):
+            return NotImplemented
+        return (self.x, self.y) == (other.x, other.y)
+
+p = Point(1, 2)
+q = Point(1, 2)
+same = p == q
+seen = {p}
+```
+
+1. **Initial state: by default, == means is** Without an __eq__ of its own, an object is equal only to itself, as a and b were at the end of demo 3. This class changes what equal means, and something else changes with it.
+2. **class Point, and a __hash__ nobody wrote** Python saw __eq__ in the class body and no __hash__, so it put __hash__ = None in the namespace itself. The rule for hashing is that equal objects must have equal hashes. The inherited object.__hash__ works from the object's identity, which would give two equal points two different hashes. So Python switches hashing off rather than let it be wrong.
+3. **p and q: equal numbers, two objects** Two separate instances that hold the same numbers. p is q is False, and the next line asks whether they're equal.
+4. **p == q calls Point.__eq__(p, q)** == asks the left operand's class first, as * did in demo 3. other is a Point, so the guard passes, and line 9 compares two tuples, (1, 2) == (1, 2).
+5. **same is True** Equal by value now, not only by identity. p != q gives False with no more code, because the default __ne__ calls __eq__ and flips the answer. And p == 5 is False: the guard returns NotImplemented, the int has no answer either, and Python falls back to comparing identity.
+6. **{p} needs hash(p), and Point.__hash__ is None** A set files each element under its hash, so building {p} starts with hash(p). That looks up __hash__ on the class, finds None, and raises TypeError: unhashable type: 'Point'. A dict key, a set member and a direct hash(p) all fail the same way.
+7. **Summary: write __hash__ from the fields __eq__ compares** Nothing handles the error, so the program stops. If your points never change once they're made, add def __hash__(self): return hash((self.x, self.y)), built from the same fields __eq__ compares, so equal points hash alike. If they can change, leave them unhashable. Demo 5 shows why.
+
+### Demo 5 · a key that moved
+
+Watch for: Keep an eye on the hash written under the set. Then watch p change while that number stays put.
+
+```python
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def __eq__(self, other):
+        if not isinstance(other, Point):
+            return NotImplemented
+        return (self.x, self.y) == (other.x, other.y)
+
+    def __hash__(self):
+        return hash((self.x, self.y))
+
+p = Point(1, 2)
+seen = {p}
+p.x = 10
+found = p in seen
+```
+
+1. **Initial state: the same Point, now hashable** This time the class has a __hash__ to match its __eq__, so a point can go in a set. Then one of its fields changes.
+2. **class Point: __eq__ and __hash__ read the same fields** The body defines __hash__ itself, so Python leaves it alone. Both methods read x and y, so two equal points always get the same hash. The rule is kept.
+3. **p = Point(1, 2)** One instance, holding x = 1 and y = 2.
+4. **Building {p} calls Point.__hash__** The method hashes the tuple (1, 2). On a 64-bit build that's -3550055125485641917, the same number on every run. Python randomises the hashes of strings for each run, but not of ints or tuples of ints.
+5. **seen keeps p under that hash** The set stores two things for the entry: the reference to p and the hash, worked out once on the way in. Where the entry sits in the set's table depends on that number.
+6. **p.x = 10 changes the object, not the set** Setting an attribute changes the instance's __dict__ and nothing else. Nobody tells the set. Its entry still carries -3550055125485641917, the hash of (1, 2), while the point it refers to is now (10, 2).
+7. **p in seen hashes p again, and gets a different number** in on a set starts the way building one did: hash the thing you're looking for. hash((10, 2)) is -1767087503132776002, so the set looks in the place for that number.
+8. **Nothing is filed under the new hash, so found is False** The set compares stored hashes first, and no entry has the new one, so __eq__ is never even called. found is False, though p is plainly inside: len(seen) is 1 and p in list(seen) is True. Looking for Point(1, 2) fails too. Its hash matches the stored one, but then __eq__ compares it with the changed p and says no.
+9. **Summary: hash only what can't change** A dict or set trusts that an object's hash stays the same for as long as it's stored there. That was Session 03's reason lists can't be keys, and it holds for your classes too. Build __hash__ only from fields that never change, or make the class immutable. @dataclass(frozen=True) does both: it writes __eq__ and __hash__ from the fields, and makes p.x = 10 raise FrozenInstanceError.
+
+
+## Check yourself (quiz)
+
+**Q: 1. Playlist defines __len__, and you run mix.__len__ = lambda: 99 on one instance. What does len(mix) return?**
+- 99, because the instance's __dict__ is checked before the class
+- Whatever Playlist.__len__ returns, because len() looks the method up on type(mix) (correct)
+- It raises TypeError, because the instance and the class disagree
+
+Why: Special methods are found on the class. The lambda sits in the instance's __dict__, where only an explicit mix.__len__() would find it. To change what len() does, change the class.
+
+**Q: 2. A class defines __repr__, returning "P", and no __str__. What does print(p) show?**
+- P, because object.__str__ falls back to repr (correct)
+- <__main__.P object at 0x...>, because print needs a __str__
+- Nothing. It raises AttributeError
+
+Why: print calls str(p), which finds object.__str__ on the way up from the class. That method calls repr(p), which finds your __repr__. One method covers both.
+
+**Q: 3. Vec defines __mul__, and __rmul__ = __mul__. In what order does Python try methods for 3 * v?**
+- Vec.__mul__(v, 3) first, because a class you wrote takes priority over a built-in one
+- It converts 3 to a Vec, then calls Vec.__mul__
+- int.__mul__(3, v), which returns NotImplemented, then Vec.__rmul__(v, 3) (correct)
+
+Why: The left operand is asked first. The int can't multiply by a Vec, so it returns NotImplemented, and Python asks the right operand through its reflected method. Nothing is converted.
+
+**Q: 4. Your __add__ is handed a type it can't add. What should it do?**
+- Raise NotImplementedError, so the caller can see the type isn't supported
+- Return NotImplemented, so Python can ask the other operand, and raise the right TypeError if that fails too (correct)
+- Return None, so the expression has no value
+
+Why: NotImplemented is a value that means "not with this type". Raising stops the search before the other side gets a turn, and returning None makes a + b evaluate to None, which is worse than an error.
+
+**Q: 5. Point defines __eq__ and no __hash__. What does {Point(1, 2)} do?**
+- It raises TypeError: unhashable type: 'Point', because defining __eq__ set __hash__ to None (correct)
+- It makes a set with one point, hashed by its identity
+- It makes a set with one point, hashed by its fields
+
+Why: Hashing by identity would give equal points different hashes, which breaks dicts and sets. So Python switches hashing off for the class until you write a __hash__ that agrees with your __eq__.
+
+**Q: 6. p is in the set seen, hashed from (x, y). Then p.x = 10 runs. What is p in seen?**
+- True, because it's the same object
+- It raises KeyError
+- False: the set looks under p's new hash, and the entry is filed under the old one (correct)
+
+Why: The set stored the hash when p went in and never works it out again. The lookup hashes p as it is now, finds no entry with that hash and stops. p is still inside, and only looping over the set would find it.
+
+**Q: 7. You write @dataclass above class P: with one field, x: int. What does {P(1)} do?**
+- It makes a set with one item, because dataclasses are always hashable
+- It raises TypeError: unhashable type: 'P'. The dataclass wrote an __eq__, so it set __hash__ to None (correct)
+- It makes a set with one item, hashed by identity
+
+Why: A dataclass follows the same rule as a class you write by hand. Pass frozen=True to get a __hash__ built from the fields, along with fields that can't be reassigned.
+
+
+
+---
+
 # Glossary
 
 URL: https://inboxpraveen.github.io/Py-Internals/glossary.html
@@ -4185,7 +4631,7 @@ URL: https://inboxpraveen.github.io/Py-Internals/glossary.html
 - **Container**: An object whose contents are references to other objects. Lists, dicts, tuples, and sets are containers. See Session 03.
 - **Shallow copy**: A new outer container filled with the same inner references. list.copy() and dict.copy() are shallow. Nested objects stay shared.
 - **Deep copy**: A recursive copy of nested objects. Use it only when you need nested independence. Some objects should stay shared on purpose.
-- **Hashable**: An object with a stable hash, required for dict keys and set elements. Built-in immutables are usually hashable. Lists and dicts are not.
+- **Hashable**: An object with a stable hash, required for dict keys and set elements. Built-in immutables are usually hashable. Lists and dicts are not. A class of your own is hashable by identity until it defines __eq__, which sets its __hash__ to None (see Session 10).
 
 ## Classes
 
@@ -4261,3 +4707,13 @@ URL: https://inboxpraveen.github.io/Py-Internals/glossary.html
 - **Package**: A module that can hold submodules, usually a folder with an __init__.py. import shop.orders runs shop/__init__.py first, then shop/orders.py, caches both, and binds the name shop. The package's __path__ lists the folders its submodules are searched in.
 - **__pycache__**: The folder where Python saves compiled bytecode for imported modules, as files like config.cpython-313.pyc, so the next start can skip compiling when the source hasn't changed. It speeds up start-up, not running time, and it is safe to delete.
 - **importlib.reload**: Runs a module's file again into the same module object, so code that reads config.name sees the new values. Names copied out earlier with from-imports, and instances of the old classes, still point at the old objects, which is why restarting is often simpler.
+
+## Data model
+
+- **Special method**: A method with two underscores on each side of its name, such as __len__ or __add__, which Python calls for you when you use some syntax: len(x) runs type(x).__len__(x). People call them dunder methods. Python looks them up on the object's class, never on the instance, so setting one on an instance changes nothing the syntax can see. See Session 10.
+- **__repr__ and __str__**: Two ways to turn an object into text. repr() is for developers, and it's what the REPL, debuggers and containers show. str() is for users, and it's what print and f-strings use. The default __str__ calls __repr__, so write __repr__ first.
+- **Reflected method**: The right operand's version of an operator, such as __radd__ or __rmul__. For a * b, Python calls type(a).__mul__ first. If that returns NotImplemented and the types differ, it calls type(b).__rmul__(b, a). If that declines too, you get TypeError: unsupported operand type(s).
+- **NotImplemented**: A built-in object, like None, that an operator method returns to say "not with this type". It tells Python to try the other operand. It isn't the exception NotImplementedError, which is for a method that a subclass is meant to fill in.
+- **__eq__ and __hash__**: Dicts and sets use hash() to pick a place and == to confirm a match, so equal objects must have equal hashes, and a stored object's hash must not change. Defining __eq__ without __hash__ sets __hash__ to None, which makes the class unhashable.
+- **Truthiness**: What if x: and bool(x) decide. Python calls the class's __bool__ if it has one, then __len__ (false when it returns 0), and otherwise treats the object as true. That's why an empty list, or an empty instance of your own container class, counts as false.
+- **Dataclass**: A class decorated with @dataclass, which reads the annotated fields and writes __init__, __repr__ and __eq__ into the class. It also sets __hash__ to None, unless you pass frozen=True, which builds __hash__ from the fields and makes assigning to them raise FrozenInstanceError.

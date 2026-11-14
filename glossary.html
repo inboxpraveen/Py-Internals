@@ -316,7 +316,7 @@
         {
           "@type": "DefinedTerm",
           "name": "Hashable",
-          "description": "An object with a stable hash, required for dict keys and set elements. Built-in immutables are usually hashable. Lists and dicts are not.",
+          "description": "An object with a stable hash, required for dict keys and set elements. Built-in immutables are usually hashable. Lists and dicts are not. A class of your own is hashable by identity until it defines __eq__, which sets its __hash__ to None (see Session 10).",
           "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#hashable",
           "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
         },
@@ -718,6 +718,55 @@
           "description": "Runs a module's file again into the same module object, so code that reads config.name sees the new values. Names copied out earlier with from-imports, and instances of the old classes, still point at the old objects, which is why restarting is often simpler.",
           "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#reload",
           "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Special method",
+          "description": "A method with two underscores on each side of its name, such as __len__ or __add__, which Python calls for you when you use some syntax: len(x) runs type(x).__len__(x). People call them dunder methods. Python looks them up on the object's class, never on the instance, so setting one on an instance changes nothing the syntax can see. See Session 10.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#special-method",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "__repr__ and __str__",
+          "description": "Two ways to turn an object into text. repr() is for developers, and it's what the REPL, debuggers and containers show. str() is for users, and it's what print and f-strings use. The default __str__ calls __repr__, so write __repr__ first.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#repr-str",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Reflected method",
+          "description": "The right operand's version of an operator, such as __radd__ or __rmul__. For a * b, Python calls type(a).__mul__ first. If that returns NotImplemented and the types differ, it calls type(b).__rmul__(b, a). If that declines too, you get TypeError: unsupported operand type(s).",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#reflected-method",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "NotImplemented",
+          "description": "A built-in object, like None, that an operator method returns to say \"not with this type\". It tells Python to try the other operand. It isn't the exception NotImplementedError, which is for a method that a subclass is meant to fill in.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#notimplemented",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "__eq__ and __hash__",
+          "description": "Dicts and sets use hash() to pick a place and == to confirm a match, so equal objects must have equal hashes, and a stored object's hash must not change. Defining __eq__ without __hash__ sets __hash__ to None, which makes the class unhashable.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#eq-hash",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Truthiness",
+          "description": "What if x: and bool(x) decide. Python calls the class's __bool__ if it has one, then __len__ (false when it returns 0), and otherwise treats the object as true. That's why an empty list, or an empty instance of your own container class, counts as false.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#truthiness",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
+        },
+        {
+          "@type": "DefinedTerm",
+          "name": "Dataclass",
+          "description": "A class decorated with @dataclass, which reads the annotated fields and writes __init__, __repr__ and __eq__ into the class. It also sets __hash__ to None, unless you pass frozen=True, which builds __hash__ from the fields and makes assigning to them raise FrozenInstanceError.",
+          "url": "https://inboxpraveen.github.io/Py-Internals/glossary.html#dataclass",
+          "inDefinedTermSet": "https://inboxpraveen.github.io/Py-Internals/glossary.html"
         }
       ]
     },
@@ -783,6 +832,7 @@
     <button type="button" class="glossary-filter" data-filter="concurrency" aria-pressed="false">Concurrency</button>
     <button type="button" class="glossary-filter" data-filter="exceptions" aria-pressed="false">Exceptions</button>
     <button type="button" class="glossary-filter" data-filter="modules" aria-pressed="false">Modules</button>
+    <button type="button" class="glossary-filter" data-filter="data-model" aria-pressed="false">Data model</button>
   </div>
   <p class="glossary-count" id="glossaryCount" role="status"></p>
   <p class="glossary-empty" id="glossaryEmpty">No terms match that search.</p>
@@ -895,7 +945,7 @@
     </article>
     <article class="term" id="hashable" data-terms="hashable key">
       <h3>Hashable</h3>
-      <p>An object with a stable hash, required for dict keys and set elements. Built-in immutables are usually hashable. Lists and dicts are not.</p>
+      <p>An object with a stable hash, required for dict keys and set elements. Built-in immutables are usually hashable. Lists and dicts are not. A class of your own is hashable by identity until it defines <code>__eq__</code>, which sets its <code>__hash__</code> to <code>None</code> (see <a href="sessions/10-data-model/">Session 10</a>).</p>
     </article>
   </section>
 
@@ -1148,6 +1198,38 @@
     <article class="term" id="reload" data-terms="importlib.reload reload re-import edit">
       <h3><code>importlib.reload</code></h3>
       <p>Runs a module's file again into the same module object, so code that reads <code>config.name</code> sees the new values. Names copied out earlier with from-imports, and instances of the old classes, still point at the old objects, which is why restarting is often simpler.</p>
+    </article>
+  </section>
+
+  <section class="glossary-group" data-group="data-model">
+    <h2>Data model</h2>
+    <article class="term" id="special-method" data-terms="special method dunder magic method data model __len__ __add__ protocol">
+      <h3>Special method</h3>
+      <p>A method with two underscores on each side of its name, such as <code>__len__</code> or <code>__add__</code>, which Python calls for you when you use some syntax: <code>len(x)</code> runs <code>type(x).__len__(x)</code>. People call them dunder methods. Python looks them up on the object's class, never on the instance, so setting one on an instance changes nothing the syntax can see. See <a href="sessions/10-data-model/">Session 10</a>.</p>
+    </article>
+    <article class="term" id="repr-str" data-terms="__repr__ __str__ repr str print representation">
+      <h3><code>__repr__</code> and <code>__str__</code></h3>
+      <p>Two ways to turn an object into text. <code>repr()</code> is for developers, and it's what the REPL, debuggers and containers show. <code>str()</code> is for users, and it's what <code>print</code> and f-strings use. The default <code>__str__</code> calls <code>__repr__</code>, so write <code>__repr__</code> first.</p>
+    </article>
+    <article class="term" id="reflected-method" data-terms="reflected method __radd__ __rmul__ right operand operator overloading">
+      <h3>Reflected method</h3>
+      <p>The right operand's version of an operator, such as <code>__radd__</code> or <code>__rmul__</code>. For <code>a * b</code>, Python calls <code>type(a).__mul__</code> first. If that returns <code>NotImplemented</code> and the types differ, it calls <code>type(b).__rmul__(b, a)</code>. If that declines too, you get <code>TypeError: unsupported operand type(s)</code>.</p>
+    </article>
+    <article class="term" id="notimplemented" data-terms="NotImplemented NotImplementedError operator decline">
+      <h3><code>NotImplemented</code></h3>
+      <p>A built-in object, like <code>None</code>, that an operator method returns to say "not with this type". It tells Python to try the other operand. It isn't the exception <code>NotImplementedError</code>, which is for a method that a subclass is meant to fill in.</p>
+    </article>
+    <article class="term" id="eq-hash" data-terms="__eq__ __hash__ equality hash unhashable equal objects">
+      <h3><code>__eq__</code> and <code>__hash__</code></h3>
+      <p>Dicts and sets use <code>hash()</code> to pick a place and <code>==</code> to confirm a match, so equal objects must have equal hashes, and a stored object's hash must not change. Defining <code>__eq__</code> without <code>__hash__</code> sets <code>__hash__</code> to <code>None</code>, which makes the class unhashable.</p>
+    </article>
+    <article class="term" id="truthiness" data-terms="truthiness truthy falsy __bool__ bool if empty">
+      <h3>Truthiness</h3>
+      <p>What <code>if x:</code> and <code>bool(x)</code> decide. Python calls the class's <code>__bool__</code> if it has one, then <code>__len__</code> (false when it returns 0), and otherwise treats the object as true. That's why an empty list, or an empty instance of your own container class, counts as false.</p>
+    </article>
+    <article class="term" id="dataclass" data-terms="dataclass @dataclass frozen dataclasses fields FrozenInstanceError">
+      <h3>Dataclass</h3>
+      <p>A class decorated with <code>@dataclass</code>, which reads the annotated fields and writes <code>__init__</code>, <code>__repr__</code> and <code>__eq__</code> into the class. It also sets <code>__hash__</code> to <code>None</code>, unless you pass <code>frozen=True</code>, which builds <code>__hash__</code> from the fields and makes assigning to them raise <code>FrozenInstanceError</code>.</p>
     </article>
   </section>
 </main>

@@ -380,7 +380,7 @@
       .course-path { grid-template-columns: 1fr 1fr; }
     }
 
-    /* Two columns all the way down. One column made the same nine sessions a
+    /* Two columns all the way down. One column made the sessions a
        screen and a half long, right above the cards that list them again. */
     @media (max-width: 640px) {
       .howto-grid { grid-template-columns: 1fr; }
@@ -474,7 +474,7 @@
         "CPython internals",
         "memory model"
       ],
-      "keywords": "python, python internals, memory model, reference counting, closures, decorators, generators, GIL, exceptions, imports, modules",
+      "keywords": "python, python internals, memory model, reference counting, closures, decorators, generators, GIL, exceptions, imports, modules, special methods, dunder methods",
       "teaches": [
         "Python variables as names bound to objects",
         "id() and object identity",
@@ -536,7 +536,15 @@
         "the __name__ == \"__main__\" guard",
         "circular imports",
         "sys.path and shadowed modules",
-        "packages and __pycache__"
+        "packages and __pycache__",
+        "special methods and the data model",
+        "__repr__ and __str__",
+        "special method lookup on the type",
+        "operator overloading",
+        "NotImplemented and reflected operators",
+        "__eq__ and __hash__",
+        "hashable objects and changing keys",
+        "dataclasses"
       ],
       "offers": [
         {
@@ -551,7 +559,7 @@
         {
           "@type": "CourseInstance",
           "courseMode": "online",
-          "courseWorkload": "PT6H"
+          "courseWorkload": "PT7H"
         }
       ],
       "hasPart": [
@@ -599,6 +607,11 @@
           "@type": "LearningResource",
           "name": "Session 09: Modules & Imports",
           "url": "https://inboxpraveen.github.io/Py-Internals/sessions/09-modules/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Session 10: Special Methods & the Data Model",
+          "url": "https://inboxpraveen.github.io/Py-Internals/sessions/10-data-model/"
         }
       ]
     },
@@ -636,7 +649,7 @@
     <span class="topbar__brand">Py<span>Internals</span></span>
   </div>
   <div class="topbar__actions">
-    <span class="progress-chip" id="homeProgressChip">9 live sessions</span>
+    <span class="progress-chip" id="homeProgressChip">10 live sessions</span>
     <a href="glossary.html" class="btn btn--ghost btn--sm">Glossary</a>
     <a href="https://github.com/inboxpraveen/Py-Internals"
        target="_blank" rel="noopener"
@@ -766,6 +779,11 @@
         <div class="course-path__num">09</div>
         <div class="course-path__title">Modules</div>
         <div class="course-path__idea">A file runs once. Every later import gets the cached module.</div>
+      </a>
+      <a class="course-path__step" href="sessions/10-data-model/">
+        <div class="course-path__num">10</div>
+        <div class="course-path__title">Special methods</div>
+        <div class="course-path__idea">Syntax becomes a method call, looked up on the class.</div>
       </a>
     </div>
   </section>
@@ -969,6 +987,30 @@
           <span class="session-card__tag">__main__</span>
           <span class="session-card__tag">circular imports</span>
           <span class="session-card__tag">sys.path</span>
+        </div>
+      </div>
+      <svg class="session-card__arrow" width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M7 10h6M10 7l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+
+    <a href="sessions/10-data-model/" class="session-card animate-fade-up delay-5" data-session="10-data-model">
+      <div class="session-card__num">10</div>
+      <div class="session-card__body">
+        <div class="session-card__title">Special Methods &amp; the Data Model</div>
+        <div class="session-card__desc">
+          How <code>print</code>, <code>len</code>, <code>==</code> and <code>*</code> find your
+          methods on the class, and why an instance can't override them. Why defining
+          <code>__eq__</code> makes a class unhashable, what <code>NotImplemented</code> is for,
+          and how a changed object gets lost inside a set.
+        </div>
+        <div class="session-card__tags">
+          <span class="session-card__tag">__repr__</span>
+          <span class="session-card__tag">__len__</span>
+          <span class="session-card__tag">operators</span>
+          <span class="session-card__tag">NotImplemented</span>
+          <span class="session-card__tag">__eq__ / __hash__</span>
+          <span class="session-card__tag">dataclass</span>
         </div>
       </div>
       <svg class="session-card__arrow" width="20" height="20" viewBox="0 0 20 20" fill="none">

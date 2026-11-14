@@ -5,7 +5,7 @@
 # Py Internals
 
 [![Live course](https://img.shields.io/badge/course-live-1A6B5C)](https://inboxpraveen.github.io/Py-Internals)
-[![Sessions](https://img.shields.io/badge/sessions-9-1A6B5C)](#course-content)
+[![Sessions](https://img.shields.io/badge/sessions-10-1A6B5C)](#course-content)
 [![License](https://img.shields.io/badge/license-Apache%202.0%20%2B%20CC%20BY--SA%204.0-blue.svg)](#license)
 [![No build step](https://img.shields.io/badge/build-none-B85C1A)](docs/ARCHITECTURE.md)
 [![Sponsor](https://img.shields.io/badge/sponsor-inboxpraveen-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/inboxpraveen)
@@ -61,6 +61,7 @@ That gap, between using a tool and understanding it, is where bugs hide. It is w
 | 07 | [The GIL & Concurrency](https://inboxpraveen.github.io/Py-Internals/sessions/07-gil/) | GIL, races, `Lock`, I/O vs CPU, `multiprocessing`, `asyncio`, free threading |
 | 08 | [Exceptions, Tracebacks & Context Managers](https://inboxpraveen.github.io/Py-Internals/sessions/08-exceptions/) | `raise`, stack unwinding, tracebacks, `try` / `except` / `finally`, `with`, `raise from` |
 | 09 | [Modules & Imports](https://inboxpraveen.github.io/Py-Internals/sessions/09-modules/) | `import`, module objects, `sys.modules`, `from ... import`, `__name__ == "__main__"`, circular imports, `sys.path` |
+| 10 | [Special Methods & the Data Model](https://inboxpraveen.github.io/Py-Internals/sessions/10-data-model/) | `__repr__` / `__str__`, lookup on the type, operators and `NotImplemented`, `__eq__` / `__hash__`, `@dataclass` |
 
 Sessions are released one at a time and build on each other, so start at 01 if you are new. Ideas for the next one are welcome in [Discussions](https://github.com/inboxpraveen/Py-Internals/discussions). There is also a [glossary](https://inboxpraveen.github.io/Py-Internals/glossary.html).
 
@@ -151,7 +152,7 @@ Py-Internals/
 │   └── images/                logo, banner, architecture diagram, screenshots, og/ share cards
 │
 ├── sessions/
-│   └── NN-topic/              index.html (the page) and session.js (the demos), nine so far
+│   └── NN-topic/              index.html (the page) and session.js (the demos), ten so far
 │
 ├── tools/
 │   ├── check_sessions.js      Demo data checks

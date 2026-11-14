@@ -440,11 +440,14 @@ PJ.MemoryViz = class {
   _renderCollectionItems(obj) {
     const wrap = document.createElement('div');
     wrap.className = 'mem-obj__items';
+    // A set has no positions, so its items carry no [i]: an index would
+    // suggest s[0] works.
+    const indexed = obj.type !== 'set';
     (obj.items || []).forEach((item, i) => {
       const cell = document.createElement('span');
       cell.className = 'mem-obj__item-cell';
       cell.innerHTML = `
-        <span class="item-index">[${i}]</span>
+        ${indexed ? `<span class="item-index">[${i}]</span>` : ''}
         ${this._renderValueHTML(item.value, item.type)}
       `;
       wrap.appendChild(cell);
