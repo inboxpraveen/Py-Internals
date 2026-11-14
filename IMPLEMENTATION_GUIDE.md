@@ -367,6 +367,49 @@ dropped, so don't draw it as freed.
 `module.exports = DEMOS;` to your file, so a function named `module` quietly
 breaks it. Session 09 uses `moduleObj` for that reason.
 
+### Shared fixes from the November 2026 review
+
+A pass over every session at 320 to 1440px, stepping all 312 steps, turned up
+a few things that were wrong everywhere. They live in the shared files, so a
+new session gets them without doing anything.
+
+- **The lab keeps the change on screen.** Both panels scroll themselves,
+  never the page. The code panel used to measure lines from the top of the
+  page and could hide line 1 in a long demo. It now shows every highlighted
+  line when they fit (a call and the `def` it jumps into, say), and centres
+  the first line listed when they don't, so list the line that runs first.
+  The memory panel does the same with whatever the step changed: names marked
+  `new` or `rebound`, objects marked `new`, `mutated` or `gc`. If all of them
+  fit, all of them are shown; if not, the first changed object wins. This is
+  one more reason to set `state` honestly on every step.
+- **Addresses are linked to their objects.** Pointing at a name's address,
+  or at a heap object, lights up the object and every name that refers to
+  it, so two aliases show up as one amber group. Tapping an address scrolls
+  its object into view. It works from `ref` on the variable and the heap
+  object's `id`, so there is nothing to add to a snapshot. A `ref` with no
+  matching object (Session 07's deliberate space savers) just lights the name.
+- **Anchors clear the topbar.** `html` has `scroll-padding-top: 72px`, so a
+  sidebar link lands its heading under the sticky topbar, not behind it.
+- **The reading progress bar is sticky** under the topbar. For that,
+  `.main-content` uses `overflow-x: clip` with `min-width: 0`. Don't swap
+  either back: `hidden` makes it a scroll container, so nothing inside can
+  stick, and without `min-width: 0` the grid column grows to the widest code
+  line and the page runs off a phone.
+- **The phone sidebar is `visibility: hidden` while closed**, so its links
+  are out of the tab order. Opening it moves focus to the current section,
+  and closing it from the overlay or with `Escape` returns focus to the menu
+  button.
+- **The quiz result links onward.** Once every question is answered, the
+  result card offers the next live session from `PJ.COURSE` (or the course
+  page after the last one) and a Try again button that clears the answers.
+  Completion is still recorded.
+- **Footers use full titles.** Every `.session-footer` has the previous and
+  next session's full `PJ.COURSE` title and a `.session-footer__count`
+  between them. Session 01 points back to all sessions, and the last session
+  points to the course page.
+- **Card paragraphs end flush.** The last `<p>` in a flow, rule, diagram or
+  mental-model card has no bottom margin.
+
 ---
 
 ## 3. The JavaScript Modules
@@ -392,7 +435,7 @@ breaks it. Session 09 uses `moduleObj` for that reason.
 
 Keyboard playback (once an animator is mounted): `→` next, `←` previous, `Space` play/pause, `R` reset.
 
-Quizzes are plain HTML. Add `<section class="quiz" data-session="NN-topic">` with `.quiz-card` elements. Set `data-answer` to the winning `data-choice`. `PJ.Core` scores them automatically.
+Quizzes are plain HTML. Add `<section class="quiz" data-session="NN-topic">` with `.quiz-card` elements. Set `data-answer` to the winning `data-choice`. `PJ.Core` scores them automatically, and the result card links to the next session in `PJ.COURSE` and offers a retake.
 
 ### `PJ.Syntax`
 - **`PJ.Syntax.render(source, container, opts)`**: Highlights Python source and renders numbered lines into `container`
@@ -403,8 +446,12 @@ Quizzes are plain HTML. Add `<section class="quiz" data-session="NN-topic">` wit
 ```js
 const viz = new PJ.MemoryViz('container-id');
 viz.render(snapshot);   // snapshot format below
+viz.reveal();           // scroll the panel to what this step changed
 viz.clear();
 ```
+
+`PJ.Session.mount` calls `reveal()` after every `render()`, so a session never
+calls either directly.
 
 `PJ.MemoryViz` supports two stack formats:
 - `frame` for a single namespace, used by simple sessions like variables.
@@ -1093,7 +1140,7 @@ Before shipping a session, verify:
 - [ ] Check the awkward middle too: **860 to 1024px**, where the sidebar is still
       pinned but the stage has just gone single-column
 - [ ] Prose never says "on the right" or "on the left" about the panels. Below
-      860px they stack vertically
+      1024px they stack vertically
 - [ ] Tab through the whole lab: every control has a visible focus ring, and
       `Space` on a quiz option answers it rather than starting playback
 - [ ] If any frame sets `state`, step every demo and confirm exactly one frame
@@ -1106,6 +1153,9 @@ Before shipping a session, verify:
 - [ ] The memory panel is still full width at 320px and half width at 1100px
       with your longest code line on screen. A code line cannot widen the
       stage any more, but check the first demo of a new session anyway
+- [ ] Step every demo at 375px and confirm the highlighted code line and the
+      thing the step changed are both on screen inside their panels. If a
+      change is off screen, check that its `state` is set
 - [ ] Compare your tallest memory snapshot against the existing ceiling
       (about 1200 to 1320px at 375px wide, set by Sessions 04, 07, 08 and 09,
       and about 1470px at 320px, where long values wrap). Measure it, do not

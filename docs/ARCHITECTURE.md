@@ -37,15 +37,15 @@ Each script adds one object to a shared `PJ` namespace.
 | --- | --- |
 | `PJ.Core` (`core.js`) | Sidebar, the reading progress bar and current-section highlight, quizzes, the "Continue Learning" button on the homepage and saved progress. `PJ.Session.mount()` wires a whole lab together. |
 | `PJ.Animator` (`animator.js`) | Owns time. It holds the current step index and the autoplay timer, wires the play, previous, next, reset and speed controls, and calls `onStep(step, index, total)` whenever the step changes. It also owns the keyboard (arrows, Space, R), but only while the lab is on screen. |
-| `PJ.MemoryViz` (`memory-viz.js`) | `render(snapshot)` turns one snapshot into DOM: the frames on one side, the heap objects on the other, reference links, refcount badges and the new, rebound, mutated and about-to-be-collected states. |
-| `PJ.Syntax` (`syntax.js`) | Highlights Python source into numbered lines and marks the line a step is about, and the lines that have already run. |
+| `PJ.MemoryViz` (`memory-viz.js`) | `render(snapshot)` turns one snapshot into DOM: the frames on one side, the heap objects on the other, reference links, refcount badges and the new, rebound, mutated and about-to-be-collected states. `reveal()` scrolls the panel to what the step changed. Pointing at an address lights up its object and every name that shares it. |
+| `PJ.Syntax` (`syntax.js`) | Highlights Python source into numbered lines, marks the lines a step is about and scrolls the code panel (never the page) to keep them in view. |
 
 When a session page loads, `PJ.Session.mount({ sessionId, demos, defaultDemo, defaultSpeed })` does the following:
 
 1. creates a `PJ.MemoryViz` for the memory panel,
 2. renders the chosen demo's source with `PJ.Syntax`,
 3. creates a `PJ.Animator` over the demo's steps, and
-4. on every step, calls `PJ.Syntax.highlightLines` with the step's `lines` and `PJ.MemoryViz.render` with the step's `memory`.
+4. on every step, calls `PJ.Syntax.highlightLines` with the step's `lines`, then `PJ.MemoryViz.render` and `reveal` with the step's `memory`.
 
 Choosing another demo tears the animator down and repeats the same four steps. The animator and the visualiser never talk to each other directly, which is why a new kind of lesson needs new data and not a new renderer.
 
