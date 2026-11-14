@@ -28,9 +28,7 @@
     }
 
     .home-hero__eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--sp-2);
+      display: inline-block;
       font-size: var(--fs-xs);
       font-weight: 600;
       text-transform: uppercase;
@@ -94,7 +92,7 @@
 
     .feature-strip__icon {
       color: var(--clr-accent);
-      font-size: var(--fs-md);
+      flex-shrink: 0;
     }
 
     .sessions-grid {
@@ -382,15 +380,29 @@
       .course-path { grid-template-columns: 1fr 1fr; }
     }
 
+    /* Two columns all the way down. One column made the same nine sessions a
+       screen and a half long, right above the cards that list them again. */
     @media (max-width: 640px) {
       .howto-grid { grid-template-columns: 1fr; }
-      .course-path { grid-template-columns: 1fr; }
+      .course-path { gap: var(--sp-2); }
+      .course-path__step { padding: var(--sp-3); }
     }
 
+    /* On a phone the status badge took a column of its own and squeezed the
+       description to a few words a line. The number and the badge share the
+       top row now, and the text gets the full width under them. */
     @media (max-width: 520px) {
-      .session-card { gap: var(--sp-4); padding: var(--sp-5); }
+      .session-card { gap: var(--sp-3); padding: var(--sp-5); }
       .session-card__num { width: 40px; height: 40px; }
       .session-card__arrow { display: none; }
+      .session-card__status { order: 1; margin-left: auto; margin-top: 0; align-self: center; }
+      .session-card__body { order: 2; flex-basis: 100%; }
+      .home-hero__eyebrow { letter-spacing: 0.06em; padding: var(--sp-1) var(--sp-3); }
+    }
+
+    /* Three items do not fit on one line here, and a two-line pill looks broken. */
+    @media (max-width: 420px) {
+      .home-hero__eyebrow-extra { display: none; }
     }
 
     @media (max-width: 640px) {
@@ -398,7 +410,7 @@
       .sessions-grid { padding: var(--sp-8) var(--sp-5); }
       .philosophy-inner { grid-template-columns: 1fr; gap: var(--sp-8); }
       .philosophy-inner h2 { grid-column: 1; }
-      .feature-strip { gap: var(--sp-5); }
+      .feature-strip { gap: var(--sp-3) var(--sp-5); padding: var(--sp-5); }
     }
   </style>
   <!-- seo:head -->
@@ -455,7 +467,7 @@
       "isAccessibleForFree": true,
       "license": "https://creativecommons.org/licenses/by-sa/4.0/",
       "datePublished": "2026-03-23",
-      "dateModified": "2026-10-29",
+      "dateModified": "2026-11-14",
       "educationalLevel": "Beginner",
       "about": [
         "Python (programming language)",
@@ -627,7 +639,8 @@
     <span class="progress-chip" id="homeProgressChip">9 live sessions</span>
     <a href="glossary.html" class="btn btn--ghost btn--sm">Glossary</a>
     <a href="https://github.com/inboxpraveen/Py-Internals"
-       target="_blank"
+       target="_blank" rel="noopener"
+       aria-label="Py Internals on GitHub"
        class="btn btn--secondary btn--sm"
        style="display:inline-flex;align-items:center;gap:6px;">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
@@ -644,7 +657,7 @@
   <!-- Hero -->
   <section class="home-hero">
     <div class="home-hero__eyebrow animate-fade-up">
-      Open Source · Free Forever · Interactive
+      Open Source · Free Forever<span class="home-hero__eyebrow-extra"> · Interactive</span>
     </div>
     <h1 class="home-hero__title animate-fade-up delay-1">
       Learn Python the way it <em>actually</em> works
@@ -667,23 +680,23 @@
   <!-- Feature strip -->
   <div class="feature-strip">
     <div class="feature-strip__item">
-      <span class="feature-strip__icon">🧠</span>
+      <svg class="feature-strip__icon" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="5" height="10" rx="1"/><circle cx="13" cy="9" r="3"/><path d="M7 9h3"/></svg>
       Memory model visualised
     </div>
     <div class="feature-strip__item">
-      <span class="feature-strip__icon">▶</span>
+      <svg class="feature-strip__icon" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 3.5l8 5.5-8 5.5z"/></svg>
       Step-by-step animation
     </div>
     <div class="feature-strip__item">
-      <span class="feature-strip__icon">📱</span>
+      <svg class="feature-strip__icon" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="8" height="14" rx="2"/><path d="M8 13h2"/></svg>
       Works on any device
     </div>
     <div class="feature-strip__item">
-      <span class="feature-strip__icon">⚡</span>
+      <svg class="feature-strip__icon" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="14" height="12" rx="2"/><path d="M2 7h14M5 5h.01M7 5h.01"/></svg>
       No install needed
     </div>
     <div class="feature-strip__item">
-      <span class="feature-strip__icon">🔓</span>
+      <svg class="feature-strip__icon" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 5L2 9l4 4M12 5l4 4-4 4"/></svg>
       Open source
     </div>
   </div>
@@ -1011,7 +1024,7 @@
   Created with care. Code under <a href="https://github.com/inboxpraveen/Py-Internals/blob/main/LICENSE">Apache 2.0</a>, course content under
   <a href="LICENSE-CONTENT.txt">CC BY-SA 4.0</a>.
   <a href="glossary.html">Glossary</a>.
-  <a href="https://github.com/inboxpraveen/Py-Internals" target="_blank">Contribute on GitHub</a>.
+  <a href="https://github.com/inboxpraveen/Py-Internals" target="_blank" rel="noopener">Contribute on GitHub</a>.
 </footer>
 
 <script src="assets/js/core.js"></script>
