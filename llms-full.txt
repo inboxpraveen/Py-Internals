@@ -4175,7 +4175,7 @@ Python's data model is the list of specially named methods it calls for you. `le
 **In plain words**
 A universal remote has the same buttons whatever it's pointed at: power, volume, channel. What a button does depends on the device. Python's syntax is the buttons. Each class decides what they do by defining methods with reserved names, and Python presses the one that matches what you wrote.
 
-These methods have two underscores on each side, so people call them dunder methods. `len(x)` becomes `type(x).__len__(x)`, `a * b` becomes `type(a).__mul__(a, b)`, and `a == b` becomes `type(a).__eq__(a, b)`. The search starts at `type(x)`, follows the MRO from Session 04, and never reads the instance's `__dict__`. If no class on the way defines the method, either `object` has a fallback (it does for `__repr__`, `__str__`, `__eq__` and `__hash__`) or you get a `TypeError`.
+These methods have two underscores on each side, so people call them dunder methods. `len(x)` becomes `type(x).__len__(x)`, `a * b` becomes `type(a).__mul__(a, b)`, and `a == b` becomes `type(a).__eq__(a, b)`. The search starts at `type(x)`, follows the MRO from Session 04, and never reads the instance's `__dict__`. If no class on the way defines the method, one of three things happens: `object` has a fallback (it does for `__repr__`, `__str__`, `__eq__` and `__hash__`), Python has a built-in default (an object with no `__bool__` or `__len__` counts as true), or you get a `TypeError`.
 
 | You write | Python calls | If no class defines it |
 | --- | --- | --- |
